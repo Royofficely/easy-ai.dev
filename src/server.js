@@ -24,6 +24,15 @@ app.use(express.urlencoded({ extended: true }));
 // Static files
 app.use('/public', express.static(path.join(__dirname, '../public')));
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    service: 'easyai-backend'
+  });
+});
+
 // Routes
 app.use('/auth', authRoutes);
 app.use('/api/prompts', promptRoutes);

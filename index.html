@@ -96,10 +96,12 @@
                 </div>
             </div>
             <div class="font-mono text-sm space-y-2">
-                <div class="text-gray-400">$ npm install easyai</div>
-                <div class="text-gray-400">$ export EASYAI_API_KEY="your-key"</div>
-                <div class="text-gray-50">$ node app.js</div>
-                <div class="text-gray-500 cursor-blink">Server running on port 3000</div>
+                <div class="text-gray-400">$ npm install -g easyai</div>
+                <div class="text-gray-400">$ easyai setup --api-key your-key</div>
+                <div class="text-gray-50">✅ Database initialized</div>
+                <div class="text-gray-50">✅ IDE integration active</div>
+                <div class="text-gray-50">✅ Dashboard running on port 3000</div>
+                <div class="text-gray-500 cursor-blink">🎯 Ready to use!</div>
             </div>
         </div>
 
@@ -177,7 +179,8 @@
                     <div class="space-y-4">
                         <div>
                             <h3 class="text-lg font-medium">Pro</h3>
-                            <div class="text-2xl font-semibold mt-2">$29</div>
+                            <div class="text-2xl font-semibold mt-2">Pay per use</div>
+                            <div class="text-sm text-gray-400">Credit usage based</div>
                         </div>
                         <ul class="space-y-2 text-sm text-gray-400">
                             <li class="flex items-center gap-2">
@@ -194,7 +197,7 @@
                             </li>
                             <li class="flex items-center gap-2">
                                 <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
-                                Priority support
+                                Only pay for what you use
                             </li>
                             <li class="flex items-center gap-2">
                                 <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
@@ -407,8 +410,15 @@
                                 </button>
                             </div>
                         </div>
+                        <div class="bg-gray-800 border border-gray-700 rounded p-3 mb-3">
+                            <p class="text-gray-300 text-sm font-medium mb-2">Quick Setup (One Command):</p>
+                            <div class="bg-gray-900 rounded p-2 font-mono text-xs text-gray-300">
+                                <div>npm install -g easyai</div>
+                                <div>easyai setup --api-key ${apiKey}</div>
+                            </div>
+                        </div>
                         <p class="text-gray-400 text-sm">
-                            Save this key safely. You'll need it to use EasyAI.
+                            That's it! EasyAI will handle everything: database, IDE integration, and dashboard.
                         </p>
                     </div>
                     <div class="space-y-2">

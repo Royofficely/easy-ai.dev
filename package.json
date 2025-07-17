@@ -15,7 +15,8 @@
     "db:init": "node -e \"require('./src/models').initializeDatabase()\"",
     "install:all": "npm install && cd dashboard && npm install",
     "setup-ide": "node install-ide-integration.js",
-    "postinstall": "echo '\\n🎯 To integrate with Claude Code & Cursor, run: npm run setup-ide'"
+    "setup": "node bin/cli.js setup",
+    "postinstall": "echo '\\n🎯 After getting your API key, run: easyai setup'"
   },
   "keywords": [
     "ai",
@@ -37,6 +38,7 @@
     "dotenv": "^16.3.1",
     "easyai": "^1.0.0",
     "express": "^4.18.2",
+    "express-rate-limit": "^8.0.1",
     "helmet": "^7.0.0",
     "inquirer": "^9.2.8",
     "joi": "^17.9.2",
@@ -44,6 +46,7 @@
     "mysql2": "^3.6.0",
     "ora": "^7.0.1",
     "sequelize": "^6.32.1",
+    "sqlite3": "^5.1.7",
     "uuid": "^9.0.0",
     "winston": "^3.10.0"
   },

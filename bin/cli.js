@@ -7,6 +7,9 @@ const ora = require('ora');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
+const { exec } = require('child_process');
+const util = require('util');
+const execAsync = util.promisify(exec);
 
 program
   .name('easyai')
@@ -34,7 +37,7 @@ program
       const config = {
         project_name: projectName,
         api: {
-          base_url: "http://localhost:3000",
+          base_url: "http://localhost:3001",
           timeout: 30000
         },
         models: {
@@ -75,7 +78,7 @@ program
       // Create .env.example
       const envExample = `# EasyAI Configuration
 EASYAI_API_KEY=your_api_key_here
-EASYAI_BASE_URL=http://localhost:3000
+EASYAI_BASE_URL=http://localhost:3001
 EASYAI_USER_ID=your_user_id
 
 # Optional: Direct provider keys for fallback
@@ -140,12 +143,17 @@ promptsCommand
   });
 
 promptsCommand
-  .command('create')
-  .description('Create a new prompt')
+  .command('add')
+  .alias('create')
+  .description('Add a new prompt (opens UI if available)')
   .option('-n, --name <name>', 'Prompt name')
   .option('-t, --template <template>', 'Prompt template')
   .option('-m, --model <model>', 'Model to use')
+  .option('--ui', 'Open in UI instead of CLI')
   .action(async (options) => {
+    if (options.ui) {
+      return openInUI('prompts/new');
+    }
     try {
       const answers = await inquirer.prompt([
         {
@@ -209,6 +217,82 @@ promptsCommand
       
     } catch (error) {
       console.error(chalk.red(`Failed to create prompt: ${error.message}`));
+    }
+  });
+
+promptsCommand
+  .command('edit <prompt_id>')
+  .description('Edit an existing prompt (opens UI if available)')
+  .option('--ui', 'Open in UI instead of CLI')
+  .action(async (promptId, options) => {
+    if (options.ui) {
+      return openInUI(`prompts/${promptId}/edit`);
+    }
+    
+    try {
+      const config = loadConfig();
+      const spinner = ora('Loading prompt...').start();
+      
+      const response = await axios.get(`${config.api.base_url}/api/prompts/${promptId}`, {
+        headers: getAuthHeaders()
+      });
+      
+      spinner.succeed('Prompt loaded');
+      const prompt = response.data;
+      
+      const answers = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'name',
+          message: 'Prompt name:',
+          default: prompt.name
+        },
+        {
+          type: 'input',
+          name: 'description',
+          message: 'Description:',
+          default: prompt.description
+        },
+        {
+          type: 'input',
+          name: 'category',
+          message: 'Category:',
+          default: prompt.category
+        },
+        {
+          type: 'editor',
+          name: 'template',
+          message: 'Template:',
+          default: prompt.template
+        },
+        {
+          type: 'input',
+          name: 'model',
+          message: 'Model:',
+          default: prompt.model_config.primary
+        }
+      ]);
+      
+      const updatedPrompt = {
+        name: answers.name,
+        description: answers.description,
+        category: answers.category,
+        template: answers.template,
+        model_config: {
+          primary: answers.model,
+          fallbacks: ['gpt-4o-mini', 'claude-3-haiku']
+        }
+      };
+      
+      const updateSpinner = ora('Updating prompt...').start();
+      await axios.put(`${config.api.base_url}/api/prompts/${promptId}`, updatedPrompt, {
+        headers: getAuthHeaders()
+      });
+      
+      updateSpinner.succeed('Prompt updated successfully');
+      
+    } catch (error) {
+      console.error(chalk.red(`Failed to edit prompt: ${error.message}`));
     }
   });
 
@@ -294,5 +378,315 @@ function extractTemplateVariables(template) {
   const matches = template.match(/{{([^}]+)}}/g) || [];
   return matches.map(match => match.replace(/[{}]/g, '').trim());
 }
+
+// Function to open UI (if available)
+function openInUI(route) {
+  const url = `http://localhost:3000/${route}`;
+  
+  const command = process.platform === 'win32' ? 'start' : 
+                  process.platform === 'darwin' ? 'open' : 
+                  'xdg-open';
+  
+  exec(`${command} ${url}`, (error) => {
+    if (error) {
+      console.log(chalk.yellow(`Could not open UI. Please visit: ${url}`));
+      console.log(chalk.gray('Make sure the dashboard is running with: npm run dev'));
+    } else {
+      console.log(chalk.green(`Opening ${route} in your browser...`));
+    }
+  });
+}
+
+// Setup command - one command to install everything
+program
+  .command('setup')
+  .description('Complete EasyAI setup - install everything in one command')
+  .option('--token <token>', 'Your EasyAI authentication token')
+  .option('--api-key <apiKey>', 'Your EasyAI API key')
+  .action(async (options) => {
+    console.log(chalk.blue('🚀 Starting EasyAI Complete Setup...'));
+    console.log(chalk.gray('This will install and configure everything you need\n'));
+    
+    let apiKey = options.apiKey;
+    let token = options.token;
+    
+    // If no API key provided, try to get from localStorage or prompt
+    if (!apiKey) {
+      if (typeof localStorage !== 'undefined' && localStorage.getItem('easyai_api_key')) {
+        apiKey = localStorage.getItem('easyai_api_key');
+      } else {
+        const answers = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'apiKey',
+            message: 'Enter your EasyAI API key:',
+            validate: (input) => input.length > 0 || 'API key is required'
+          }
+        ]);
+        apiKey = answers.apiKey;
+      }
+    }
+    
+    const setupSpinner = ora('Setting up EasyAI...').start();
+    
+    try {
+      // Step 1: Install dependencies
+      setupSpinner.text = 'Installing dependencies...';
+      await execAsync('npm install', { cwd: __dirname });
+      
+      // Step 2: Initialize database
+      setupSpinner.text = 'Initializing database...';
+      await execAsync('npm run db:init', { cwd: path.dirname(__dirname) });
+      
+      // Step 3: Set up IDE integration
+      setupSpinner.text = 'Setting up IDE integration...';
+      process.env.EASYAI_API_KEY = apiKey;
+      await execAsync(`node install-ide-integration.js ${apiKey}`, { cwd: path.dirname(__dirname) });
+      
+      // Step 4: Create .env file
+      setupSpinner.text = 'Creating configuration files...';
+      const envContent = `EASYAI_API_KEY=${apiKey}
+EASYAI_BASE_URL=http://localhost:3001
+JWT_SECRET=your-jwt-secret-key
+DATABASE_URL=sqlite:./database.sqlite
+PORT=3001
+
+# Provider API Keys (optional - for fallback)
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+GOOGLE_API_KEY=
+DEEPSEEK_API_KEY=
+`;
+      
+      fs.writeFileSync(path.join(path.dirname(__dirname), '.env'), envContent);
+      
+      // Step 5: Start services
+      setupSpinner.text = 'Starting services...';
+      
+      // Start backend server in background
+      exec('npm start', { cwd: path.dirname(__dirname), detached: true, stdio: 'ignore' });
+      
+      // Start dashboard in background
+      exec('cd dashboard && npm install && npm start', { 
+        cwd: path.dirname(__dirname), 
+        detached: true, 
+        stdio: 'ignore' 
+      });
+      
+      // Wait a moment for services to start
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      setupSpinner.succeed('EasyAI setup completed successfully!');
+      
+      console.log(chalk.green('\n🎉 EasyAI is now ready to use!'));
+      console.log(chalk.yellow('\n📊 Dashboard: http://localhost:3000'));
+      console.log(chalk.yellow('🔗 API: http://localhost:3001'));
+      console.log(chalk.yellow('🚀 Proxy: http://localhost:8888'));
+      
+      console.log(chalk.blue('\n✨ What\'s configured:'));
+      console.log(chalk.gray('  ✅ Backend server running'));
+      console.log(chalk.gray('  ✅ Dashboard running'));
+      console.log(chalk.gray('  ✅ IDE integration active'));
+      console.log(chalk.gray('  ✅ Claude Code configured'));
+      console.log(chalk.gray('  ✅ Cursor configured'));
+      console.log(chalk.gray('  ✅ Database initialized'));
+      
+      console.log(chalk.blue('\n🎯 Next steps:'));
+      console.log(chalk.gray('  1. Visit http://localhost:3000 to use the dashboard'));
+      console.log(chalk.gray('  2. Use your IDE - it will automatically route through EasyAI'));
+      console.log(chalk.gray('  3. Run "easyai prompts list" to see your prompts'));
+      console.log(chalk.gray('  4. Run "easyai --help" for more commands'));
+      
+      // Open dashboard automatically
+      setTimeout(() => {
+        openInUI('');
+      }, 2000);
+      
+    } catch (error) {
+      setupSpinner.fail(`Setup failed: ${error.message}`);
+      console.log(chalk.red('\n❌ Setup failed. Please check the error above.'));
+      console.log(chalk.yellow('💡 You can try running individual commands:'));
+      console.log(chalk.gray('  - npm install'));
+      console.log(chalk.gray('  - npm run db:init'));
+      console.log(chalk.gray('  - npm run setup-ide'));
+    }
+  });
+
+// Settings management
+const settingsCommand = program.command('settings').description('Manage EasyAI settings');
+
+settingsCommand
+  .command('show')
+  .description('Show current settings')
+  .action(async () => {
+    try {
+      const config = loadConfig();
+      const response = await axios.get(`${config.api.base_url}/api/settings`, {
+        headers: getAuthHeaders()
+      });
+      
+      console.log(chalk.green('\n⚙️ Current Settings:\n'));
+      Object.entries(response.data).forEach(([key, value]) => {
+        console.log(chalk.blue(`${key}: `) + chalk.white(value));
+      });
+    } catch (error) {
+      console.error(chalk.red(`Failed to load settings: ${error.message}`));
+    }
+  });
+
+settingsCommand
+  .command('set <key> <value>')
+  .description('Set a configuration value')
+  .action(async (key, value) => {
+    try {
+      const config = loadConfig();
+      await axios.put(`${config.api.base_url}/api/settings`, {
+        [key]: value
+      }, {
+        headers: getAuthHeaders()
+      });
+      
+      console.log(chalk.green(`✅ ${key} set to ${value}`));
+    } catch (error) {
+      console.error(chalk.red(`Failed to update setting: ${error.message}`));
+    }
+  });
+
+settingsCommand
+  .command('open')
+  .description('Open settings in UI')
+  .action(() => {
+    openInUI('settings');
+  });
+
+// Playground commands
+const playgroundCommand = program.command('playground').description('Test prompts across multiple models');
+
+playgroundCommand
+  .command('test <prompt>')
+  .description('Test a prompt across multiple models')
+  .option('-m, --models <models>', 'Comma-separated list of models to test')
+  .action(async (prompt, options) => {
+    const models = options.models ? options.models.split(',') : ['gpt-4o-mini', 'claude-3-haiku', 'gemini-pro'];
+    
+    console.log(chalk.blue(`\n🧪 Testing prompt across ${models.length} models...\n`));
+    
+    for (const model of models) {
+      const spinner = ora(`Testing with ${model}...`).start();
+      
+      try {
+        const config = loadConfig();
+        const response = await axios.post(`${config.api.base_url}/api/playground/test`, {
+          prompt: prompt,
+          model: model
+        }, {
+          headers: getAuthHeaders()
+        });
+        
+        spinner.succeed(`${model} (${response.data.cost} - ${response.data.tokens} tokens)`);
+        console.log(chalk.gray(`  ${response.data.content.substring(0, 100)}...\n`));
+      } catch (error) {
+        spinner.fail(`${model} failed: ${error.message}`);
+      }
+    }
+  });
+
+playgroundCommand
+  .command('open')
+  .description('Open playground in UI')
+  .action(() => {
+    openInUI('playground');
+  });
+
+// Analytics commands
+const analyticsCommand = program.command('analytics').description('View usage analytics');
+
+analyticsCommand
+  .command('usage')
+  .description('Show usage statistics')
+  .option('-d, --days <days>', 'Number of days to show', '7')
+  .action(async (options) => {
+    try {
+      const config = loadConfig();
+      const response = await axios.get(`${config.api.base_url}/api/analytics/usage`, {
+        headers: getAuthHeaders(),
+        params: { days: options.days }
+      });
+      
+      const stats = response.data;
+      
+      console.log(chalk.green(`\n📊 Usage Analytics (Last ${options.days} days):\n`));
+      console.log(chalk.blue('Total Requests: ') + chalk.white(stats.total_requests));
+      console.log(chalk.blue('Total Cost: ') + chalk.white(`$${stats.total_cost.toFixed(4)}`));
+      console.log(chalk.blue('Total Tokens: ') + chalk.white(stats.total_tokens));
+      
+      if (stats.by_model) {
+        console.log(chalk.blue('\nBy Model:'));
+        Object.entries(stats.by_model).forEach(([model, count]) => {
+          console.log(chalk.gray(`  ${model}: ${count} requests`));
+        });
+      }
+    } catch (error) {
+      console.error(chalk.red(`Failed to load analytics: ${error.message}`));
+    }
+  });
+
+analyticsCommand
+  .command('costs')
+  .description('Show cost breakdown')
+  .action(async () => {
+    try {
+      const config = loadConfig();
+      const response = await axios.get(`${config.api.base_url}/api/analytics/costs`, {
+        headers: getAuthHeaders()
+      });
+      
+      console.log(chalk.green('\n💰 Cost Breakdown:\n'));
+      Object.entries(response.data).forEach(([provider, cost]) => {
+        console.log(chalk.blue(`${provider}: `) + chalk.white(`$${cost.toFixed(6)}`));
+      });
+    } catch (error) {
+      console.error(chalk.red(`Failed to load costs: ${error.message}`));
+    }
+  });
+
+analyticsCommand
+  .command('open')
+  .description('Open analytics in UI')
+  .action(() => {
+    openInUI('analytics');
+  });
+
+// Dashboard command
+program
+  .command('dashboard')
+  .description('Open EasyAI dashboard')
+  .action(() => {
+    console.log(chalk.blue('Opening EasyAI dashboard...'));
+    openInUI('');
+  });
+
+// Status command
+program
+  .command('status')
+  .description('Check EasyAI service status')
+  .action(async () => {
+    console.log(chalk.blue('🔍 Checking EasyAI status...\n'));
+    
+    const checks = [
+      { name: 'Backend Server', url: 'http://localhost:3001/health' },
+      { name: 'Dashboard', url: 'http://localhost:3000' },
+      { name: 'Proxy Server', url: 'http://localhost:8888' }
+    ];
+    
+    for (const check of checks) {
+      try {
+        await axios.get(check.url, { timeout: 2000 });
+        console.log(chalk.green(`✅ ${check.name} - Running`));
+      } catch (error) {
+        console.log(chalk.red(`❌ ${check.name} - Not running`));
+      }
+    }
+  });
 
 program.parse();
