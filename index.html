@@ -55,7 +55,7 @@
                     </div>
                     <span class="font-medium text-lg">EasyAI</span>
                 </div>
-                <button onclick="showAuth()" class="bg-gray-50 text-gray-950 px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
+                <button id="signInBtn" class="bg-gray-50 text-gray-950 px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
                     Sign in
                 </button>
             </div>
@@ -72,10 +72,10 @@
                 Unified prompts, real-time costs, model switching, and IDE integration — all in one place.
             </p>
             <div class="flex items-center justify-center gap-3">
-                <button onclick="showAuth()" class="bg-gray-50 text-gray-950 px-6 py-3 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
+                <button id="getStartedBtn" class="bg-gray-50 text-gray-950 px-6 py-3 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
                     Get started
                 </button>
-                <button onclick="scrollToDemo()" class="text-gray-400 hover:text-gray-50 px-6 py-3 text-sm font-medium transition-colors">
+                <button id="seeDemoBtn" class="text-gray-400 hover:text-gray-50 px-6 py-3 text-sm font-medium transition-colors">
                     View demo
                 </button>
             </div>
@@ -166,7 +166,7 @@
                                 Community support
                             </li>
                         </ul>
-                        <button onclick="showAuth()" class="w-full bg-gray-800 text-gray-50 py-2 text-sm font-medium rounded-md hover:bg-gray-700 transition-colors">
+                        <button id="startFreeBtn" class="w-full bg-gray-800 text-gray-50 py-2 text-sm font-medium rounded-md hover:bg-gray-700 transition-colors">
                             Start free
                         </button>
                     </div>
@@ -203,7 +203,7 @@
                                 Advanced analytics
                             </li>
                         </ul>
-                        <button onclick="showAuth()" class="w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
+                        <button id="getStartedProBtn" class="w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
                             Get started
                         </button>
                     </div>
@@ -257,7 +257,7 @@
         <div class="bg-gray-950 border border-gray-800 rounded-lg p-8 max-w-md w-full mx-4">
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-xl font-semibold">Sign in to EasyAI</h2>
-                <button onclick="hideAuth()" class="text-gray-400 hover:text-gray-50">
+                <button id="closeModalBtn" class="text-gray-400 hover:text-gray-50">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -281,6 +281,54 @@
         // Test if JavaScript is working
         console.log('JavaScript loaded successfully');
         console.log('API_BASE:', API_BASE);
+
+        // Add event listeners when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, adding event listeners');
+            
+            // Get Started button
+            const getStartedBtn = document.getElementById('getStartedBtn');
+            if (getStartedBtn) {
+                getStartedBtn.addEventListener('click', showAuth);
+                console.log('Get Started button event listener added');
+            } else {
+                console.error('Get Started button not found');
+            }
+            
+            // Sign In button
+            const signInBtn = document.getElementById('signInBtn');
+            if (signInBtn) {
+                signInBtn.addEventListener('click', showAuth);
+                console.log('Sign In button event listener added');
+            }
+            
+            // See Demo button
+            const seeDemoBtn = document.getElementById('seeDemoBtn');
+            if (seeDemoBtn) {
+                seeDemoBtn.addEventListener('click', scrollToDemo);
+                console.log('See Demo button event listener added');
+            }
+            
+            // Pricing buttons
+            const startFreeBtn = document.getElementById('startFreeBtn');
+            if (startFreeBtn) {
+                startFreeBtn.addEventListener('click', showAuth);
+                console.log('Start Free button event listener added');
+            }
+            
+            const getStartedProBtn = document.getElementById('getStartedProBtn');
+            if (getStartedProBtn) {
+                getStartedProBtn.addEventListener('click', showAuth);
+                console.log('Get Started Pro button event listener added');
+            }
+            
+            // Close modal button
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            if (closeModalBtn) {
+                closeModalBtn.addEventListener('click', hideAuth);
+                console.log('Close Modal button event listener added');
+            }
+        });
 
         function showAuth() {
             console.log('showAuth called');
