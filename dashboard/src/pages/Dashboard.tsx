@@ -206,7 +206,7 @@ const Dashboard: React.FC = () => {
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Average Cost per Request</span>
                 <span className="text-sm font-medium text-gray-900">
-                  ${stats?.total_requests > 0 
+                  ${(stats?.total_requests && stats.total_requests > 0) 
                     ? (stats.total_cost / stats.total_requests).toFixed(6) 
                     : '0.000000'}
                 </span>
