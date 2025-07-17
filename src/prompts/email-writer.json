@@ -1,0 +1,40 @@
+{
+  "name": "Email Writer",
+  "description": "Professional email composition assistant",
+  "template": "Write a {{tone}} email to {{recipient}} about {{subject}}. The email should be {{length}} and include the following key points:\n\n{{key_points}}\n\nContext: {{context}}\n\nPlease format it professionally with appropriate greeting and closing.",
+  "parameters": {
+    "recipient": {
+      "type": "text",
+      "placeholder": "e.g., John Smith, HR Team, Client",
+      "required": true
+    },
+    "subject": {
+      "type": "text",
+      "placeholder": "e.g., Project Update, Meeting Request",
+      "required": true
+    },
+    "tone": {
+      "type": "select",
+      "options": ["professional", "friendly", "formal", "urgent", "apologetic"],
+      "default": "professional"
+    },
+    "length": {
+      "type": "select",
+      "options": ["brief", "medium", "detailed"],
+      "default": "medium"
+    },
+    "key_points": {
+      "type": "textarea",
+      "placeholder": "List the main points to include...",
+      "required": true
+    },
+    "context": {
+      "type": "textarea",
+      "placeholder": "Additional context or background information..."
+    }
+  },
+  "model": "gpt-4",
+  "category": "communication",
+  "created": "2024-01-15T10:00:00Z",
+  "updated": "2024-01-15T10:00:00Z"
+}

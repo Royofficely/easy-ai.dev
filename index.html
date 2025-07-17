@@ -140,7 +140,7 @@
                 <h2 class="text-3xl font-semibold">Simple pricing</h2>
                 <p class="text-gray-400 mt-2">Start free, scale when you need to</p>
             </div>
-            <div class="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+            <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
                 <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
                     <div class="space-y-4">
                         <div>
@@ -150,7 +150,11 @@
                         <ul class="space-y-2 text-sm text-gray-400">
                             <li class="flex items-center gap-2">
                                 <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
-                                1,000 requests/month
+                                Localhost only
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
+                                API token access
                             </li>
                             <li class="flex items-center gap-2">
                                 <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
@@ -178,7 +182,11 @@
                         <ul class="space-y-2 text-sm text-gray-400">
                             <li class="flex items-center gap-2">
                                 <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
-                                100,000 requests/month
+                                Custom domain support
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
+                                Production API calls
                             </li>
                             <li class="flex items-center gap-2">
                                 <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
@@ -195,6 +203,39 @@
                         </ul>
                         <button onclick="showAuth()" class="w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
                             Get started
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="text-lg font-medium">Enterprise</h3>
+                            <div class="text-2xl font-semibold mt-2">Custom</div>
+                        </div>
+                        <ul class="space-y-2 text-sm text-gray-400">
+                            <li class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
+                                Self-hosted deployment
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
+                                Unlimited requests
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
+                                Custom integrations
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
+                                Dedicated support
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
+                                SLA guarantees
+                            </li>
+                        </ul>
+                        <button onclick="contactSales()" class="w-full bg-gray-800 text-gray-50 py-2 text-sm font-medium rounded-md hover:bg-gray-700 transition-colors">
+                            Contact sales
                         </button>
                     </div>
                 </div>
@@ -471,6 +512,10 @@
             } catch (error) {
                 alert('Login failed. Please try again.');
             }
+        }
+
+        function contactSales() {
+            window.open('mailto:sales@easy-ai.dev?subject=Enterprise%20Inquiry&body=Hi%2C%20I%27m%20interested%20in%20the%20Enterprise%20plan%20for%20EasyAI.%20Please%20contact%20me%20to%20discuss%20pricing%20and%20deployment%20options.', '_blank');
         }
     </script>
 </body>

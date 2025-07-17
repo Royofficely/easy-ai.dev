@@ -9,6 +9,8 @@ const promptRoutes = require('./routes/prompts');
 const apiRoutes = require('./routes/api');
 const dashboardRoutes = require('./routes/dashboard');
 const gatewayRoutes = require('./routes/gateway');
+const settingsRoutes = require('./routes/settings');
+const playgroundRoutes = require('./routes/playground');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +30,8 @@ app.use('/api/prompts', promptRoutes);
 app.use('/api/v1', apiRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/gateway', gatewayRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/playground', playgroundRoutes);
 
 // Root route
 app.get('/', (req, res) => {

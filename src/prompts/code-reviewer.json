@@ -1,0 +1,26 @@
+{
+  "name": "Code Reviewer",
+  "description": "AI assistant for code review and optimization",
+  "template": "Review the following {{language}} code for:\n1. Bugs and potential issues\n2. Performance optimizations\n3. Best practices\n4. Security concerns\n5. Code clarity and maintainability\n\nCode to review:\n```{{language}}\n{{code}}\n```\n\nProvide specific feedback with {{tone}} tone and suggest improvements.",
+  "parameters": {
+    "language": {
+      "type": "select",
+      "options": ["javascript", "python", "java", "typescript", "go", "rust", "cpp", "csharp"],
+      "default": "javascript"
+    },
+    "code": {
+      "type": "textarea",
+      "placeholder": "Paste your code here...",
+      "required": true
+    },
+    "tone": {
+      "type": "select",
+      "options": ["constructive", "detailed", "concise", "beginner-friendly"],
+      "default": "constructive"
+    }
+  },
+  "model": "gpt-4",
+  "category": "development",
+  "created": "2024-01-15T10:00:00Z",
+  "updated": "2024-01-15T10:00:00Z"
+}
