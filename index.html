@@ -332,54 +332,40 @@
                 return;
             }
 
+            // Show success immediately - no need for backend call
+            document.getElementById('authContent').innerHTML = `
+                <div class="space-y-4">
+                    <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+                        <h3 class="font-medium mb-2">Thanks for your interest!</h3>
+                        <p class="text-gray-400 text-sm">
+                            We've registered your email: ${email}
+                        </p>
+                        <p class="text-gray-400 text-sm mt-2">
+                            You'll receive your API key and setup instructions via email soon.
+                        </p>
+                    </div>
+                    <button onclick="hideAuth()" class="w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
+                        Continue
+                    </button>
+                </div>
+            `;
+
+            // Send to Make.com webhook in the background (no error handling needed)
             try {
-                const response = await fetch(API_BASE, {
+                fetch('https://hook.eu1.make.com/ggrd1nilwumpay2envc5k8lqhwqtxlm7', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         email: email,
                         action: 'register',
+                        source: 'easy-ai.dev',
                         verification_code: Math.floor(100000 + Math.random() * 900000).toString()
                     })
+                }).catch(() => {
+                    // Silently ignore errors - user already sees success
                 });
-
-                if (response.ok || response.status === 202) {
-                    document.getElementById('authContent').innerHTML = `
-                        <div class="space-y-4">
-                            <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-                                <h3 class="font-medium mb-2">Thanks for your interest!</h3>
-                                <p class="text-gray-400 text-sm">
-                                    We've registered your email: ${email}
-                                </p>
-                                <p class="text-gray-400 text-sm mt-2">
-                                    You'll receive your API key and setup instructions via email soon.
-                                </p>
-                            </div>
-                            <button onclick="hideAuth()" class="w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
-                                Continue
-                            </button>
-                        </div>
-                    `;
-                } else {
-                    throw new Error('Registration failed');
-                }
             } catch (error) {
-                document.getElementById('authContent').innerHTML = `
-                    <div class="space-y-4">
-                        <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-                            <h3 class="font-medium mb-2">Registration Received</h3>
-                            <p class="text-gray-400 text-sm">
-                                Thanks for your interest in EasyAI! We've noted your email: ${email}
-                            </p>
-                            <p class="text-gray-400 text-sm mt-2">
-                                You'll receive your API key and setup instructions via email soon.
-                            </p>
-                        </div>
-                        <button onclick="hideAuth()" class="w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
-                            Continue
-                        </button>
-                    </div>
-                `;
+                // Silently ignore errors - user already sees success
             }
         }
 
