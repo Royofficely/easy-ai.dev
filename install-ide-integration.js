@@ -168,7 +168,7 @@ if (!fs.existsSync(claudeCodeConfigDir)) {
 
 const claudeCodeConfig = {
     "api": {
-        "baseUrl": \`http://localhost:\${proxyPort}/v1\`,
+        "baseUrl": `http://localhost:${proxyPort}/v1`,
         "defaultModel": "gpt-4"
     },
     "easyai": {
@@ -190,11 +190,11 @@ if (!fs.existsSync(cursorConfigDir)) {
 
 const cursorConfig = {
     "openai": {
-        "apiBase": \`http://localhost:\${proxyPort}/v1\`,
+        "apiBase": `http://localhost:${proxyPort}/v1`,
         "apiKey": "easyai-proxy"
     },
     "anthropic": {
-        "apiBase": \`http://localhost:\${proxyPort}/v1\`,
+        "apiBase": `http://localhost:${proxyPort}/v1`,
         "apiKey": "easyai-proxy"
     }
 };
@@ -205,9 +205,9 @@ fs.writeFileSync(
 );
 
 // Create VS Code settings for Continue extension
-const vscodeDir = path.join(homeDir, '.vscode');
-if (!fs.existsSync(vscodeDir)) {
-    fs.mkdirSync(vscodeDir);
+const continueDir = path.join(homeDir, '.continue');
+if (!fs.existsSync(continueDir)) {
+    fs.mkdirSync(continueDir, { recursive: true });
 }
 
 const continueConfig = {
@@ -217,35 +217,35 @@ const continueConfig = {
             "provider": "openai",
             "model": "gpt-4",
             "apiKey": apiKey,
-            "apiBase": \`http://localhost:\${proxyPort}/v1\`
+            "apiBase": `http://localhost:${proxyPort}/v1`
         },
         {
             "title": "EasyAI Claude",
             "provider": "anthropic",
             "model": "claude-3-sonnet",
             "apiKey": apiKey,
-            "apiBase": \`http://localhost:\${proxyPort}/v1\`
+            "apiBase": `http://localhost:${proxyPort}/v1`
         }
     ],
     "systemMessage": "You are an expert software engineer powered by EasyAI."
 };
 
 fs.writeFileSync(
-    path.join(homeDir, '.continue', 'config.json'),
+    path.join(continueDir, 'config.json'),
     JSON.stringify(continueConfig, null, 2)
 );
 
 // Start proxy server immediately
 console.log('🚀 Starting EasyAI proxy server...');
 try {
-    execSync(\`node "\${path.join(easyaiDir, 'proxy-server.js')}" &\`, { 
+    execSync(`node "${path.join(easyaiDir, 'proxy-server.js')}" &`, { 
         stdio: 'inherit',
         detached: true
     });
-    console.log(\`✅ Proxy server started on http://localhost:\${proxyPort}\`);
+    console.log(`✅ Proxy server started on http://localhost:${proxyPort}`);
 } catch (error) {
     console.log('⚠️  Could not start proxy server automatically');
-    console.log(\`Please run: node \${path.join(easyaiDir, 'proxy-server.js')}\`);
+    console.log(`Please run: node ${path.join(easyaiDir, 'proxy-server.js')}`);
 }
 
 console.log('\\n🎉 EasyAI IDE Integration Setup Complete!');
