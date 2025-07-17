@@ -362,11 +362,20 @@
                     <div class="space-y-3">
                         <input type="email" id="email" placeholder="Email" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-md text-gray-50 placeholder-gray-400 focus:border-gray-600 focus:outline-none text-sm">
                     </div>
-                    <button onclick="register()" class="w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
+                    <button id="registerBtn" class="w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
                         Send verification code
                     </button>
                 </div>
             `;
+            
+            // Add event listener to the register button
+            setTimeout(() => {
+                const registerBtn = document.getElementById('registerBtn');
+                if (registerBtn) {
+                    registerBtn.addEventListener('click', register);
+                    console.log('Register button event listener added');
+                }
+            }, 100);
         }
 
         function showLogin() {
@@ -396,6 +405,8 @@
             }
 
             try {
+                console.log('Registering user with email:', email);
+                
                 // Call backend API to register user
                 const response = await fetch(`${API_BASE}/auth/register`, {
                     method: 'POST',
