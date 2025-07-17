@@ -1,0 +1,80 @@
+const axios = require('axios');
+
+class DeepSeekProvider {
+  constructor() {
+    this.baseURL = 'https://api.deepseek.com/v1';
+    this.apiKey = process.env.DEEPSEEK_API_KEY;
+  }
+
+  async complete(prompt, model, options = {}) {
+    if (!this.apiKey) {
+      throw new Error('DeepSeek API key not configured');
+    }
+
+    const requestData = {
+      model: model,
+      messages: [
+        { role: 'user', content: prompt }
+      ],
+      temperature: options.temperature || 0.7,
+      max_tokens: options.max_tokens || 1000,
+      top_p: options.top_p || 1,
+      frequency_penalty: options.frequency_penalty || 0,
+      presence_penalty: options.presence_penalty || 0
+    };
+
+    try {
+      const response = await axios.post(`${this.baseURL}/chat/completions`, requestData, {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000
+      });
+
+      const choice = response.data.choices[0];
+      const usage = response.data.usage;
+
+      return {
+        content: choice.message.content,
+        model_used: model,
+        tokens_used: usage.total_tokens,
+        input_tokens: usage.prompt_tokens,
+        output_tokens: usage.completion_tokens,
+        finish_reason: choice.finish_reason,
+        provider: 'deepseek'
+      };
+    } catch (error) {
+      if (error.response?.status === 429) {
+        throw new Error('DeepSeek rate limit exceeded');
+      }
+      if (error.response?.status === 401) {
+        throw new Error('DeepSeek authentication failed');
+      }
+      throw new Error(`DeepSeek API error: ${error.message}`);
+    }
+  }
+
+  async getModels() {
+    return [
+      { name: 'deepseek-chat', cost_per_input_token: 0.00000014, cost_per_output_token: 0.00000028 },
+      { name: 'deepseek-coder', cost_per_input_token: 0.00000014, cost_per_output_token: 0.00000028 }
+    ];
+  }
+
+  async healthCheck() {
+    if (!this.apiKey) return false;
+    
+    try {
+      await axios.get(`${this.baseURL}/models`, {
+        headers: { 'Authorization': `Bearer ${this.apiKey}` },
+        timeout: 5000
+      });
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+}
+
+module.exports = { DeepSeekProvider };
