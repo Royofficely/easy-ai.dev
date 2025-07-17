@@ -11,6 +11,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const gatewayRoutes = require('./routes/gateway');
 const settingsRoutes = require('./routes/settings');
 const playgroundRoutes = require('./routes/playground');
+const monitoringRoutes = require('./routes/monitoring');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -41,6 +42,7 @@ app.use('/dashboard', dashboardRoutes);
 app.use('/gateway', gatewayRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/playground', playgroundRoutes);
+app.use('/api/monitoring', monitoringRoutes);
 
 // Root route
 app.get('/', (req, res) => {

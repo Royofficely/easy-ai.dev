@@ -3,6 +3,7 @@ const User = require('./User');
 const ApiKey = require('./ApiKey');
 const Prompt = require('./Prompt');
 const RequestLog = require('./RequestLog');
+const AuthEvent = require('./AuthEvent')(sequelize);
 
 // Define associations
 User.hasMany(ApiKey, { foreignKey: 'user_id', as: 'apiKeys' });
@@ -17,6 +18,9 @@ RequestLog.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 ApiKey.hasMany(RequestLog, { foreignKey: 'api_key_id', as: 'requestLogs' });
 RequestLog.belongsTo(ApiKey, { foreignKey: 'api_key_id', as: 'apiKey' });
 
+User.hasMany(AuthEvent, { foreignKey: 'user_id', as: 'authEvents' });
+AuthEvent.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
 module.exports = {
   sequelize,
   testConnection,
@@ -24,5 +28,6 @@ module.exports = {
   User,
   ApiKey,
   Prompt,
-  RequestLog
+  RequestLog,
+  AuthEvent
 };

@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
-const { User } = require('../models');
+const { User, AuthEvent } = require('../models');
 const { validateInput } = require('../middleware/validation');
 const { rateLimiter } = require('../middleware/rateLimiter');
 
@@ -39,14 +39,44 @@ router.post('/register', rateLimiter, async (req, res) => {
 
     // Send verification email via Make.com webhook
     try {
-      await axios.post('https://hook.eu1.make.com/ggrd1nilwumpay2envc5k8lqhwqtxlm7', {
+      const webhookPayload = {
         email: user.email,
-        verification_code: verificationCode
+        verification_code: verificationCode,
+        action: 'register',
+        source: 'easy-ai.dev',
+        timestamp: new Date().toISOString()
+      };
+      
+      console.log('Sending webhook payload:', webhookPayload);
+      
+      const webhookResponse = await axios.post('https://hook.eu1.make.com/ggrd1nilwumpay2envc5k8lqhwqtxlm7', webhookPayload, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 10000
       });
+      
+      console.log('Webhook response:', webhookResponse.status, webhookResponse.data);
     } catch (emailError) {
-      console.error('Email sending failed:', emailError);
+      console.error('Email sending failed:', emailError.response?.data || emailError.message);
     }
 
+    // Log the signup event to database
+    await AuthEvent.logEvent({
+      user_id: user.id,
+      email: email,
+      event_type: 'signup',
+      ip_address: req.ip,
+      user_agent: req.get('User-Agent'),
+      source: 'web',
+      metadata: {
+        verification_code_sent: true,
+        webhook_called: true
+      }
+    });
+    
+    console.log(`📝 SIGNUP EVENT: ${email} registered at ${new Date().toISOString()}`);
+    
     res.status(201).json({
       message: 'Verification code sent to your email.',
       user_id: user.id
@@ -80,7 +110,23 @@ router.post('/verify', rateLimiter, async (req, res) => {
     user.password = verification_code; // Set verification code as password
     user.verification_code = null;
     user.verification_expires = null;
+    user.last_login = new Date();
     await user.save();
+    
+    // Log the email verification event to database
+    await AuthEvent.logEvent({
+      user_id: user.id,
+      email: email,
+      event_type: 'email_verification',
+      ip_address: req.ip,
+      user_agent: req.get('User-Agent'),
+      source: 'web',
+      metadata: {
+        verification_code: verification_code
+      }
+    });
+    
+    console.log(`✅ EMAIL VERIFIED: ${email} verified at ${new Date().toISOString()}`);
 
     // Generate JWT token for immediate login
     const token = jwt.sign(
@@ -136,12 +182,24 @@ router.post('/login', rateLimiter, async (req, res) => {
 
         // Send verification email
         try {
-          await axios.post('https://hook.eu1.make.com/ggrd1nilwumpay2envc5k8lqhwqtxlm7', {
+          const webhookPayload = {
             email: user.email,
-            verification_code: verificationCode
+            verification_code: verificationCode,
+            action: 'login',
+            source: 'easy-ai.dev',
+            timestamp: new Date().toISOString()
+          };
+          
+          console.log('Sending login webhook payload:', webhookPayload);
+          
+          await axios.post('https://hook.eu1.make.com/ggrd1nilwumpay2envc5k8lqhwqtxlm7', webhookPayload, {
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            timeout: 10000
           });
         } catch (emailError) {
-          console.error('Email sending failed:', emailError);
+          console.error('Email sending failed:', emailError.response?.data || emailError.message);
         }
 
         return res.json({ message: 'Verification code sent to your email.' });
@@ -174,6 +232,22 @@ router.post('/login', rateLimiter, async (req, res) => {
           { expiresIn: '24h' }
         );
 
+        // Log the login event to database
+        await AuthEvent.logEvent({
+          user_id: user.id,
+          email: email,
+          event_type: 'login',
+          ip_address: req.ip,
+          user_agent: req.get('User-Agent'),
+          source: 'web',
+          metadata: {
+            login_method: 'verification_code',
+            unverified_user: true
+          }
+        });
+        
+        console.log(`🔐 LOGIN EVENT: ${email} logged in at ${new Date().toISOString()}`);
+        
         return res.json({
           message: 'Login successful',
           token,
@@ -230,12 +304,24 @@ router.post('/login', rateLimiter, async (req, res) => {
 
       // Send verification email
       try {
-        await axios.post('https://hook.eu1.make.com/ggrd1nilwumpay2envc5k8lqhwqtxlm7', {
+        const webhookPayload = {
           email: user.email,
-          verification_code: verificationCode
+          verification_code: verificationCode,
+          action: 'login_verified',
+          source: 'easy-ai.dev',
+          timestamp: new Date().toISOString()
+        };
+        
+        console.log('Sending verified login webhook payload:', webhookPayload);
+        
+        await axios.post('https://hook.eu1.make.com/ggrd1nilwumpay2envc5k8lqhwqtxlm7', webhookPayload, {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
         });
       } catch (emailError) {
-        console.error('Email sending failed:', emailError);
+        console.error('Email sending failed:', emailError.response?.data || emailError.message);
       }
 
       return res.json({ message: 'Verification code sent to your email.' });
@@ -266,12 +352,24 @@ router.post('/resend-verification', rateLimiter, async (req, res) => {
 
     // Send verification email
     try {
-      await axios.post('https://hook.eu1.make.com/ggrd1nilwumpay2envc5k8lqhwqtxlm7', {
+      const webhookPayload = {
         email: user.email,
-        verification_code: verificationCode
+        verification_code: verificationCode,
+        action: 'resend_verification',
+        source: 'easy-ai.dev',
+        timestamp: new Date().toISOString()
+      };
+      
+      console.log('Sending resend webhook payload:', webhookPayload);
+      
+      await axios.post('https://hook.eu1.make.com/ggrd1nilwumpay2envc5k8lqhwqtxlm7', webhookPayload, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 10000
       });
     } catch (emailError) {
-      console.error('Email sending failed:', emailError);
+      console.error('Email sending failed:', emailError.response?.data || emailError.message);
     }
 
     res.json({ message: 'Verification code sent' });
