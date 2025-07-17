@@ -13,7 +13,9 @@
     "lint": "eslint src/",
     "build": "npm run lint && npm run test",
     "db:init": "node -e \"require('./src/models').initializeDatabase()\"",
-    "install:all": "npm install && cd dashboard && npm install"
+    "install:all": "npm install && cd dashboard && npm install",
+    "setup-ide": "node install-ide-integration.js",
+    "postinstall": "echo '\\n🎯 To integrate with Claude Code & Cursor, run: npm run setup-ide'"
   },
   "keywords": [
     "ai",

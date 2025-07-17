@@ -1,15 +1,85 @@
-# 🤖 EasyAI - AI Development Made Simple
+# EasyAI - One API for Every AI Model
+
+EasyAI is a unified API gateway that allows you to use multiple AI providers (OpenAI, Anthropic, Google, DeepSeek, and more) through a single interface. Perfect for developers who want to avoid vendor lock-in and ensure high availability with automatic fallbacks.
 
 ## 🚀 Quick Start
 
-### For End Users
-1. **Get your API token**: Visit [https://easy-ai.dev](https://easy-ai.dev)
-2. **Install EasyAI**: Run the installer
-3. **Start building**: Use your token to access AI models
+```bash
+npm install easyai
+```
+
+After installation, integrate with your favorite AI coding tools:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Royofficely/easyai/main/install-easyai-complete.sh | bash
+npm run setup-ide
 ```
+
+This will automatically configure:
+- **Claude Code** - All AI requests will go through EasyAI
+- **Cursor** - Seamless integration with EasyAI proxy
+- **VS Code Continue** - Use EasyAI for all code generation
+- **Any OpenAI-compatible tool** - Works with our proxy server
+
+## 🎯 IDE Integration
+
+When you run `npm run setup-ide`, EasyAI will:
+
+1. **Create a local proxy server** on `http://localhost:8888`
+2. **Set environment variables** to redirect AI tools to use EasyAI
+3. **Configure popular IDEs** automatically
+4. **Start the proxy in background** for seamless operation
+
+### Supported IDEs & Tools:
+- ✅ **Claude Code** - Full integration
+- ✅ **Cursor** - Complete proxy setup
+- ✅ **VS Code with Continue** - Automatic configuration
+- ✅ **Any OpenAI-compatible tool** - Works through proxy
+
+## 💡 How It Works
+
+```javascript
+// Before: Direct OpenAI call
+const openai = new OpenAI({ apiKey: "sk-..." });
+
+// After: EasyAI handles everything
+const easyai = new EasyAI({ apiKey: "easyai-..." });
+```
+
+When you use Claude Code or Cursor:
+1. Your AI request goes to EasyAI proxy
+2. EasyAI routes it to the best available provider
+3. Automatic fallbacks if primary provider fails
+4. Usage tracked in your EasyAI dashboard
+
+## 📊 Features
+
+- **Unified Interface** - One API for all providers
+- **Automatic Fallbacks** - Never worry about downtime
+- **Cost Tracking** - Monitor usage across all providers
+- **Analytics Dashboard** - Real-time insights
+- **IDE Integration** - Works with existing dev tools
+
+## 🔧 Manual Configuration
+
+If you prefer manual setup:
+
+```bash
+# Set environment variables
+export EASYAI_API_KEY="your-api-key"
+export OPENAI_API_BASE="http://localhost:8888/v1"
+export ANTHROPIC_API_BASE="http://localhost:8888/v1"
+
+# Start proxy server
+node ~/.easyai/proxy-server.js
+```
+
+## 🌐 Get Started
+
+1. Sign up at [easy-ai.dev](https://easy-ai.dev)
+2. Get your API key from the dashboard
+3. Install EasyAI: `npm install easyai`
+4. Run IDE integration: `npm run setup-ide`
+5. Start coding with AI - all requests go through EasyAI!
 
 ### For Developers (Running Locally)
 1. **Clone and setup**:
