@@ -381,7 +381,7 @@ function extractTemplateVariables(template) {
 
 // Function to open UI (if available)
 function openInUI(route) {
-  const url = `http://localhost:3000/${route}`;
+  const url = `http://localhost:3001/${route}`;
   
   const command = process.platform === 'win32' ? 'start' : 
                   process.platform === 'darwin' ? 'open' : 
@@ -390,7 +390,7 @@ function openInUI(route) {
   exec(`${command} ${url}`, (error) => {
     if (error) {
       console.log(chalk.yellow(`Could not open UI. Please visit: ${url}`));
-      console.log(chalk.gray('Make sure the dashboard is running with: npm run dev'));
+      console.log(chalk.gray('Make sure the server is running with: npm start'));
     } else {
       console.log(chalk.green(`Opening ${route} in your browser...`));
     }
@@ -466,12 +466,9 @@ DEEPSEEK_API_KEY=
       // Start backend server in background
       exec('npm start', { cwd: path.dirname(__dirname), detached: true, stdio: 'ignore' });
       
-      // Start dashboard in background
-      exec('cd dashboard && npm install && npm start', { 
-        cwd: path.dirname(__dirname), 
-        detached: true, 
-        stdio: 'ignore' 
-      });
+      // Build dashboard
+      setupSpinner.text = 'Building dashboard...';
+      await execAsync('cd dashboard && npm install && npm run build', { cwd: path.dirname(__dirname) });
       
       // Wait a moment for services to start
       await new Promise(resolve => setTimeout(resolve, 3000));
@@ -479,7 +476,7 @@ DEEPSEEK_API_KEY=
       setupSpinner.succeed('EasyAI setup completed successfully!');
       
       console.log(chalk.green('\n🎉 EasyAI is now ready to use!'));
-      console.log(chalk.yellow('\n📊 Dashboard: http://localhost:3000'));
+      console.log(chalk.yellow('\n📊 Dashboard: http://localhost:3001/dashboard'));
       console.log(chalk.yellow('🔗 API: http://localhost:3001'));
       console.log(chalk.yellow('🚀 Proxy: http://localhost:8888'));
       
@@ -492,14 +489,14 @@ DEEPSEEK_API_KEY=
       console.log(chalk.gray('  ✅ Database initialized'));
       
       console.log(chalk.blue('\n🎯 Next steps:'));
-      console.log(chalk.gray('  1. Visit http://localhost:3000 to use the dashboard'));
+      console.log(chalk.gray('  1. Visit http://localhost:3001/dashboard to use the dashboard'));
       console.log(chalk.gray('  2. Use your IDE - it will automatically route through EasyAI'));
       console.log(chalk.gray('  3. Run "easyai prompts list" to see your prompts'));
       console.log(chalk.gray('  4. Run "easyai --help" for more commands'));
       
       // Open dashboard automatically
       setTimeout(() => {
-        openInUI('');
+        openInUI('dashboard');
       }, 2000);
       
     } catch (error) {
@@ -664,6 +661,83 @@ program
   .action(() => {
     console.log(chalk.blue('Opening EasyAI dashboard...'));
     openInUI('');
+  });
+
+// Server command - start the web UI server
+program
+  .command('server')
+  .description('Start the EasyAI web server')
+  .option('-p, --port <port>', 'Port to run server on', '3001')
+  .action(async (options) => {
+    console.log(chalk.blue('🚀 Starting EasyAI web server...'));
+    
+    try {
+      // Start the server
+      const serverPath = path.join(path.dirname(__dirname), 'src/server.js');
+      const env = { ...process.env, PORT: options.port };
+      
+      const server = exec(`node ${serverPath}`, { env }, (error, stdout, stderr) => {
+        if (error) {
+          console.error(chalk.red(`Server error: ${error.message}`));
+          return;
+        }
+        if (stderr) {
+          console.error(chalk.red(`Server stderr: ${stderr}`));
+          return;
+        }
+        console.log(stdout);
+      });
+      
+      // Wait a moment for server to start
+      setTimeout(() => {
+        console.log(chalk.green(`✅ Server started on http://localhost:${options.port}`));
+        console.log(chalk.yellow(`📊 Dashboard: http://localhost:${options.port}/dashboard`));
+        console.log(chalk.gray('Press Ctrl+C to stop'));
+        
+        // Open dashboard
+        openInUI('dashboard');
+      }, 2000);
+      
+    } catch (error) {
+      console.error(chalk.red(`Failed to start server: ${error.message}`));
+    }
+  });
+
+// Simple UI command for easy access
+program
+  .command('ui')
+  .description('Open EasyAI web interface')
+  .action(async () => {
+    console.log(chalk.blue('🚀 Starting EasyAI web interface...'));
+    
+    try {
+      // Check if server is already running
+      try {
+        await axios.get('http://localhost:3001/health', { timeout: 2000 });
+        console.log(chalk.green('✅ Server is already running'));
+        openInUI('dashboard');
+        return;
+      } catch (error) {
+        // Server not running, start it
+        console.log(chalk.yellow('⚠️  Server not running, starting...'));
+      }
+      
+      // Start the server
+      const serverPath = path.join(path.dirname(__dirname), 'src/server.js');
+      const env = { ...process.env, PORT: '3001' };
+      
+      exec(`node ${serverPath}`, { env, detached: true, stdio: 'ignore' });
+      
+      // Wait for server to start
+      setTimeout(() => {
+        console.log(chalk.green('✅ Server started on http://localhost:3001'));
+        console.log(chalk.yellow('📊 Dashboard: http://localhost:3001/dashboard'));
+        openInUI('dashboard');
+      }, 3000);
+      
+    } catch (error) {
+      console.error(chalk.red(`Failed to start server: ${error.message}`));
+    }
   });
 
 // Status command

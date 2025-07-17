@@ -22,14 +22,10 @@ const authRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// API rate limiter (based on API key)
+// API rate limiter (simplified for now)
 const apiRateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 1000, // default limit
-  keyGenerator: (req) => {
-    // Use API key or IP address as key
-    return req.headers['x-api-key'] || req.ip;
-  },
   message: {
     error: 'API rate limit exceeded'
   },

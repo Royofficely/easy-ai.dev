@@ -66,11 +66,10 @@
     <main class="max-w-4xl mx-auto px-6 py-24">
         <div class="text-center space-y-8">
             <h1 class="text-5xl font-semibold tracking-tight">
-                One API for every AI model
+                Stop Wrestling with AI Code
             </h1>
             <p class="text-xl text-gray-400 max-w-2xl mx-auto">
-                Build AI applications with a unified interface to OpenAI, Anthropic, Google, and more. 
-                No vendor lock-in, automatic fallbacks, real-time analytics.
+                Unified prompts, real-time costs, model switching, and IDE integration — all in one place.
             </p>
             <div class="flex items-center justify-center gap-3">
                 <button onclick="showAuth()" class="bg-gray-50 text-gray-950 px-6 py-3 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
@@ -111,27 +110,27 @@
                 <div class="w-10 h-10 bg-gray-900 border border-gray-800 rounded-lg flex items-center justify-center">
                     <i data-lucide="zap" class="w-5 h-5 text-gray-50"></i>
                 </div>
-                <h3 class="text-lg font-medium">Unified Interface</h3>
+                <h3 class="text-lg font-medium">Centralized Prompts</h3>
                 <p class="text-gray-400 text-sm leading-relaxed">
-                    One API call works across all providers. Switch between OpenAI, Anthropic, Google without changing your code.
+                    No more scattered prompts in code. Manage all your AI prompts in one dashboard with real-time sync.
                 </p>
             </div>
             <div class="space-y-3">
                 <div class="w-10 h-10 bg-gray-900 border border-gray-800 rounded-lg flex items-center justify-center">
                     <i data-lucide="shield" class="w-5 h-5 text-gray-50"></i>
                 </div>
-                <h3 class="text-lg font-medium">Automatic Fallbacks</h3>
+                <h3 class="text-lg font-medium">Real-time Cost Tracking</h3>
                 <p class="text-gray-400 text-sm leading-relaxed">
-                    Built-in reliability with automatic provider switching. Your applications stay online even when providers don't.
+                    See exactly what each API call costs. No more surprise bills or hidden usage across providers.
                 </p>
             </div>
             <div class="space-y-3">
                 <div class="w-10 h-10 bg-gray-900 border border-gray-800 rounded-lg flex items-center justify-center">
                     <i data-lucide="bar-chart-3" class="w-5 h-5 text-gray-50"></i>
                 </div>
-                <h3 class="text-lg font-medium">Real-time Analytics</h3>
+                <h3 class="text-lg font-medium">IDE Integration</h3>
                 <p class="text-gray-400 text-sm leading-relaxed">
-                    Track usage, costs, and performance across all your AI integrations in a single dashboard.
+                    Works automatically with Claude Code and Cursor. All your AI requests flow through EasyAI seamlessly.
                 </p>
             </div>
         </div>
@@ -418,7 +417,12 @@
                                     </div>
                                 </div>
                                 <div class="bg-gray-800 border border-gray-700 rounded p-3 mb-3">
-                                    <p class="text-gray-300 text-sm font-medium mb-2">Quick Setup (One Command):</p>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <p class="text-gray-300 text-sm font-medium">Quick Setup (One Command):</p>
+                                        <button onclick="copySetupCommands('${apiKey}')" class="text-gray-400 hover:text-gray-50">
+                                            <i data-lucide="copy" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
                                     <div class="bg-gray-900 rounded p-2 font-mono text-xs text-gray-300">
                                         <div>npm install -g easyai</div>
                                         <div>easyai setup --api-key ${apiKey}</div>

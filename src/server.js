@@ -14,7 +14,7 @@ const playgroundRoutes = require('./routes/playground');
 const monitoringRoutes = require('./routes/monitoring');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(helmet());
@@ -24,6 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Static files
 app.use('/public', express.static(path.join(__dirname, '../public')));
+app.use('/dashboard', express.static(path.join(__dirname, '../dashboard/build')));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -43,6 +44,11 @@ app.use('/gateway', gatewayRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/playground', playgroundRoutes);
 app.use('/api/monitoring', monitoringRoutes);
+
+// Dashboard route - serve React app
+app.get('/dashboard*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dashboard/build/index.html'));
+});
 
 // Root route
 app.get('/', (req, res) => {

@@ -1,7 +1,7 @@
 {
-  "name": "easyai-sdk",
-  "version": "1.0.0",
-  "description": "Keep your code clean by managing AI prompts externally",
+  "name": "easyai-cli",
+  "version": "1.0.3",
+  "description": "Stop wrestling with AI code. Unified prompts, real-time costs, model switching, and IDE integration.",
   "main": "src/index.js",
   "bin": {
     "easyai": "./bin/cli.js"
@@ -20,11 +20,19 @@
   },
   "keywords": [
     "ai",
+    "llm",
+    "prompts",
     "openai",
     "anthropic",
-    "prompts",
-    "sdk",
-    "machine-learning"
+    "claude",
+    "gemini",
+    "cost-tracking",
+    "model-switching",
+    "ide-integration",
+    "cursor",
+    "claude-code",
+    "prompt-management",
+    "ai-development"
   ],
   "author": "EasyAI Team",
   "license": "MIT",

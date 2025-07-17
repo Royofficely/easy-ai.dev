@@ -7,6 +7,22 @@ const { generateApiKey } = require('../utils/apiKeyUtils');
 
 const router = express.Router();
 
+// Get current user info
+router.get('/user', authenticateApiKey, async (req, res) => {
+  try {
+    res.json({
+      id: req.user.id,
+      email: req.user.email,
+      name: req.user.name,
+      role: req.user.role,
+      is_verified: req.user.is_verified
+    });
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({ error: 'Failed to get user info' });
+  }
+});
+
 // Create API key
 router.post('/api-keys', authenticateApiKey, checkPermission('write'), validateInput('createApiKey'), async (req, res) => {
   try {

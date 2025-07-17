@@ -97,5 +97,6 @@ module.exports = {
   authenticateToken,
   authenticateApiKey,
   requireRole,
-  checkPermission
+  checkPermission,
+  authMiddleware: authenticateToken // Alias for compatibility
 };

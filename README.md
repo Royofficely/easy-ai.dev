@@ -1,88 +1,242 @@
-# EasyAI - One API for Every AI Model
+# EasyAI - Stop Wrestling with AI Code
 
-EasyAI is a unified API gateway that allows you to use multiple AI providers (OpenAI, Anthropic, Google, DeepSeek, and more) through a single interface. Perfect for developers who want to avoid vendor lock-in and ensure high availability with automatic fallbacks.
+**Unified prompts, real-time costs, model switching, and IDE integration — all in one place.**
+
+Building AI features shouldn't mean wrestling with hardcoded prompts, surprise costs, and IDE chaos. EasyAI gives you a single dashboard to manage all your prompts, track every API call, test multiple models, and automatically integrate with Claude Code and Cursor.
 
 ## 🚀 Quick Start
 
 ```bash
-npm install easyai
+# Install the CLI
+npm install -g easyai-cli
+
+# Get your API key from https://easy-ai.dev
+# Then setup everything in one command
+easyai setup --api-key your_api_key_here
+
+# Open the dashboard
+easyai ui
 ```
 
-After installation, integrate with your favorite AI coding tools:
+## ✨ Key Features
 
-```bash
-npm run setup-ide
-```
+- **🎯 Centralized Prompts** - No more scattered prompts in code. Manage everything in one dashboard.
+- **💰 Real-time Cost Tracking** - See exactly what each API call costs across all providers.
+- **🔄 Model Switching** - Switch between OpenAI, Claude, Gemini instantly without code changes.
+- **🛠️ IDE Integration** - Works automatically with Claude Code and Cursor.
+- **👥 Team Collaboration** - Non-devs can edit prompts without touching code.
+- **📊 Analytics Dashboard** - Track usage, costs, and performance in real-time.
 
-This will automatically configure:
-- **Claude Code** - All AI requests will go through EasyAI
-- **Cursor** - Seamless integration with EasyAI proxy
-- **VS Code Continue** - Use EasyAI for all code generation
-- **Any OpenAI-compatible tool** - Works with our proxy server
+## 🎯 The Problem We Solve
 
-## 🎯 IDE Integration
-
-When you run `npm run setup-ide`, EasyAI will:
-
-1. **Create a local proxy server** on `http://localhost:8888`
-2. **Set environment variables** to redirect AI tools to use EasyAI
-3. **Configure popular IDEs** automatically
-4. **Start the proxy in background** for seamless operation
-
-### Supported IDEs & Tools:
-- ✅ **Claude Code** - Full integration
-- ✅ **Cursor** - Complete proxy setup
-- ✅ **VS Code with Continue** - Automatic configuration
-- ✅ **Any OpenAI-compatible tool** - Works through proxy
-
-## 💡 How It Works
-
+### Before EasyAI:
 ```javascript
-// Before: Direct OpenAI call
-const openai = new OpenAI({ apiKey: "sk-..." });
+// Scattered prompts throughout your codebase
+const systemPrompt = "You are a helpful assistant...";
+const userPrompt = `Generate a summary of: ${text}`;
 
-// After: EasyAI handles everything
-const easyai = new EasyAI({ apiKey: "easyai-..." });
+// Hidden costs across multiple providers
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+// Manual model switching requires code changes
+const response = await openai.chat.completions.create({
+  model: "gpt-4",
+  messages: [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userPrompt }
+  ]
+});
 ```
 
-When you use Claude Code or Cursor:
-1. Your AI request goes to EasyAI proxy
-2. EasyAI routes it to the best available provider
-3. Automatic fallbacks if primary provider fails
-4. Usage tracked in your EasyAI dashboard
+### After EasyAI:
+```javascript
+// Clean, centralized prompt management
+const easyai = require('easyai-cli');
 
-## 📊 Features
+const response = await easyai.complete({
+  promptId: 'text_summarizer',
+  parameters: { text: "Your content here" }
+});
 
-- **Unified Interface** - One API for all providers
-- **Automatic Fallbacks** - Never worry about downtime
-- **Cost Tracking** - Monitor usage across all providers
-- **Analytics Dashboard** - Real-time insights
-- **IDE Integration** - Works with existing dev tools
+// Costs tracked automatically
+// Model switching from dashboard
+// Team can edit prompts without code deployment
+```
 
-## 🔧 Manual Configuration
+## 🛠️ Installation & Setup
 
-If you prefer manual setup:
-
+### 1. Install CLI
 ```bash
-# Set environment variables
-export EASYAI_API_KEY="your-api-key"
-export OPENAI_API_BASE="http://localhost:8888/v1"
-export ANTHROPIC_API_BASE="http://localhost:8888/v1"
-
-# Start proxy server
-node ~/.easyai/proxy-server.js
+npm install -g easyai-cli
 ```
 
-## 🌐 Get Started
+### 2. Get API Key
+1. Visit [https://easy-ai.dev](https://easy-ai.dev)
+2. Sign up with email verification
+3. Get your API key from the dashboard
 
-1. Sign up at [easy-ai.dev](https://easy-ai.dev)
-2. Get your API key from the dashboard
-3. Install EasyAI: `npm install easyai`
-4. Run IDE integration: `npm run setup-ide`
-5. Start coding with AI - all requests go through EasyAI!
+### 3. Setup Everything
+```bash
+# This command sets up everything:
+# - Initializes your project
+# - Configures IDE integration (Claude Code, Cursor)
+# - Starts local server
+# - Opens dashboard
+easyai setup --api-key your_api_key_here
+```
 
-### For Developers (Running Locally)
-1. **Clone and setup**:
+### 4. Start Building
+```bash
+# Open the dashboard anytime
+easyai ui
+
+# Check system status
+easyai status
+
+# Start just the server
+easyai server
+```
+
+## 🎮 IDE Integration
+
+EasyAI automatically configures your development environment:
+
+### ✅ Claude Code
+- Intercepts all AI requests
+- Routes through EasyAI automatically
+- Full cost tracking and analytics
+
+### ✅ Cursor
+- Seamless proxy integration
+- All AI features work through EasyAI
+- Real-time usage monitoring
+
+### ✅ VS Code + Continue
+- Automatic configuration
+- All models available through EasyAI
+- Unified prompt management
+
+## 📊 Dashboard Features
+
+### Prompt Management
+- Visual prompt editor with syntax highlighting
+- Real-time testing with multiple models
+- Version control and rollback
+- Team collaboration with comments
+
+### Cost Analytics
+- Real-time cost tracking per request
+- Usage breakdown by model and prompt
+- Budget alerts and limits
+- Provider comparison
+
+### Model Playground
+- Test prompts across multiple models simultaneously
+- Compare response quality and costs
+- A/B testing capabilities
+- Performance benchmarking
+
+### Analytics & Monitoring
+- Request/response logging
+- Performance metrics
+- Error tracking and alerts
+- Usage patterns analysis
+
+## 🔧 CLI Commands
+
+### Project Management
+```bash
+# Initialize new project
+easyai init
+
+# Check system status
+easyai status
+
+# Open dashboard
+easyai ui
+
+# Start server
+easyai server --port 3001
+```
+
+### Prompt Management
+```bash
+# List all prompts
+easyai prompts list
+
+# Create new prompt
+easyai prompts add --name "email_writer"
+
+# Test prompt
+easyai prompts test email_writer --params '{"recipient": "John"}'
+
+# Edit prompt (opens in dashboard)
+easyai prompts edit email_writer
+```
+
+### Analytics
+```bash
+# View usage stats
+easyai analytics usage --days 30
+
+# View cost breakdown
+easyai analytics costs
+
+# Open analytics dashboard
+easyai analytics open
+```
+
+## 🏗️ Architecture
+
+```
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│   Your App      │────▶│   EasyAI CLI     │────▶│  EasyAI Cloud   │
+│   (Node.js)     │     │   (Local Proxy)  │     │   API Gateway   │
+└─────────────────┘     └──────────────────┘     └────────┬────────┘
+                                                           │
+                        ┌──────────────────────────────────┼──────────────────────────────────┐
+                        │                                  │                                  │
+                    ┌───▼─────┐                    ┌───────▼────────┐              ┌──────────▼────────┐
+                    │ OpenAI  │                    │   Anthropic    │              │      Google       │
+                    │   API    │                    │     Claude     │              │      Gemini       │
+                    └─────────┘                    └────────────────┘              └───────────────────┘
+```
+
+## 💰 Pricing
+
+### Free Tier
+- ✅ Localhost development only
+- ✅ All CLI features
+- ✅ Dashboard access
+- ✅ IDE integration
+- ✅ Basic analytics
+
+### Pro Tier
+- ✅ Everything in Free
+- ✅ Production domain support
+- ✅ Team collaboration
+- ✅ Advanced analytics
+- ✅ Priority support
+
+### Enterprise
+- ✅ Everything in Pro
+- ✅ Self-hosted deployment
+- ✅ Custom integrations
+- ✅ SLA guarantees
+- ✅ Dedicated support
+
+## 🔒 Security
+
+- 🔐 API key-based authentication
+- 🛡️ TLS 1.3 encryption
+- 🔒 Local development by default
+- 📊 Comprehensive audit logging
+- 🔑 Role-based access control
+
+## 🚀 For Developers (Running Locally)
+
+### 1. Clone and Setup
 ```bash
 git clone https://github.com/Royofficely/easyai.git
 cd easyai
@@ -91,7 +245,7 @@ cp .env.example .env
 # Edit .env with your API keys
 ```
 
-2. **Start the platform**:
+### 2. Start the Platform
 ```bash
 # Terminal 1: Backend server
 npm run dev
@@ -100,37 +254,16 @@ npm run dev
 cd dashboard && npm install && npm start
 ```
 
-3. **Access the platform**:
-- Landing page: Open `landing-page.html` in browser
-- Dashboard: http://localhost:3000
-- API: http://localhost:3000/api/v1
+### 3. Access the Platform
+- **Landing page**: Open `index.html` in browser
+- **Dashboard**: http://localhost:3001/dashboard
+- **API**: http://localhost:3001/api/v1
 
-## 🌟 Features
+## 📚 Usage Examples
 
-- **Unified API**: One interface for OpenAI, Claude, Gemini, and more
-- **Auto Fallbacks**: Automatic failover between AI providers
-- **Real-time Analytics**: Track usage, costs, and performance
-- **Secure**: Enterprise-grade security with tiered access
-- **Scalable**: From localhost to enterprise deployments
-
-## 🔑 Authentication Flow
-
-1. **Visit**: [easy-ai.dev](https://easy-ai.dev)
-2. **Register/Login**: Create account with email verification
-3. **Generate Token**: Get your API key in the dashboard
-4. **Deploy**: Use locally (free) or upgrade for production
-
-## 💰 Pricing Tiers
-
-- **Free**: 100 requests/hour, localhost only
-- **Paid**: 10K requests/hour, production domains
-- **Enterprise**: 100K requests/hour, self-hosted options
-
-## 📚 Quick Usage Example
-
-### Node.js
+### Node.js SDK
 ```javascript
-const { EasyAI } = require('easyai-sdk');
+const { EasyAI } = require('easyai-cli');
 
 const ai = new EasyAI({ apiKey: 'your-api-key' });
 
@@ -160,31 +293,7 @@ const response = await ai.completeDirect({
 console.log(response.content);
 ```
 
-## 🛠️ Development Setup
-
-### Backend Server
-```bash
-# From project root
-npm install
-npm run dev
-# Server runs on http://localhost:3000
-```
-
-### React Dashboard
-```bash
-cd dashboard
-npm install
-npm start
-# Dashboard runs on http://localhost:3000
-```
-
-### Landing Page
-```bash
-# Simply open landing-page.html in your browser
-open landing-page.html
-```
-
-## 📖 Core Concepts
+## 🎯 Core Concepts
 
 ### Prompt Management
 Create and manage AI prompts externally from your code:
@@ -226,222 +335,29 @@ Different configurations for dev, staging, and production:
 }
 ```
 
-## 🔧 CLI Commands
-
-### Project Setup
-```bash
-# Initialize new project
-easyai init --name "my-ai-app"
-
-# List available models
-easyai models
-```
-
-### Prompt Management
-```bash
-# List all prompts
-easyai prompts list
-
-# Create new prompt
-easyai prompts create --name "summarizer"
-
-# Test prompt
-easyai prompts test my-prompt --params '{"text": "Hello world"}'
-
-# Compare models
-easyai prompts compare my-prompt --models "gpt-4,claude-3"
-```
-
-### Analytics
-```bash
-# View usage analytics
-easyai analytics --days 30
-
-# Health check
-easyai health
-```
-
-**Note**: CLI tool is available at `./bin/cli.js` and can be installed globally with `npm install -g .`
-
-## 🏗️ Architecture
-
-```
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│   Application   │────▶│   EasyAI SDK     │────▶│  EasyAI Cloud   │
-│  (Your Code)    │     │  (npm package)   │     │   API Gateway   │
-└─────────────────┘     └──────────────────┘     └────────┬────────┘
-                                                           │
-                        ┌──────────────────────────────────┼──────────────────────────────────┐
-                        │                                  │                                  │
-                    ┌───▼─────┐                    ┌───────▼────────┐              ┌──────────▼────────┐
-                    │ OpenAI  │                    │   Anthropic    │              │      Google       │
-                    │   API    │                    │     Claude     │              │      Gemini       │
-                    └─────────┘                    └────────────────┘              └───────────────────┘
-```
-
-## 🔒 Security Features
-
-- **JWT Authentication**: Secure token-based auth
-- **API Key Management**: Cryptographic key generation
-- **Rate Limiting**: Per-tier usage limits
-- **Domain Validation**: Production usage monitoring
-- **Audit Logging**: Complete request/response tracking
-
-## 🚀 Deployment Options
-
-### Local Development
-```bash
-# Start backend server
-npm run dev
-
-# Start React dashboard (in separate terminal)
-cd dashboard && npm start
-
-# Access:
-# - Backend API: http://localhost:3000
-# - React Dashboard: http://localhost:3000
-# - Landing Page: Open landing-page.html in browser
-```
-
-### Production Deployment
-```bash
-# Set environment variables
-export NODE_ENV=production
-export JWT_SECRET=your-secret-key
-export OPENAI_API_KEY=sk-...
-export ANTHROPIC_API_KEY=sk-ant-...
-export GOOGLE_API_KEY=AIza...
-
-# Build and start
-npm install
-npm start
-```
-
-### Docker Deployment
-```bash
-# Build container
-docker build -t easyai .
-
-# Run container
-docker run -p 3000:3000 \
-  -e OPENAI_API_KEY=sk-... \
-  -e ANTHROPIC_API_KEY=sk-ant-... \
-  -e JWT_SECRET=your-secret \
-  easyai
-```
-
-## 📊 Monitoring & Analytics
-
-### Built-in Analytics
-- Request/response logging
-- Token usage tracking
-- Cost analysis per model
-- Performance metrics
-- Error rate monitoring
-
-### Integration with External Tools
-```javascript
-// Custom analytics webhook
-const ai = new EasyAI({
-  apiKey: 'your-key',
-  webhook: 'https://your-analytics-endpoint.com/webhook'
-});
-```
-
-## 🔧 Configuration
-
-### Server Environment Variables
-```bash
-# Server Configuration
-NODE_ENV=development
-PORT=3000
-JWT_SECRET=your-super-secret-jwt-key
-
-# Database
-DATABASE_URL=./database/easyai.sqlite
-
-# LLM Provider Keys
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-GOOGLE_API_KEY=AIza...
-DEEPSEEK_API_KEY=sk-...
-
-# Email Verification
-MAKE_WEBHOOK_URL=https://hook.eu1.make.com/ggrd1nilwumpay2envc5k8lqhwqtxlm7
-```
-
-### SDK Configuration
-```bash
-# For applications using the SDK
-EASYAI_API_KEY=your_api_key_here
-EASYAI_BASE_URL=http://localhost:3000
-EASYAI_TIMEOUT=30000
-```
-
-### Project Configuration (easyai.config.json)
-```json
-{
-  "project_name": "My AI Project",
-  "api": {
-    "base_url": "http://localhost:3000",
-    "timeout": 30000
-  },
-  "models": {
-    "default": "gpt-4o-mini",
-    "fallback_chain": ["gpt-4o-mini", "claude-3-haiku", "gemini-pro"]
-  },
-  "prompts": {
-    "categories": ["general", "development", "email", "analysis"]
-  }
-}
-```
-
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions! Please check out our [Contributing Guide](CONTRIBUTING.md).
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
-
-## 📄 License
+## 📝 License
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 
-- **Documentation**: [https://docs.easyai.dev](https://docs.easyai.dev)
-- **Community**: [Discord](https://discord.gg/easyai)
-- **Issues**: [GitHub Issues](https://github.com/Royofficely/easyai/issues)
-- **Email**: [support@easy-ai.dev](mailto:support@easy-ai.dev)
+- 📖 **Documentation**: [https://docs.easy-ai.dev](https://docs.easy-ai.dev)
+- 💬 **Discord**: [Join our community](https://discord.gg/easyai)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/YourOrg/easyai/issues)
+- 📧 **Email**: support@easy-ai.dev
 
-## 🎯 Roadmap
+## 🎯 What's Next?
 
-### Phase 1: Core Platform ✅
-- [x] Unified API gateway
-- [x] Basic prompt management
-- [x] Node.js SDK
-- [x] Local dashboard
-- [x] Provider integrations
-
-### Phase 2: Advanced Features 🚧
-- [ ] Team collaboration
-- [ ] Advanced analytics
-- [ ] A/B testing
+- [ ] Python SDK
+- [ ] Advanced A/B testing
 - [ ] Custom model endpoints
 - [ ] Workflow automation
-
-### Phase 3: Enterprise Features 📋
-- [ ] SSO/SAML support
-- [ ] Private cloud deployment
-- [ ] Compliance certifications
-- [ ] SLA guarantees
-- [ ] 24/7 support
+- [ ] Enterprise SSO
 
 ---
 
-**Made with ❤️ by the EasyAI Team**
-
-Get started today at [easy-ai.dev](https://easy-ai.dev)!
+**Ready to stop wrestling with AI code?** [Get started now →](https://easy-ai.dev)
