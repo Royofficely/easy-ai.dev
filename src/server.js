@@ -50,14 +50,9 @@ app.get('/dashboard*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dashboard/build/index.html'));
 });
 
-// Root route
+// Root route - serve landing page
 app.get('/', (req, res) => {
-  res.json({
-    message: 'EasyAI Platform API',
-    version: '1.0.0',
-    documentation: 'https://docs.easyai.dev',
-    status: 'running'
-  });
+  res.sendFile(path.join(__dirname, '../index.html'));
 });
 
 // Health check
