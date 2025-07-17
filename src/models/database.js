@@ -1,10 +1,17 @@
 const { Sequelize } = require('sequelize');
 const path = require('path');
+const fs = require('fs');
+
+// Ensure database directory exists
+const dbDir = path.join(__dirname, '../../database');
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
 
 // Database configuration
 const sequelize = new Sequelize({
   dialect: 'sqlite',
-  storage: path.join(__dirname, '../../database/easyai.sqlite'),
+  storage: path.join(dbDir, 'easyai.sqlite'),
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
   define: {
     timestamps: true,
