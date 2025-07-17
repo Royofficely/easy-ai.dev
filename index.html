@@ -3,176 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EasyAI - The Future of AI Development</title>
+    <title>EasyAI</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'ai-black': '#0a0a0a',
-                        'ai-gray': '#1a1a1a',
-                        'ai-border': '#333333',
-                        'ai-accent': '#00ff88',
-                        'ai-text': '#e5e5e5',
-                        'ai-muted': '#888888'
+                        'gray-50': '#fafafa',
+                        'gray-100': '#f5f5f5',
+                        'gray-200': '#e5e5e5',
+                        'gray-300': '#d4d4d4',
+                        'gray-400': '#a3a3a3',
+                        'gray-500': '#737373',
+                        'gray-600': '#525252',
+                        'gray-700': '#404040',
+                        'gray-800': '#262626',
+                        'gray-900': '#171717',
+                        'gray-950': '#0a0a0a'
                     }
                 }
             }
         }
     </script>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
     <style>
         body { 
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #0a0a0a;
+            color: #fafafa;
         }
-        .glow { 
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
-        }
-        .terminal-cursor::after {
+        .cursor-blink::after {
             content: '|';
             animation: blink 1s infinite;
+            color: #737373;
         }
         @keyframes blink {
             0%, 50% { opacity: 1; }
             51%, 100% { opacity: 0; }
         }
-        .gradient-text {
-            background: linear-gradient(45deg, #00ff88, #ffffff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
     </style>
 </head>
-<body class="bg-ai-black text-ai-text min-h-screen">
+<body class="bg-gray-950 text-gray-50 antialiased">
     <!-- Navigation -->
-    <nav class="border-b border-ai-border backdrop-blur-md bg-ai-black/50 fixed w-full z-50">
-        <div class="max-w-6xl mx-auto px-6 py-4">
+    <nav class="border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-ai-accent rounded-lg flex items-center justify-center">
-                        <span class="text-ai-black font-bold text-sm">⚡</span>
+                <div class="flex items-center space-x-2">
+                    <div class="w-6 h-6 bg-gray-50 rounded flex items-center justify-center">
+                        <div class="w-3 h-3 bg-gray-950 rounded-sm"></div>
                     </div>
-                    <span class="font-bold text-xl">EasyAI</span>
+                    <span class="font-medium text-lg">EasyAI</span>
                 </div>
-                <button onclick="showAuth()" class="bg-ai-accent text-ai-black px-6 py-2 rounded-lg font-medium hover:bg-ai-accent/80 transition-all glow">
-                    Get Access
+                <button onclick="showAuth()" class="bg-gray-50 text-gray-950 px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
+                    Sign in
                 </button>
             </div>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <main class="pt-24 pb-12">
-        <div class="max-w-6xl mx-auto px-6 text-center">
-            <!-- Hero Content -->
-            <div class="pt-16 pb-20">
-                <h1 class="text-6xl md:text-8xl font-bold mb-8 leading-tight">
-                    <span class="gradient-text">AI</span><br>
-                    <span class="text-ai-text">Unified</span>
-                </h1>
-                <p class="text-xl md:text-2xl text-ai-muted max-w-2xl mx-auto mb-12 leading-relaxed">
-                    One API. Every model. Zero complexity.
+    <!-- Hero -->
+    <main class="max-w-4xl mx-auto px-6 py-24">
+        <div class="text-center space-y-8">
+            <h1 class="text-5xl font-semibold tracking-tight">
+                One API for every AI model
+            </h1>
+            <p class="text-xl text-gray-400 max-w-2xl mx-auto">
+                Build AI applications with a unified interface to OpenAI, Anthropic, Google, and more. 
+                No vendor lock-in, automatic fallbacks, real-time analytics.
+            </p>
+            <div class="flex items-center justify-center gap-3">
+                <button onclick="showAuth()" class="bg-gray-50 text-gray-950 px-6 py-3 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
+                    Get started
+                </button>
+                <button onclick="scrollToDemo()" class="text-gray-400 hover:text-gray-50 px-6 py-3 text-sm font-medium transition-colors">
+                    View demo
+                </button>
+            </div>
+        </div>
+
+        <!-- Code Example -->
+        <div id="demo" class="mt-24 bg-gray-900 border border-gray-800 rounded-lg p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                </div>
+                <div class="flex items-center space-x-2 text-gray-500 text-sm">
+                    <i data-lucide="terminal" class="w-4 h-4"></i>
+                    <span>Terminal</span>
+                </div>
+            </div>
+            <div class="font-mono text-sm space-y-2">
+                <div class="text-gray-400">$ npm install easyai</div>
+                <div class="text-gray-400">$ export EASYAI_API_KEY="your-key"</div>
+                <div class="text-gray-50">$ node app.js</div>
+                <div class="text-gray-500 cursor-blink">Server running on port 3000</div>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="grid md:grid-cols-3 gap-8 mt-24">
+            <div class="space-y-3">
+                <div class="w-10 h-10 bg-gray-900 border border-gray-800 rounded-lg flex items-center justify-center">
+                    <i data-lucide="zap" class="w-5 h-5 text-gray-50"></i>
+                </div>
+                <h3 class="text-lg font-medium">Unified Interface</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">
+                    One API call works across all providers. Switch between OpenAI, Anthropic, Google without changing your code.
                 </p>
-                
-                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-                    <button onclick="showAuth()" class="bg-ai-accent text-ai-black px-8 py-4 rounded-lg font-medium hover:bg-ai-accent/80 transition-all glow">
-                        Start Building
-                    </button>
-                    <a href="#demo" class="text-ai-muted hover:text-ai-text font-medium transition-colors">
-                        See Demo →
-                    </a>
+            </div>
+            <div class="space-y-3">
+                <div class="w-10 h-10 bg-gray-900 border border-gray-800 rounded-lg flex items-center justify-center">
+                    <i data-lucide="shield" class="w-5 h-5 text-gray-50"></i>
                 </div>
+                <h3 class="text-lg font-medium">Automatic Fallbacks</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">
+                    Built-in reliability with automatic provider switching. Your applications stay online even when providers don't.
+                </p>
+            </div>
+            <div class="space-y-3">
+                <div class="w-10 h-10 bg-gray-900 border border-gray-800 rounded-lg flex items-center justify-center">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5 text-gray-50"></i>
+                </div>
+                <h3 class="text-lg font-medium">Real-time Analytics</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">
+                    Track usage, costs, and performance across all your AI integrations in a single dashboard.
+                </p>
+            </div>
+        </div>
 
-                <!-- Terminal Demo -->
-                <div id="demo" class="bg-ai-gray/50 border border-ai-border rounded-2xl p-8 max-w-4xl mx-auto mb-20 backdrop-blur-sm">
-                    <div class="flex items-center space-x-3 mb-6">
-                        <div class="w-3 h-3 bg-red-500 rounded-full"></div>
-                        <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                        <div class="w-3 h-3 bg-ai-accent rounded-full"></div>
-                        <span class="text-ai-muted text-sm ml-4">terminal</span>
-                    </div>
-                    <div class="font-mono text-sm text-left space-y-3">
-                        <div><span class="text-ai-accent">$</span> <span class="text-ai-text">npm install easyai</span></div>
-                        <div><span class="text-ai-accent">$</span> <span class="text-ai-text">easyai init</span></div>
-                        <div class="text-ai-muted">// One API for OpenAI, Claude, Gemini, and more</div>
-                        <div><span class="text-ai-accent">$</span> <span class="text-ai-text">easyai.complete("gpt-4", "Hello world")</span></div>
-                        <div class="text-ai-accent terminal-cursor">Ready to build the future</div>
+        <!-- Pricing -->
+        <div class="mt-24 space-y-8">
+            <div class="text-center">
+                <h2 class="text-3xl font-semibold">Simple pricing</h2>
+                <p class="text-gray-400 mt-2">Start free, scale when you need to</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="text-lg font-medium">Free</h3>
+                            <div class="text-2xl font-semibold mt-2">$0</div>
+                        </div>
+                        <ul class="space-y-2 text-sm text-gray-400">
+                            <li class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
+                                1,000 requests/month
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
+                                Basic models
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
+                                Community support
+                            </li>
+                        </ul>
+                        <button onclick="showAuth()" class="w-full bg-gray-800 text-gray-50 py-2 text-sm font-medium rounded-md hover:bg-gray-700 transition-colors">
+                            Start free
+                        </button>
                     </div>
                 </div>
-
-                <!-- Features Grid -->
-                <div class="grid md:grid-cols-3 gap-8 mb-20">
-                    <div class="bg-ai-gray/30 border border-ai-border rounded-2xl p-8 hover:bg-ai-gray/50 transition-all">
-                        <div class="w-12 h-12 bg-ai-accent/20 rounded-xl flex items-center justify-center mx-auto mb-6">
-                            <span class="text-ai-accent text-2xl">⚡</span>
-                        </div>
-                        <h3 class="text-xl font-semibold mb-4">Unified</h3>
-                        <p class="text-ai-muted">One interface for all AI models. Switch providers without changing code.</p>
+                <div class="bg-gray-900 border border-gray-700 rounded-lg p-6 relative">
+                    <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gray-50 text-gray-950 px-3 py-1 rounded-full text-xs font-medium">
+                        Most popular
                     </div>
-                    <div class="bg-ai-gray/30 border border-ai-border rounded-2xl p-8 hover:bg-ai-gray/50 transition-all">
-                        <div class="w-12 h-12 bg-ai-accent/20 rounded-xl flex items-center justify-center mx-auto mb-6">
-                            <span class="text-ai-accent text-2xl">🛡️</span>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="text-lg font-medium">Pro</h3>
+                            <div class="text-2xl font-semibold mt-2">$29</div>
                         </div>
-                        <h3 class="text-xl font-semibold mb-4">Reliable</h3>
-                        <p class="text-ai-muted">Automatic fallbacks. Never worry about downtime again.</p>
-                    </div>
-                    <div class="bg-ai-gray/30 border border-ai-border rounded-2xl p-8 hover:bg-ai-gray/50 transition-all">
-                        <div class="w-12 h-12 bg-ai-accent/20 rounded-xl flex items-center justify-center mx-auto mb-6">
-                            <span class="text-ai-accent text-2xl">📊</span>
-                        </div>
-                        <h3 class="text-xl font-semibold mb-4">Analytics</h3>
-                        <p class="text-ai-muted">Real-time insights. Track costs, usage, and performance.</p>
-                    </div>
-                </div>
-
-                <!-- Pricing -->
-                <div class="bg-ai-gray/20 border border-ai-border rounded-3xl p-12 mb-20">
-                    <h2 class="text-4xl font-bold mb-12 gradient-text">Pricing</h2>
-                    <div class="grid md:grid-cols-3 gap-8">
-                        <div class="bg-ai-gray/30 border border-ai-border rounded-2xl p-8">
-                            <h3 class="text-2xl font-semibold mb-4">Free</h3>
-                            <div class="text-4xl font-bold mb-6">$0</div>
-                            <ul class="space-y-3 text-ai-muted mb-8">
-                                <li>✓ 1K requests/month</li>
-                                <li>✓ Basic models</li>
-                                <li>✓ Community support</li>
-                            </ul>
-                            <button onclick="showAuth()" class="w-full bg-ai-border text-ai-text py-3 rounded-lg hover:bg-ai-border/80 transition-all">
-                                Start Free
-                            </button>
-                        </div>
-                        <div class="bg-ai-gray/30 border-2 border-ai-accent rounded-2xl p-8 relative glow">
-                            <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-ai-accent text-ai-black px-4 py-1 rounded-full text-sm font-medium">
-                                Popular
-                            </div>
-                            <h3 class="text-2xl font-semibold mb-4">Pro</h3>
-                            <div class="text-4xl font-bold mb-6">$29</div>
-                            <ul class="space-y-3 text-ai-muted mb-8">
-                                <li>✓ 100K requests/month</li>
-                                <li>✓ All models</li>
-                                <li>✓ Priority support</li>
-                                <li>✓ Analytics dashboard</li>
-                            </ul>
-                            <button onclick="showAuth()" class="w-full bg-ai-accent text-ai-black py-3 rounded-lg hover:bg-ai-accent/80 transition-all">
-                                Start Pro
-                            </button>
-                        </div>
-                        <div class="bg-ai-gray/30 border border-ai-border rounded-2xl p-8">
-                            <h3 class="text-2xl font-semibold mb-4">Enterprise</h3>
-                            <div class="text-4xl font-bold mb-6">Custom</div>
-                            <ul class="space-y-3 text-ai-muted mb-8">
-                                <li>✓ Unlimited requests</li>
-                                <li>✓ Custom models</li>
-                                <li>✓ Dedicated support</li>
-                                <li>✓ Self-hosted option</li>
-                            </ul>
-                            <button onclick="contactSales()" class="w-full bg-ai-border text-ai-text py-3 rounded-lg hover:bg-ai-border/80 transition-all">
-                                Contact Sales
-                            </button>
-                        </div>
+                        <ul class="space-y-2 text-sm text-gray-400">
+                            <li class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
+                                100,000 requests/month
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
+                                All models
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
+                                Priority support
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-gray-50"></i>
+                                Advanced analytics
+                            </li>
+                        </ul>
+                        <button onclick="showAuth()" class="w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
+                            Get started
+                        </button>
                     </div>
                 </div>
             </div>
@@ -180,24 +203,29 @@
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-ai-border py-12">
-        <div class="max-w-6xl mx-auto px-6 text-center">
-            <p class="text-ai-muted">Built for the future of AI development</p>
+    <footer class="border-t border-gray-800 mt-24 py-12">
+        <div class="max-w-7xl mx-auto px-6 text-center text-gray-400 text-sm">
+            Built for developers, by developers
         </div>
     </footer>
 
     <!-- Auth Modal -->
-    <div id="authModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50">
-        <div class="bg-ai-gray border border-ai-border rounded-2xl p-8 max-w-md w-full mx-4">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">Get Access</h2>
-                <button onclick="hideAuth()" class="text-ai-muted hover:text-ai-text text-2xl">×</button>
+    <div id="authModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="bg-gray-950 border border-gray-800 rounded-lg p-8 max-w-md w-full mx-4">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold">Sign in to EasyAI</h2>
+                <button onclick="hideAuth()" class="text-gray-400 hover:text-gray-50">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
             </div>
             <div id="authContent"></div>
         </div>
     </div>
 
     <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
         const API_BASE = window.location.hostname === 'localhost' 
             ? 'http://localhost:3000' 
             : 'https://api.easy-ai.dev';
@@ -215,25 +243,24 @@
             document.getElementById('authModal').classList.remove('flex');
         }
 
+        function scrollToDemo() {
+            document.getElementById('demo').scrollIntoView({ behavior: 'smooth' });
+        }
+
         function loadAuthForm() {
             document.getElementById('authContent').innerHTML = `
                 <div class="space-y-4">
-                    <div class="bg-ai-accent/10 border border-ai-accent/20 rounded-lg p-4 mb-4">
-                        <p class="text-ai-accent text-sm">
-                            Join the future of AI development. Create your account to get started.
+                    <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+                        <p class="text-gray-400 text-sm">
+                            Enter your email to get started with EasyAI
                         </p>
                     </div>
-                    <input type="email" id="email" placeholder="Email" class="w-full p-4 bg-ai-black border border-ai-border rounded-lg text-ai-text placeholder-ai-muted focus:border-ai-accent focus:outline-none">
-                    <input type="text" id="name" placeholder="Full Name" class="w-full p-4 bg-ai-black border border-ai-border rounded-lg text-ai-text placeholder-ai-muted focus:border-ai-accent focus:outline-none">
-                    <input type="password" id="password" placeholder="Password" class="w-full p-4 bg-ai-black border border-ai-border rounded-lg text-ai-text placeholder-ai-muted focus:border-ai-accent focus:outline-none">
-                    <button onclick="register()" class="w-full bg-ai-accent text-ai-black py-4 rounded-lg font-medium hover:bg-ai-accent/80 transition-all glow">
-                        Create Account
-                    </button>
-                    <div class="text-center">
-                        <button onclick="showLogin()" class="text-ai-muted hover:text-ai-text text-sm">
-                            Already have an account? Sign in
-                        </button>
+                    <div class="space-y-3">
+                        <input type="email" id="email" placeholder="Email" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-md text-gray-50 placeholder-gray-400 focus:border-gray-600 focus:outline-none text-sm">
                     </div>
+                    <button onclick="register()" class="w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
+                        Send verification code
+                    </button>
                 </div>
             `;
         }
@@ -241,32 +268,26 @@
         function showLogin() {
             document.getElementById('authContent').innerHTML = `
                 <div class="space-y-4">
-                    <div class="bg-ai-accent/10 border border-ai-accent/20 rounded-lg p-4 mb-4">
-                        <p class="text-ai-accent text-sm">
-                            Welcome back to the future.
+                    <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+                        <p class="text-gray-400 text-sm">
+                            Enter your email to sign in
                         </p>
                     </div>
-                    <input type="email" id="loginEmail" placeholder="Email" class="w-full p-4 bg-ai-black border border-ai-border rounded-lg text-ai-text placeholder-ai-muted focus:border-ai-accent focus:outline-none">
-                    <input type="password" id="loginPassword" placeholder="Password" class="w-full p-4 bg-ai-black border border-ai-border rounded-lg text-ai-text placeholder-ai-muted focus:border-ai-accent focus:outline-none">
-                    <button onclick="login()" class="w-full bg-ai-accent text-ai-black py-4 rounded-lg font-medium hover:bg-ai-accent/80 transition-all glow">
-                        Sign In
-                    </button>
-                    <div class="text-center">
-                        <button onclick="loadAuthForm()" class="text-ai-muted hover:text-ai-text text-sm">
-                            Don't have an account? Create one
-                        </button>
+                    <div class="space-y-3">
+                        <input type="email" id="loginEmail" placeholder="Email" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-md text-gray-50 placeholder-gray-400 focus:border-gray-600 focus:outline-none text-sm">
                     </div>
+                    <button onclick="login()" class="w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
+                        Send verification code
+                    </button>
                 </div>
             `;
         }
 
         async function register() {
             const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const name = document.getElementById('name').value;
 
-            if (!email || !password || !name) {
-                alert('Please fill in all fields');
+            if (!email) {
+                alert('Please enter your email');
                 return;
             }
 
@@ -274,39 +295,39 @@
                 const response = await fetch(`${API_BASE}/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password, name })
+                    body: JSON.stringify({ email })
                 });
 
                 if (response.ok) {
                     document.getElementById('authContent').innerHTML = `
-                        <div class="text-center space-y-4">
-                            <div class="bg-ai-accent/10 border border-ai-accent/20 rounded-lg p-6">
-                                <h3 class="text-ai-accent font-semibold mb-2">Account Created!</h3>
-                                <p class="text-ai-muted text-sm mb-4">
-                                    Verification code sent to ${email}
+                        <div class="space-y-4">
+                            <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+                                <h3 class="font-medium mb-2">Check your email</h3>
+                                <p class="text-gray-400 text-sm">
+                                    We sent a 6-digit verification code to ${email}
                                 </p>
-                                <input type="text" id="verificationCode" placeholder="Enter 6-digit code" 
-                                       maxlength="6" class="w-full p-3 bg-ai-black border border-ai-border rounded-lg text-ai-text text-center text-lg tracking-widest mb-4 focus:border-ai-accent focus:outline-none">
-                                <button onclick="verifyEmail('${email}')" class="w-full bg-ai-accent text-ai-black py-3 rounded-lg hover:bg-ai-accent/80 transition-all glow">
-                                    Verify Email
-                                </button>
                             </div>
+                            <input type="text" id="verificationCode" placeholder="Enter 6-digit code" 
+                                   maxlength="6" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-md text-gray-50 placeholder-gray-400 focus:border-gray-600 focus:outline-none text-sm">
+                            <button onclick="verifyEmail('${email}')" class="w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
+                                Verify and continue
+                            </button>
                         </div>
                     `;
                 } else {
                     const error = await response.json();
-                    alert(error.error || 'Registration failed');
+                    alert(error.error || 'Failed to send verification code');
                 }
             } catch (error) {
-                alert('Registration failed. Please try again.');
+                alert('Failed to send verification code. Please try again.');
             }
         }
 
         async function verifyEmail(email) {
             const code = document.getElementById('verificationCode').value;
             
-            if (!code || code.length !== 6) {
-                alert('Please enter the 6-digit verification code');
+            if (!code) {
+                alert('Please enter the verification code');
                 return;
             }
 
@@ -318,17 +339,22 @@
                 });
 
                 if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.token;
+                    localStorage.setItem('auth_token', authToken);
+                    
                     document.getElementById('authContent').innerHTML = `
-                        <div class="text-center space-y-4">
-                            <div class="bg-ai-accent/10 border border-ai-accent/20 rounded-lg p-6">
-                                <h3 class="text-ai-accent font-semibold mb-2">Welcome to the Future!</h3>
-                                <p class="text-ai-muted text-sm mb-4">
-                                    Your account is verified. Sign in to start building.
+                        <div class="space-y-4">
+                            <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+                                <h3 class="font-medium mb-2">Welcome to EasyAI</h3>
+                                <p class="text-gray-400 text-sm">
+                                    Your account is ready. Open your dashboard to continue.
                                 </p>
-                                <button onclick="showLogin()" class="w-full bg-ai-accent text-ai-black py-3 rounded-lg hover:bg-ai-accent/80 transition-all glow">
-                                    Sign In
-                                </button>
                             </div>
+                            <a href="http://localhost:3000" 
+                               class="block w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors text-center">
+                                Open dashboard
+                            </a>
                         </div>
                     `;
                 } else {
@@ -340,12 +366,11 @@
             }
         }
 
-        async function login() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-
-            if (!email || !password) {
-                alert('Please enter both email and password');
+        async function verifyLoginCode(email) {
+            const code = document.getElementById('loginCode').value;
+            
+            if (!code) {
+                alert('Please enter the verification code');
                 return;
             }
 
@@ -353,7 +378,7 @@
                 const response = await fetch(`${API_BASE}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify({ email, code })
                 });
 
                 if (response.ok) {
@@ -362,17 +387,17 @@
                     localStorage.setItem('auth_token', authToken);
                     
                     document.getElementById('authContent').innerHTML = `
-                        <div class="text-center space-y-4">
-                            <div class="bg-ai-accent/10 border border-ai-accent/20 rounded-lg p-6">
-                                <h3 class="text-ai-accent font-semibold mb-2">Access Granted</h3>
-                                <p class="text-ai-muted text-sm mb-4">
-                                    Welcome back. Ready to build the future?
+                        <div class="space-y-4">
+                            <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+                                <h3 class="font-medium mb-2">Welcome back</h3>
+                                <p class="text-gray-400 text-sm">
+                                    You're signed in. Open your dashboard to continue.
                                 </p>
-                                <a href="http://localhost:3000" 
-                                   class="block w-full bg-ai-accent text-ai-black py-3 rounded-lg hover:bg-ai-accent/80 transition-all glow">
-                                    Open Dashboard
-                                </a>
                             </div>
+                            <a href="http://localhost:3000" 
+                               class="block w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors text-center">
+                                Open dashboard
+                            </a>
                         </div>
                     `;
                 } else {
@@ -384,8 +409,68 @@
             }
         }
 
-        function contactSales() {
-            window.location.href = 'mailto:sales@easy-ai.dev?subject=Enterprise Plan Inquiry';
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+
+            if (!email) {
+                alert('Please enter your email');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.token) {
+                        // User is already verified and logged in
+                        authToken = data.token;
+                        localStorage.setItem('auth_token', authToken);
+                        
+                        document.getElementById('authContent').innerHTML = `
+                            <div class="space-y-4">
+                                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+                                    <h3 class="font-medium mb-2">Welcome back</h3>
+                                    <p class="text-gray-400 text-sm">
+                                        You're signed in. Open your dashboard to continue.
+                                    </p>
+                                </div>
+                                <a href="http://localhost:3000" 
+                                   class="block w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors text-center">
+                                    Open dashboard
+                                </a>
+                            </div>
+                        `;
+                    } else {
+                        // Need to verify code
+                        document.getElementById('authContent').innerHTML = `
+                            <div class="space-y-4">
+                                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+                                    <h3 class="font-medium mb-2">Check your email</h3>
+                                    <p class="text-gray-400 text-sm">
+                                        We sent a 6-digit verification code to ${email}
+                                    </p>
+                                </div>
+                                <input type="text" id="loginCode" placeholder="Enter 6-digit code" 
+                                       maxlength="6" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-md text-gray-50 placeholder-gray-400 focus:border-gray-600 focus:outline-none text-sm">
+                                <button onclick="verifyLoginCode('${email}')" class="w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
+                                    Sign in
+                                </button>
+                            </div>
+                        `;
+                    }
+                } else {
+                    const error = await response.json();
+                    alert(error.error || 'Login failed');
+                }
+            } catch (error) {
+                alert('Login failed. Please try again.');
+            }
         }
     </script>
 </body>
