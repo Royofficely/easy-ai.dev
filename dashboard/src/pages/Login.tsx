@@ -4,8 +4,6 @@ import { useAuth } from '../contexts/AuthContext';
 const Login: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [showVerification, setShowVerification] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -22,9 +20,11 @@ const Login: React.FC = () => {
 
     try {
       if (isLogin) {
-        await login(email, password);
+        await login(email);
+        setSuccess('Verification code sent! Please check your email.');
+        setShowVerification(true);
       } else {
-        await register(email, password, name);
+        await register(email);
         setSuccess('Registration successful! Please check your email for verification code.');
         setShowVerification(true);
       }
@@ -41,10 +41,15 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      await verifyEmail(email, verificationCode);
-      setSuccess('Email verified successfully! You can now log in.');
-      setShowVerification(false);
-      setIsLogin(true);
+      if (isLogin) {
+        await login(email, verificationCode);
+        setSuccess('Login successful!');
+      } else {
+        await verifyEmail(email, verificationCode);
+        setSuccess('Email verified successfully! You can now log in.');
+        setShowVerification(false);
+        setIsLogin(true);
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -140,24 +145,7 @@ const Login: React.FC = () => {
               <div className="text-sm text-green-700">{success}</div>
             </div>
           )}
-          <div className="rounded-md shadow-sm -space-y-px">
-            {!isLogin && (
-              <div>
-                <label htmlFor="name" className="sr-only">
-                  Name
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="Full name"
-                />
-              </div>
-            )}
+          <div className="rounded-md shadow-sm">
             <div>
               <label htmlFor="email" className="sr-only">
                 Email address
@@ -170,26 +158,8 @@ const Login: React.FC = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 ${
-                  isLogin ? 'rounded-t-md' : ''
-                } focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="Email address"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
               />
             </div>
           </div>
@@ -202,10 +172,10 @@ const Login: React.FC = () => {
             >
               {loading
                 ? isLogin
-                  ? 'Signing in...'
+                  ? 'Sending code...'
                   : 'Creating account...'
                 : isLogin
-                ? 'Sign in'
+                ? 'Send verification code'
                 : 'Create account'}
             </button>
           </div>

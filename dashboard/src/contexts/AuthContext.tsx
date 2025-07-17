@@ -12,9 +12,9 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, code?: string) => Promise<void>;
   logout: () => void;
-  register: (email: string, password: string, name: string) => Promise<void>;
+  register: (email: string) => Promise<void>;
   verifyEmail: (email: string, code: string) => Promise<void>;
 }
 
@@ -28,7 +28,7 @@ export const useAuth = () => {
   return context;
 };
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkAuthStatus = async (token: string) => {
     try {
-      const response = await axios.get(`${API_BASE}/dashboard/api/user`, {
+      const response = await axios.get(`${API_BASE}/api/user`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -59,11 +59,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, code?: string) => {
     try {
       const response = await axios.post(`${API_BASE}/auth/login`, {
         email,
-        password
+        code
       });
 
       const { token, user } = response.data;
@@ -74,12 +74,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (email: string, password: string, name: string) => {
+  const register = async (email: string) => {
     try {
       await axios.post(`${API_BASE}/auth/register`, {
-        email,
-        password,
-        name
+        email
       });
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Registration failed');
