@@ -14,7 +14,7 @@ const execAsync = util.promisify(exec);
 program
   .name('easyai')
   .description('EasyAI CLI tool for managing AI prompts and projects')
-  .version('1.0.0');
+  .version('1.0.4');
 
 // Initialize project
 program
