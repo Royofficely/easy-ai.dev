@@ -267,17 +267,31 @@
 
     <script>
         // Initialize Lucide icons
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        } else {
+            console.error('Lucide icons not loaded');
+        }
 
         // Update this URL with your Railway deployment URL
         const API_BASE = 'https://easy-aidev-production.up.railway.app';
         
         let authToken = localStorage.getItem('auth_token');
+        
+        // Test if JavaScript is working
+        console.log('JavaScript loaded successfully');
+        console.log('API_BASE:', API_BASE);
 
         function showAuth() {
-            document.getElementById('authModal').classList.remove('hidden');
-            document.getElementById('authModal').classList.add('flex');
-            loadAuthForm();
+            console.log('showAuth called');
+            const modal = document.getElementById('authModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                loadAuthForm();
+            } else {
+                console.error('Modal not found');
+            }
         }
 
         function hideAuth() {
