@@ -13,8 +13,11 @@ const settingsRoutes = require('./routes/settings');
 const playgroundRoutes = require('./routes/playground');
 const monitoringRoutes = require('./routes/monitoring');
 
+// Initialize database
+const { initializeDatabase } = require('./models');
+
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(helmet());
@@ -81,10 +84,23 @@ app.use('*', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`EasyAI Platform running on port ${PORT}`);
-  console.log(`Dashboard: http://localhost:${PORT}/dashboard`);
-  console.log(`API: http://localhost:${PORT}/api/v1`);
-});
+// Initialize database and start server
+async function startServer() {
+  try {
+    await initializeDatabase();
+    console.log('Database initialized successfully');
+    
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`EasyAI Platform running on port ${PORT}`);
+      console.log(`Dashboard: http://localhost:${PORT}/dashboard`);
+      console.log(`API: http://localhost:${PORT}/api/v1`);
+    });
+  } catch (error) {
+    console.error('Failed to initialize database:', error);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 module.exports = app;
