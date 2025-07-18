@@ -17,7 +17,7 @@ const monitoringRoutes = require('./routes/monitoring');
 const { initializeDatabase } = require('./models');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 
 // Middleware
 app.use(helmet({
@@ -28,7 +28,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://unpkg.com"],
       imgSrc: ["'self'", "data:", "https:"],
       fontSrc: ["'self'", "https:"],
-      connectSrc: ["'self'", "https://easy-aidev-production.up.railway.app"],
+      connectSrc: ["'self'", "http://localhost:4001", "https://easy-aidev-production.up.railway.app"],
       upgradeInsecureRequests: null
     }
   }
@@ -120,7 +120,52 @@ app.use('/dashboard', express.static(path.join(__dirname, '../dashboard/build'))
 
 // Dashboard route - serve React app for any dashboard routes
 app.get('/dashboard*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dashboard/build/index.html'));
+  try {
+    console.log('🔍 Dashboard route accessed:', req.path);
+    // Read the .env file to get API key
+    const fs = require('fs');
+    const envPath = path.join(process.cwd(), '.env');
+    let apiKey = '';
+    
+    console.log('📁 .env path:', envPath);
+    console.log('📁 .env exists:', fs.existsSync(envPath));
+    
+    if (fs.existsSync(envPath)) {
+      const envContent = fs.readFileSync(envPath, 'utf8');
+      const match = envContent.match(/EASYAI_API_KEY=(.+)/);
+      if (match) {
+        apiKey = match[1].trim();
+        console.log('🔑 API Key found:', apiKey ? 'Yes' : 'No');
+      }
+    }
+    
+    // Read React dashboard index.html
+    const dashboardPath = path.join(__dirname, '../dashboard/build/index.html');
+    let dashboardHtml = fs.readFileSync(dashboardPath, 'utf8');
+    
+    // Inject API key and API base URL into the dashboard
+    if (apiKey) {
+      dashboardHtml = dashboardHtml.replace(
+        '</head>',
+        `<script>
+          window.EASYAI_API_KEY = '${apiKey}';
+          window.EASYAI_BASE_URL = 'http://localhost:4000';
+          
+          // Store in localStorage for the React app
+          if (window.localStorage) {
+            localStorage.setItem('easyai_api_key', '${apiKey}');
+          }
+          
+          console.log('API Key injected for dashboard:', '${apiKey}' ? 'Yes' : 'No');
+        </script></head>`
+      );
+    }
+    
+    res.send(dashboardHtml);
+  } catch (error) {
+    console.error('Error serving dashboard:', error);
+    res.sendFile(path.join(__dirname, '../dashboard/build/index.html'));
+  }
 });
 
 // Root route - serve landing page

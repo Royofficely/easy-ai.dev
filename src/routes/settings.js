@@ -1,12 +1,12 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateApiKey } = require('../middleware/auth');
 
 const router = express.Router();
 
 // Get current environment settings
-router.get('/env', authenticateToken, async (req, res) => {
+router.get('/env', authenticateApiKey, async (req, res) => {
   try {
     const envPath = path.join(process.cwd(), '.env');
     const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
@@ -33,7 +33,7 @@ router.get('/env', authenticateToken, async (req, res) => {
 });
 
 // Update environment settings
-router.put('/env', authenticateToken, async (req, res) => {
+router.put('/env', authenticateApiKey, async (req, res) => {
   try {
     const { settings } = req.body;
     const envPath = path.join(process.cwd(), '.env');
@@ -73,7 +73,7 @@ router.put('/env', authenticateToken, async (req, res) => {
 });
 
 // Get all prompts organized by categories
-router.get('/prompts', authenticateToken, async (req, res) => {
+router.get('/prompts', authenticateApiKey, async (req, res) => {
   try {
     const promptsPath = path.join(process.cwd(), 'src/prompts');
     
@@ -114,7 +114,7 @@ router.get('/prompts', authenticateToken, async (req, res) => {
 });
 
 // Create or update prompt
-router.post('/prompts', authenticateToken, async (req, res) => {
+router.post('/prompts', authenticateApiKey, async (req, res) => {
   try {
     const { id, name, description, template, parameters, model, category } = req.body;
     
@@ -147,7 +147,7 @@ router.post('/prompts', authenticateToken, async (req, res) => {
 });
 
 // Delete prompt
-router.delete('/prompts/:id', authenticateToken, async (req, res) => {
+router.delete('/prompts/:id', authenticateApiKey, async (req, res) => {
   try {
     const { id } = req.params;
     const promptsPath = path.join(process.cwd(), 'src/prompts');

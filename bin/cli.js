@@ -48,7 +48,7 @@ program
       const config = {
         project_name: projectName,
         api: {
-          base_url: "http://localhost:3001",
+          base_url: "http://localhost:4001",
           timeout: 30000
         },
         models: {
@@ -89,7 +89,7 @@ program
       // Create .env.example
       const envExample = `# EasyAI Configuration
 EASYAI_API_KEY=your_api_key_here
-EASYAI_BASE_URL=http://localhost:3001
+EASYAI_BASE_URL=http://localhost:4001
 EASYAI_USER_ID=your_user_id
 
 # Optional: Direct provider keys for fallback
@@ -392,7 +392,7 @@ function extractTemplateVariables(template) {
 
 // Function to open UI (if available)
 function openInUI(route) {
-  const url = `http://localhost:3001/${route}`;
+  const url = `http://localhost:4001/${route}`;
   
   const command = process.platform === 'win32' ? 'start' : 
                   process.platform === 'darwin' ? 'open' : 
@@ -439,7 +439,7 @@ program
 EASYAI_BASE_URL=https://easy-aidev-production.up.railway.app
 JWT_SECRET=your-jwt-secret-key-${Math.random().toString(36).substring(2, 15)}
 DATABASE_URL=sqlite:./database.sqlite
-PORT=3001
+PORT=4001
 
 # Provider API Keys (optional - for fallback)
 OPENAI_API_KEY=
@@ -466,7 +466,7 @@ DEEPSEEK_API_KEY=
       console.log(chalk.green('\n🎉 EasyAI is configured and ready!'));
       console.log(chalk.yellow('\n📊 Next steps:'));
       console.log(chalk.gray('  1. Run: easyai ui'));
-      console.log(chalk.gray('  2. Your dashboard will open at http://localhost:3001'));
+      console.log(chalk.gray('  2. Your dashboard will open at http://localhost:4001'));
       console.log(chalk.gray('  3. Start building with AI!'));
       
     } catch (error) {
@@ -689,7 +689,7 @@ program
     try {
       // Check if server is already running
       try {
-        await axios.get('http://localhost:3001/health', { timeout: 2000 });
+        await axios.get('http://localhost:4001/health', { timeout: 2000 });
         console.log(chalk.green('✅ Server is already running'));
         openInUI('dashboard');
         return;
@@ -729,7 +729,7 @@ program
       // Start the dashboard server
       console.log(chalk.blue('🚀 Starting EasyAI dashboard...'));
       const app = express();
-      const port = 3001;
+      const port = 4001;
       
       // Add body parsing middleware
       app.use(express.json());
@@ -772,9 +772,15 @@ program
             filteredHeaders['X-API-Key'] = finalApiKey;
           }
           
+          // Fix the API paths - add /api prefix if not present
+          let targetPath = req.path;
+          if (!targetPath.startsWith('/api')) {
+            targetPath = '/api' + targetPath;
+          }
+          
           const response = await axios({
             method: req.method,
-            url: `http://localhost:3000${req.path}`,
+            url: `http://localhost:4000${targetPath}`,
             data: req.body,
             headers: filteredHeaders
           });
@@ -788,7 +794,12 @@ program
       
       // Serve static files from React build
       app.use('/static', express.static(path.join(__dirname, '../dashboard-build/static')));
-      app.use(express.static(path.join(__dirname, '../dashboard-build')));
+      // Don't serve the full directory to avoid serving index.html directly
+      app.use('/favicon.ico', express.static(path.join(__dirname, '../dashboard-build/favicon.ico')));
+      app.use('/logo192.png', express.static(path.join(__dirname, '../dashboard-build/logo192.png')));
+      app.use('/logo512.png', express.static(path.join(__dirname, '../dashboard-build/logo512.png')));
+      app.use('/manifest.json', express.static(path.join(__dirname, '../dashboard-build/manifest.json')));
+      app.use('/robots.txt', express.static(path.join(__dirname, '../dashboard-build/robots.txt')));
       
       // Main route - serve React dashboard
       app.get('*', (req, res) => {
@@ -820,7 +831,7 @@ program
             <script>
               localStorage.setItem('easyai_api_key', '${apiKey}');
               window.EASYAI_API_KEY = '${apiKey}';
-              window.EASYAI_BASE_URL = 'http://localhost:3001';
+              window.EASYAI_BASE_URL = 'http://localhost:4001';
               console.log('API Key set in localStorage:', localStorage.getItem('easyai_api_key'));
             </script>`
           );
@@ -862,8 +873,8 @@ program
     console.log(chalk.blue('🔍 Checking EasyAI status...\n'));
     
     const checks = [
-      { name: 'Backend Server', url: 'http://localhost:3001/health' },
-      { name: 'Dashboard', url: 'http://localhost:3000' },
+      { name: 'Backend Server', url: 'http://localhost:4001/health' },
+      { name: 'Dashboard', url: 'http://localhost:4000' },
       { name: 'Proxy Server', url: 'http://localhost:8888' }
     ];
     
@@ -908,7 +919,7 @@ program
 EASYAI_BASE_URL=https://easy-aidev-production.up.railway.app
 JWT_SECRET=your-jwt-secret-key-${Math.random().toString(36).substring(2, 15)}
 DATABASE_URL=sqlite:./database.sqlite
-PORT=3001
+PORT=4001
 
 # Provider API Keys (optional - for fallback)
 OPENAI_API_KEY=
@@ -935,7 +946,7 @@ DEEPSEEK_API_KEY=
       console.log(chalk.green('\n🎉 EasyAI is configured and ready!'));
       console.log(chalk.yellow('\n📊 Next steps:'));
       console.log(chalk.gray('  1. Run: easyai ui'));
-      console.log(chalk.gray('  2. Your dashboard will open at http://localhost:3001'));
+      console.log(chalk.gray('  2. Your dashboard will open at http://localhost:4001'));
       console.log(chalk.gray('  3. Start building with AI!'));
       
     } catch (error) {
@@ -962,11 +973,30 @@ program
       
       // Start the dashboard server
       const app = express();
-      const port = 3001;
+      const port = 4001;
       
       // Add body parsing middleware
       app.use(express.json());
       app.use(express.urlencoded({ extended: true }));
+      
+                // Set permissive CSP headers to allow API calls and disable caching
+          app.use((req, res, next) => {
+            res.setHeader('Content-Security-Policy', 
+              "default-src 'self'; " +
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+              "style-src 'self' 'unsafe-inline'; " +
+              "connect-src 'self' http://localhost:4001 http://localhost:4000; " +
+              "img-src 'self' data: https:; " +
+              "font-src 'self' data:;"
+            );
+            
+            // Disable caching for all responses
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+            
+            next();
+          });
       
       // API proxy to cloud backend
       app.use('/api', async (req, res) => {
@@ -994,9 +1024,15 @@ program
             filteredHeaders['X-API-Key'] = finalApiKey;
           }
           
+          // Fix the API paths - add /api prefix if not present
+          let targetPath = req.path;
+          if (!targetPath.startsWith('/api')) {
+            targetPath = '/api' + targetPath;
+          }
+          
           const response = await axios({
             method: req.method,
-            url: `http://localhost:3000${req.path}`,
+            url: `http://localhost:4000${targetPath}`,
             data: req.body,
             headers: filteredHeaders
           });
@@ -1023,8 +1059,14 @@ program
             const envContent = fs.readFileSync(envPath, 'utf8');
             const match = envContent.match(/EASYAI_API_KEY=(.+)/);
             if (match) {
-              apiKey = match[1];
+              apiKey = match[1].trim();
             }
+          }
+          
+          console.log('🔑 API Key for injection:', apiKey ? 'Found' : 'Not found');
+          if (!apiKey) {
+            console.log('⚠️  .env path:', envPath);
+            console.log('⚠️  .env exists:', fs.existsSync(envPath));
           }
           
           // Read React dashboard index.html
@@ -1035,12 +1077,25 @@ program
           dashboardHtml = dashboardHtml.replace(/\.\/(static\/)/g, '/$1');
           dashboardHtml = dashboardHtml.replace(/\.\/(favicon\.ico|logo192\.png|logo512\.png|manifest\.json)/g, '/$1');
           
+          // Add cache-busting to CSS and JS files
+          const timestamp = Date.now();
+          dashboardHtml = dashboardHtml.replace(/href="\/static\/css\/([^"]+)"/g, `href="/static/css/$1?v=${timestamp}"`);
+          dashboardHtml = dashboardHtml.replace(/src="\/static\/js\/([^"]+)"/g, `src="/static/js/$1?v=${timestamp}"`);
+          
           // Inject API key and API base URL into the dashboard
           dashboardHtml = dashboardHtml.replace(
             '</head>',
             `<script>
               window.EASYAI_API_KEY = '${apiKey}';
-              window.EASYAI_BASE_URL = 'http://localhost:3001';
+              window.EASYAI_BASE_URL = 'http://localhost:4001';
+              
+              // Also store in localStorage for the React app
+              if (window.localStorage && '${apiKey}') {
+                localStorage.setItem('easyai_api_key', '${apiKey}');
+              }
+              
+              console.log('API Key available:', '${apiKey}' ? 'Yes' : 'No');
+              console.log('API Key value:', '${apiKey}');
             </script></head>`
           );
           
