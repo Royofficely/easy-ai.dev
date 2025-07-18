@@ -121,11 +121,25 @@ program
       // API proxy to cloud backend
       app.use('/api', async (req, res) => {
         try {
+          // Filter out problematic headers and add proper headers
+          const filteredHeaders = {
+            'Content-Type': req.headers['content-type'] || 'application/json',
+            'X-API-Key': req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', ''),
+            'User-Agent': 'EasyAI-Client/1.0.10'
+          };
+          
+          // Remove undefined values
+          Object.keys(filteredHeaders).forEach(key => {
+            if (filteredHeaders[key] === undefined) {
+              delete filteredHeaders[key];
+            }
+          });
+          
           const response = await axios({
             method: req.method,
             url: `https://easy-aidev-production.up.railway.app/api${req.path}`,
             data: req.body,
-            headers: req.headers
+            headers: filteredHeaders
           });
           res.json(response.data);
         } catch (error) {
