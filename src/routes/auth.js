@@ -182,9 +182,23 @@ router.post('/verify', rateLimiter, async (req, res) => {
       { expiresIn: '24h' }
     );
 
+    // Create API key for the user
+    const { ApiKey } = require('../models');
+    const keyData = ApiKey.generateKey();
+    
+    await ApiKey.create({
+      user_id: user.id,
+      name: 'Default API Key',
+      key_hash: keyData.hash,
+      key_prefix: keyData.prefix,
+      permissions: ['read', 'write'],
+      expires_at: null
+    });
+
     res.json({ 
       message: 'Email verified successfully',
       token,
+      api_key: keyData.key,
       user: {
         id: user.id,
         email: user.email,

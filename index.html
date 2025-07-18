@@ -508,8 +508,8 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Generate API key for the user
-                    const apiKey = 'easyai_' + Math.random().toString(36).substr(2, 32);
+                    // Use API key from backend response
+                    const apiKey = data.api_key;
                     
                     // Show success message
                     document.getElementById('authContent').innerHTML = `
