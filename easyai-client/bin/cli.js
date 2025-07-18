@@ -28,7 +28,7 @@ try {
 program
   .name('easyai')
   .description('EasyAI Client - Local development tools for AI prompt management')
-  .version('1.0.19');
+  .version('1.0.20');
 
 // Setup command - create .env file with API key
 program
@@ -151,7 +151,7 @@ program
           // Filter out problematic headers and add proper headers
           const filteredHeaders = {
             'Content-Type': req.headers['content-type'] || 'application/json',
-            'User-Agent': 'EasyAI-Client/1.0.19'
+            'User-Agent': 'EasyAI-Client/1.0.20'
           };
           
           // Add API key if available
@@ -170,7 +170,7 @@ program
           
           const response = await axios({
             method: req.method,
-            url: `https://easy-aidev-production.up.railway.app/api${req.path}`,
+            url: `https://easy-aidev-production.up.railway.app${req.path}`,
             data: req.body,
             headers: filteredHeaders
           });

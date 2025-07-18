@@ -1,6 +1,6 @@
 {
   "name": "@easyai/client",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "description": "EasyAI Client - Local development tools for AI prompt management",
   "main": "bin/cli.js",
   "bin": {
