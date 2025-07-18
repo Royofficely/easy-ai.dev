@@ -1,8 +1,260 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import PromptModal from './PromptModal';
+import NotionStylePromptsSection from './NotionStylePromptsSection';
 import { io, Socket } from 'socket.io-client';
 import './Dashboard.css';
+
+// Analytics Component
+interface AnalyticsSectionProps {
+  currentApiKey: string;
+}
+
+const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ currentApiKey }) => {
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [timeRange, setTimeRange] = useState('24h');
+  const [realTimeData, setRealTimeData] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [timeRange, currentApiKey]);
+
+  useEffect(() => {
+    // Listen for real-time API calls
+    const socket = io('http://localhost:4000');
+    
+    socket.on('api_call', (data) => {
+      if (data.user_id) {
+        setRealTimeData(prev => [
+          { ...data, id: Date.now() },
+          ...prev.slice(0, 49) // Keep last 50 calls
+        ]);
+      }
+    });
+
+    return () => {
+      socket.close();
+    };
+  }, []);
+
+  const fetchAnalytics = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`http://localhost:4000/api/proxy/stats?period=${timeRange}`, {
+        headers: { 'x-api-key': currentApiKey }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setAnalytics(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch analytics:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getTotalCost = () => {
+    if (!analytics?.stats) return 0;
+    return analytics.stats.reduce((sum: number, stat: any) => sum + stat.cost, 0);
+  };
+
+  const getTotalRequests = () => {
+    if (!analytics?.stats) return 0;
+    return analytics.stats.reduce((sum: number, stat: any) => sum + stat.requests, 0);
+  };
+
+  const getTotalTokens = () => {
+    if (!analytics?.stats) return 0;
+    return analytics.stats.reduce((sum: number, stat: any) => sum + stat.tokens, 0);
+  };
+
+  const getMostUsedProvider = () => {
+    if (!analytics?.stats || analytics.stats.length === 0) return 'None';
+    return analytics.stats.reduce((max: any, stat: any) => 
+      stat.requests > max.requests ? stat : max
+    ).provider;
+  };
+
+  if (loading) {
+    return (
+      <div className="section-content">
+        <div className="loading-state">
+          <div className="loading-spinner"></div>
+          <p>Loading analytics...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="section-content">
+      <div className="section-header">
+        <div className="section-title">
+          <h2>Analytics</h2>
+          <p className="section-subtitle">Track your AI usage, costs, and performance</p>
+        </div>
+        <div className="section-actions">
+          <select 
+            value={timeRange} 
+            onChange={(e) => setTimeRange(e.target.value)}
+            className="time-range-selector"
+          >
+            <option value="1h">Last Hour</option>
+            <option value="24h">Last 24 Hours</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+          </select>
+        </div>
+      </div>
+      
+      {/* Key Metrics */}
+      <div className="analytics-grid">
+        <div className="metric-card">
+          <div className="metric-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
+            </svg>
+          </div>
+          <div className="metric-content">
+            <h3 className="metric-title">Total API Calls</h3>
+            <p className="metric-value">{getTotalRequests().toLocaleString()}</p>
+            <p className="metric-change">
+              {analytics?.period && `Last ${analytics.period.replace('h', ' hour').replace('d', ' days')}`}
+            </p>
+          </div>
+        </div>
+        
+        <div className="metric-card">
+          <div className="metric-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2v20M2 12h20"/>
+            </svg>
+          </div>
+          <div className="metric-content">
+            <h3 className="metric-title">Total Cost</h3>
+            <p className="metric-value">${getTotalCost().toFixed(4)}</p>
+            <p className="metric-change">
+              Avg: ${getTotalRequests() > 0 ? (getTotalCost() / getTotalRequests()).toFixed(6) : '0'} per call
+            </p>
+          </div>
+        </div>
+        
+        <div className="metric-card">
+          <div className="metric-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 12l2 2 4-4"/>
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+          </div>
+          <div className="metric-content">
+            <h3 className="metric-title">Tokens Used</h3>
+            <p className="metric-value">{getTotalTokens().toLocaleString()}</p>
+            <p className="metric-change">
+              Avg: {getTotalRequests() > 0 ? Math.round(getTotalTokens() / getTotalRequests()) : 0} per call
+            </p>
+          </div>
+        </div>
+        
+        <div className="metric-card">
+          <div className="metric-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="m22 21-3-3m0 0a4 4 0 1 1-6-6 4 4 0 0 1 6 6z"/>
+            </svg>
+          </div>
+          <div className="metric-content">
+            <h3 className="metric-title">Top Provider</h3>
+            <p className="metric-value">{getMostUsedProvider()}</p>
+            <p className="metric-change">Most frequently used</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Provider Breakdown */}
+      {analytics?.stats && analytics.stats.length > 0 && (
+        <div className="provider-breakdown">
+          <h3 className="section-title">Provider Breakdown</h3>
+          <div className="provider-grid">
+            {analytics.stats.map((stat: any) => (
+              <div key={stat.provider} className="provider-card">
+                <div className="provider-header">
+                  <h4 className="provider-name">{stat.provider.toUpperCase()}</h4>
+                  <span className="provider-badge">{stat.requests} calls</span>
+                </div>
+                <div className="provider-metrics">
+                  <div className="provider-metric">
+                    <span className="metric-label">Cost</span>
+                    <span className="metric-value">${stat.cost.toFixed(4)}</span>
+                  </div>
+                  <div className="provider-metric">
+                    <span className="metric-label">Tokens</span>
+                    <span className="metric-value">{stat.tokens.toLocaleString()}</span>
+                  </div>
+                  <div className="provider-metric">
+                    <span className="metric-label">Avg Cost/Call</span>
+                    <span className="metric-value">${(stat.cost / stat.requests).toFixed(6)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Real-time Activity */}
+      {realTimeData.length > 0 && (
+        <div className="realtime-activity">
+          <h3 className="section-title">Real-time Activity</h3>
+          <div className="activity-feed">
+            {realTimeData.slice(0, 10).map((call: any) => (
+              <div key={call.id} className="activity-item">
+                <div className="activity-icon">
+                  <div className="provider-dot" data-provider={call.provider}></div>
+                </div>
+                <div className="activity-content">
+                  <div className="activity-main">
+                    <span className="activity-provider">{call.provider.toUpperCase()}</span>
+                    <span className="activity-cost">${call.cost?.toFixed(4) || '0.0000'}</span>
+                  </div>
+                  <div className="activity-meta">
+                    <span className="activity-tokens">{call.tokens || 0} tokens</span>
+                    <span className="activity-time">
+                      {new Date(call.timestamp).toLocaleTimeString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {(!analytics?.stats || analytics.stats.length === 0) && (
+        <div className="empty-state">
+          <div className="empty-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M3 3v18h18"/>
+              <path d="m19 9-5 5-4-4-3 3"/>
+            </svg>
+          </div>
+          <h3>No Analytics Data Yet</h3>
+          <p>Start making API calls through EasyAI to see your usage analytics</p>
+          <button 
+            className="btn-primary" 
+            onClick={() => window.open('http://localhost:4000/api/proxy/openai/v1/', '_blank')}
+          >
+            View API Endpoints
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
 
 type DashboardSection = 'overview' | 'prompts' | 'apikeys' | 'analytics' | 'settings';
 
@@ -22,29 +274,89 @@ const Dashboard: React.FC = () => {
     const apiKeyValue = (window as any).EASYAI_API_KEY || localStorage.getItem('easyai_api_key') || apiKey || 'easyai_138690662fff4dc1';
     setCurrentApiKey(apiKeyValue);
     
-    const newSocket = io('http://localhost:4000');
+    // Enhanced WebSocket connection with reconnection logic
+    const connectWebSocket = () => {
+      const newSocket = io('http://localhost:4000', {
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        reconnectionAttempts: 5,
+        timeout: 20000,
+        forceNew: true
+      });
+      
+      // Connection event handlers
+      newSocket.on('connect', () => {
+        console.log('🔌 Connected to EasyAI server');
+        setConnectedClients(1);
+        
+        // Join user-specific room for targeted updates
+        newSocket.emit('join_user_room', { apiKey: apiKeyValue });
+      });
+      
+      newSocket.on('disconnect', (reason) => {
+        console.log('🔌 Disconnected from server:', reason);
+        setConnectedClients(0);
+      });
+      
+      newSocket.on('reconnect', (attemptNumber) => {
+        console.log('🔄 Reconnected after', attemptNumber, 'attempts');
+      });
+      
+      newSocket.on('reconnect_error', (error) => {
+        console.error('🔄 Reconnection failed:', error);
+      });
+      
+      // Listen for real-time prompt events
+      newSocket.on('prompt_created', (data) => {
+        console.log('🎉 New prompt created:', data.prompt);
+        setPrompts(prev => [data.prompt, ...prev]);
+        
+        // Show notification
+        if (Notification.permission === 'granted') {
+          new Notification('New Prompt Created', {
+            body: `"${data.prompt.name}" was created successfully`,
+            icon: '/favicon.ico'
+          });
+        }
+      });
+      
+      newSocket.on('prompt_updated', (data) => {
+        console.log('✏️ Prompt updated:', data.prompt);
+        setPrompts(prev => prev.map(p => p.id === data.prompt.id ? data.prompt : p));
+      });
+      
+      newSocket.on('prompt_deleted', (data) => {
+        console.log('🗑️ Prompt deleted:', data.prompt_id);
+        setPrompts(prev => prev.filter(p => p.prompt_id !== data.prompt_id));
+      });
+      
+      // Listen for API call events from proxy
+      newSocket.on('api_call', (data) => {
+        console.log('📡 API call tracked:', data);
+        // You could update analytics in real-time here
+      });
+      
+      // Listen for connection count updates
+      newSocket.on('client_count', (count) => {
+        setConnectedClients(count);
+      });
+      
+      // Listen for server messages
+      newSocket.on('server_message', (data) => {
+        console.log('📢 Server message:', data.message);
+      });
+      
+      return newSocket;
+    };
+    
+    const newSocket = connectWebSocket();
     setSocket(newSocket);
     
-    // Listen for real-time prompt events
-    newSocket.on('prompt_created', (data) => {
-      console.log('🎉 New prompt created:', data.prompt);
-      setPrompts(prev => [data.prompt, ...prev]);
-    });
-    
-    newSocket.on('prompt_updated', (data) => {
-      console.log('✏️ Prompt updated:', data.prompt);
-      setPrompts(prev => prev.map(p => p.id === data.prompt.id ? data.prompt : p));
-    });
-    
-    newSocket.on('prompt_deleted', (data) => {
-      console.log('🗑️ Prompt deleted:', data.prompt_id);
-      setPrompts(prev => prev.filter(p => p.prompt_id !== data.prompt_id));
-    });
-    
-    // Listen for connection count updates
-    newSocket.on('client_count', (count) => {
-      setConnectedClients(count);
-    });
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
     
     return () => {
       newSocket.close();
@@ -150,77 +462,16 @@ const Dashboard: React.FC = () => {
   const renderContent = () => {
     switch (activeSection) {
       case 'prompts':
-        return (
-          <div className="section-content">
-            <div className="section-header">
-              <div className="section-title">
-                <h2>Prompts</h2>
-                <p className="section-subtitle">Manage your AI prompt templates</p>
-              </div>
-              <div className="section-actions">
-                <button className="btn-primary" onClick={() => setShowPromptModal(true)}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 5v14M5 12h14"/>
-                  </svg>
-                  New Prompt
-                </button>
-              </div>
-            </div>
-            {loading ? (
-              <div className="loading-state">
-                <div className="loading-spinner"></div>
-                <p>Loading prompts...</p>
-              </div>
-            ) : (
-              <div className="prompts-grid">
-                {prompts.length > 0 ? (
-                  prompts.map((prompt: any) => (
-                    <div key={prompt.id} className="prompt-card">
-                      <div className="prompt-header">
-                        <div className="prompt-meta">
-                          <span className="prompt-category">{prompt.category}</span>
-                          <div className="prompt-actions">
-                            <button className="btn-icon" onClick={() => {
-                              setEditingPrompt(prompt);
-                              setShowPromptModal(true);
-                            }}>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                              </svg>
-                            </button>
-                            <button className="btn-icon btn-danger" onClick={() => handleDeletePrompt(prompt.prompt_id)}>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <polyline points="3,6 5,6 21,6"/>
-                                <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                        <h3 className="prompt-title">{prompt.name}</h3>
-                        <p className="prompt-description">{prompt.description}</p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="empty-state">
-                    <div className="empty-icon">
-                      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-                        <polyline points="14,2 14,8 20,8"/>
-                        <line x1="9" y1="15" x2="15" y2="15"/>
-                        <line x1="12" y1="12" x2="12" y2="18"/>
-                      </svg>
-                    </div>
-                    <h3>No prompts yet</h3>
-                    <p>Create your first prompt template to get started</p>
-                    <button className="btn-primary" onClick={() => setShowPromptModal(true)}>Create Prompt</button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        );
+        return <NotionStylePromptsSection 
+          prompts={prompts} 
+          loading={loading} 
+          onCreatePrompt={handleCreatePrompt}
+          onEditPrompt={(prompt) => {
+            setEditingPrompt(prompt);
+            setShowPromptModal(true);
+          }}
+          onDeletePrompt={handleDeletePrompt}
+        />;
       case 'apikeys':
         return (
           <div className="section-content">
@@ -258,64 +509,17 @@ const Dashboard: React.FC = () => {
           </div>
         );
       case 'analytics':
-        return (
-          <div className="section-content">
-            <div className="section-header">
-              <div className="section-title">
-                <h2>Analytics</h2>
-                <p className="section-subtitle">Track your API usage and performance</p>
-              </div>
-            </div>
-            <div className="analytics-grid">
-              <div className="metric-card">
-                <div className="metric-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
-                  </svg>
-                </div>
-                <div className="metric-content">
-                  <h3 className="metric-title">Total API Calls</h3>
-                  <p className="metric-value">0</p>
-                  <p className="metric-change">+0% from last month</p>
-                </div>
-              </div>
-              <div className="metric-card">
-                <div className="metric-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-                  </svg>
-                </div>
-                <div className="metric-content">
-                  <h3 className="metric-title">This Month</h3>
-                  <p className="metric-value">0</p>
-                  <p className="metric-change">+0% from last month</p>
-                </div>
-              </div>
-              <div className="metric-card">
-                <div className="metric-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 12l2 2 4-4"/>
-                    <circle cx="12" cy="12" r="10"/>
-                  </svg>
-                </div>
-                <div className="metric-content">
-                  <h3 className="metric-title">Success Rate</h3>
-                  <p className="metric-value">100%</p>
-                  <p className="metric-change">Perfect performance</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+        return <AnalyticsSection currentApiKey={currentApiKey} />;
       case 'settings':
         return (
           <div className="section-content">
             <div className="section-header">
               <div className="section-title">
                 <h2>Settings</h2>
-                <p className="section-subtitle">Manage your account and preferences</p>
+                <p className="section-subtitle">Manage your account and AI provider settings</p>
               </div>
             </div>
+            
             <div className="settings-card">
               <h3 className="settings-title">Account Information</h3>
               <div className="setting-group">
@@ -331,6 +535,86 @@ const Dashboard: React.FC = () => {
                   <label className="setting-label">User ID</label>
                   <input className="setting-input" type="text" value={currentApiKey.slice(-8)} disabled />
                 </div>
+              </div>
+            </div>
+
+            <div className="settings-card">
+              <h3 className="settings-title">AI Provider API Keys</h3>
+              <div className="setting-group">
+                <div className="setting-item">
+                  <label className="setting-label">OpenAI API Key</label>
+                  <input 
+                    className="setting-input" 
+                    type="password" 
+                    placeholder="sk-..." 
+                    value=""
+                  />
+                  <small className="setting-hint">Used for GPT-4, GPT-3.5, and other OpenAI models</small>
+                </div>
+                <div className="setting-item">
+                  <label className="setting-label">Anthropic API Key</label>
+                  <input 
+                    className="setting-input" 
+                    type="password" 
+                    placeholder="sk-ant-..." 
+                    value=""
+                  />
+                  <small className="setting-hint">Used for Claude models (Claude-3 Sonnet, Claude-3 Opus, etc.)</small>
+                </div>
+                <div className="setting-item">
+                  <label className="setting-label">Google AI API Key</label>
+                  <input 
+                    className="setting-input" 
+                    type="password" 
+                    placeholder="AI..." 
+                    value=""
+                  />
+                  <small className="setting-hint">Used for Gemini models (Gemini Pro, Gemini Pro Vision, etc.)</small>
+                </div>
+              </div>
+            </div>
+
+            <div className="settings-card">
+              <h3 className="settings-title">Default Model Settings</h3>
+              <div className="setting-group">
+                <div className="setting-item">
+                  <label className="setting-label">Default Model</label>
+                  <select className="setting-input">
+                    <option value="gpt-4">GPT-4 (OpenAI)</option>
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo (OpenAI)</option>
+                    <option value="claude-3-sonnet">Claude-3 Sonnet (Anthropic)</option>
+                    <option value="claude-3-opus">Claude-3 Opus (Anthropic)</option>
+                    <option value="gemini-pro">Gemini Pro (Google)</option>
+                    <option value="gemini-pro-vision">Gemini Pro Vision (Google)</option>
+                  </select>
+                </div>
+                <div className="setting-item">
+                  <label className="setting-label">Temperature</label>
+                  <input 
+                    className="setting-input" 
+                    type="number" 
+                    min="0" 
+                    max="2" 
+                    step="0.1" 
+                    defaultValue="0.7"
+                  />
+                  <small className="setting-hint">Controls randomness (0.0 = deterministic, 2.0 = very random)</small>
+                </div>
+                <div className="setting-item">
+                  <label className="setting-label">Max Tokens</label>
+                  <input 
+                    className="setting-input" 
+                    type="number" 
+                    min="1" 
+                    max="4096" 
+                    step="1" 
+                    defaultValue="1000"
+                  />
+                  <small className="setting-hint">Maximum number of tokens in the response</small>
+                </div>
+              </div>
+              <div className="setting-actions">
+                <button className="btn-primary">Save Settings</button>
               </div>
             </div>
           </div>

@@ -607,7 +607,7 @@ body {
   border-radius: var(--radius-md);
   font-size: 14px;
   color: var(--color-text-primary);
-  background-color: var(--color-bg);
+  background-color: var(--color-surface);
   transition: border-color var(--transition-fast);
 }
 
@@ -621,6 +621,26 @@ body {
   background-color: var(--color-border-light);
   color: var(--color-text-secondary);
   cursor: not-allowed;
+}
+
+.setting-input[type="password"] {
+  font-family: monospace;
+  letter-spacing: 0.05em;
+}
+
+.setting-hint {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.setting-actions {
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border-light);
+  display: flex;
+  justify-content: flex-end;
 }
 
 /* Empty States */
@@ -771,6 +791,466 @@ body {
   }
 }
 
+/* Analytics Styles */
+.time-range-selector {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.time-range-selector:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.provider-breakdown {
+  margin-top: var(--space-8);
+}
+
+.provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.provider-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  transition: all var(--transition-fast);
+}
+
+.provider-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.provider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.provider-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.provider-badge {
+  font-size: 12px;
+  font-weight: 500;
+  padding: var(--space-1) var(--space-2);
+  background-color: var(--color-accent-light);
+  color: var(--color-accent);
+  border-radius: var(--radius-sm);
+}
+
+.provider-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.provider-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.metric-label {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.metric-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.realtime-activity {
+  margin-top: var(--space-8);
+}
+
+.activity-feed {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border-light);
+  transition: background-color var(--transition-fast);
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-item:hover {
+  background-color: var(--color-border-light);
+}
+
+.activity-icon {
+  flex-shrink: 0;
+}
+
+.provider-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--color-accent);
+}
+
+.provider-dot[data-provider="openai"] {
+  background-color: #10a37f;
+}
+
+.provider-dot[data-provider="anthropic"] {
+  background-color: #cd7f32;
+}
+
+.provider-dot[data-provider="google"] {
+  background-color: #4285f4;
+}
+
+.activity-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-1);
+}
+
+.activity-provider {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.activity-cost {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-accent);
+  font-family: monospace;
+}
+
+.activity-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.activity-tokens,
+.activity-time {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+/* Notion-Style Prompts Section */
+.notion-prompts-container {
+  margin-top: var(--space-6);
+}
+
+.notion-prompts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.notion-prompt-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  transition: all var(--transition-normal);
+  cursor: pointer;
+  position: relative;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.notion-prompt-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+.new-prompt-card {
+  border: 2px dashed var(--color-border);
+  background-color: var(--color-accent-light);
+  cursor: default;
+  transform: none !important;
+}
+
+.new-prompt-card:hover {
+  border-color: var(--color-accent);
+  box-shadow: none;
+}
+
+.notion-prompt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-4);
+}
+
+.notion-prompt-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+  margin: 0;
+  flex: 1;
+  word-break: break-word;
+}
+
+.notion-prompt-title-input {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  padding: 0;
+  margin-bottom: var(--space-4);
+  font-family: inherit;
+  line-height: 1.2;
+}
+
+.notion-prompt-title-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.notion-prompt-menu {
+  display: flex;
+  gap: var(--space-2);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.notion-prompt-card:hover .notion-prompt-menu {
+  opacity: 1;
+}
+
+.notion-prompt-description {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-4) 0;
+  line-height: 1.4;
+}
+
+.notion-prompt-content {
+  flex: 1;
+  margin-bottom: var(--space-4);
+}
+
+.notion-prompt-preview {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.notion-prompt-content-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  resize: vertical;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.notion-prompt-content-textarea:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.notion-prompt-content-textarea::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.notion-prompt-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: auto;
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+.notion-prompt-category {
+  background-color: var(--color-accent-light);
+  color: var(--color-accent);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.notion-prompt-variables {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.variable-tag {
+  background-color: var(--color-border-light);
+  color: var(--color-text-secondary);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  font-family: monospace;
+}
+
+.variable-tag::before {
+  content: "{";
+  color: var(--color-text-tertiary);
+}
+
+.variable-tag::after {
+  content: "}";
+  color: var(--color-text-tertiary);
+}
+
+.notion-prompt-date {
+  margin-left: auto;
+  font-size: 11px;
+}
+
+.notion-prompt-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-light);
+}
+
+/* Button variants for prompts */
+.btn-icon {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon:hover {
+  background-color: var(--color-border-light);
+  color: var(--color-text-primary);
+}
+
+.btn-icon.btn-danger:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.btn-sm {
+  padding: var(--space-2) var(--space-4);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-border-light);
+  color: var(--color-text-primary);
+}
+
+/* Responsive prompts grid */
+@media (max-width: 1200px) {
+  .notion-prompts-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .notion-prompts-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .notion-prompt-card {
+    padding: var(--space-4);
+  }
+  
+  .notion-prompt-title {
+    font-size: 16px;
+  }
+  
+  .notion-prompt-title-input {
+    font-size: 20px;
+  }
+}
+
+/* Animation for new prompt creation */
+.new-prompt-card {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   * {
@@ -785,5 +1265,13 @@ body {
   
   .status-indicator {
     animation: none;
+  }
+  
+  .new-prompt-card {
+    animation: none;
+  }
+  
+  .notion-prompt-card:hover {
+    transform: none;
   }
 }
