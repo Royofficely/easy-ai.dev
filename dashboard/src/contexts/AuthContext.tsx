@@ -75,15 +75,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       if (!verificationCode) {
         // First step: send verification code
+        console.log('Sending verification code to:', email);
         await axios.post(`${API_BASE_URL}/auth/login`, { email });
         return;
       }
 
       // Second step: verify code and login
+      console.log('Verifying code:', verificationCode, 'for email:', email);
       const response = await axios.post(`${API_BASE_URL}/auth/verify`, {
         email,
         verification_code: verificationCode
       });
+
+      console.log('Verification response:', response.data);
 
       const { token: newToken, apiKey: newApiKey, user: userData } = response.data;
       
@@ -94,8 +98,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (newToken) localStorage.setItem('token', newToken);
       if (newApiKey) localStorage.setItem('apiKey', newApiKey);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login failed:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
       throw error;
     }
   };
