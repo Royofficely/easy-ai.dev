@@ -142,11 +142,11 @@ program
                         req.headers['authorization']?.replace('Bearer ', '') ||
                         fallbackApiKey;
           
-          // Debug logging (remove in production)
-          // console.log('API Request:', req.method, req.path);
-          // console.log('API Key from headers:', req.headers['x-api-key']);
-          // console.log('Fallback API Key:', fallbackApiKey);
-          // console.log('Final API Key:', apiKey);
+          // Debug logging
+          console.log('API Request:', req.method, req.path);
+          console.log('API Key from headers:', req.headers['x-api-key']);
+          console.log('Fallback API Key:', fallbackApiKey);
+          console.log('Final API Key:', apiKey);
           
           // Filter out problematic headers and add proper headers
           const filteredHeaders = {
@@ -158,6 +158,8 @@ program
           if (apiKey) {
             filteredHeaders['X-API-Key'] = apiKey;
           }
+          
+          console.log('Sending to server with headers:', filteredHeaders);
           
           // Remove undefined values
           Object.keys(filteredHeaders).forEach(key => {
