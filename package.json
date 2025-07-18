@@ -1,7 +1,7 @@
 {
   "name": "@easyai/cli",
-  "version": "1.1.5",
-  "description": "Stop wrestling with AI code. Unified prompts, real-time costs, model switching, and IDE integration.",
+  "version": "1.2.0",
+  "description": "EasyAI CLI - Unified AI prompts, real-time costs, model switching, IDE integration, and local dashboard.",
   "main": "src/index.js",
   "bin": {
     "easyai": "./bin/cli.js"
@@ -16,7 +16,7 @@
     "install:all": "npm install && cd dashboard && npm install",
     "setup-ide": "node install-ide-integration.js",
     "setup": "node bin/cli.js setup",
-    "postinstall": "echo '\\n🎯 After getting your API key, run: easyai setup'"
+    "postinstall": "echo '\\n🎯 Get your API key from https://easy-ai.dev and run: easyai setup --api-key YOUR_KEY'"
   },
   "keywords": [
     "ai",
