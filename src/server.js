@@ -39,7 +39,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Static files
 app.use('/public', express.static(path.join(__dirname, '../public')));
-app.use('/dashboard', express.static(path.join(__dirname, '../dashboard/build')));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -111,14 +110,16 @@ app.get('/create-test-api-key', async (req, res) => {
 app.use('/auth', authRoutes);
 app.use('/api/prompts', promptRoutes);
 app.use('/api/v1', apiRoutes);
-app.use('/dashboard', dashboardRoutes);
 app.use('/gateway', gatewayRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/playground', playgroundRoutes);
 app.use('/api/monitoring', monitoringRoutes);
 
-// Dashboard route - serve React app (but exclude API routes)
-app.get('/dashboard', (req, res) => {
+// Serve dashboard static files
+app.use('/dashboard', express.static(path.join(__dirname, '../dashboard/build')));
+
+// Dashboard route - serve React app for any dashboard routes
+app.get('/dashboard*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dashboard/build/index.html'));
 });
 

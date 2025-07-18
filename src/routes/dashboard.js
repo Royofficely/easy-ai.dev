@@ -1,17 +1,7 @@
 const express = require('express');
-const path = require('path');
-const { authenticateToken } = require('../middleware/auth');
-const { ApiKey } = require('../models');
-
 const router = express.Router();
 
-// Serve dashboard static files
-router.use('/static', express.static(path.join(__dirname, '../../public')));
-
-// Dashboard main page
-router.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../public/dashboard.html'));
-});
-
+// This router is now empty since we serve the React dashboard directly
+// from the static build folder in server.js
 
 module.exports = router;
