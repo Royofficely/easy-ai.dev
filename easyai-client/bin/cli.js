@@ -28,7 +28,7 @@ try {
 program
   .name('easyai')
   .description('EasyAI Client - Local development tools for AI prompt management')
-  .version('1.0.18');
+  .version('1.0.19');
 
 // Setup command - create .env file with API key
 program
@@ -151,7 +151,7 @@ program
           // Filter out problematic headers and add proper headers
           const filteredHeaders = {
             'Content-Type': req.headers['content-type'] || 'application/json',
-            'User-Agent': 'EasyAI-Client/1.0.18'
+            'User-Agent': 'EasyAI-Client/1.0.19'
           };
           
           // Add API key if available

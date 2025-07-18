@@ -19,7 +19,7 @@ export const useApi = () => {
   return context;
 };
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
+const API_BASE = (window as any).EASYAI_BASE_URL || process.env.REACT_APP_API_BASE || 'http://localhost:3001/api';
 
 export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const getAuthHeaders = () => {
