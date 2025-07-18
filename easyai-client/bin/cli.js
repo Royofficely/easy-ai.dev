@@ -142,10 +142,11 @@ program
                         req.headers['authorization']?.replace('Bearer ', '') ||
                         fallbackApiKey;
           
-          console.log('API Request:', req.method, req.path);
-          console.log('API Key from headers:', req.headers['x-api-key']);
-          console.log('Fallback API Key:', fallbackApiKey);
-          console.log('Final API Key:', apiKey);
+          // Debug logging (remove in production)
+          // console.log('API Request:', req.method, req.path);
+          // console.log('API Key from headers:', req.headers['x-api-key']);
+          // console.log('Fallback API Key:', fallbackApiKey);
+          // console.log('Final API Key:', apiKey);
           
           // Filter out problematic headers and add proper headers
           const filteredHeaders = {
@@ -205,7 +206,7 @@ program
           // Inject API key into the dashboard
           dashboardHtml = dashboardHtml.replace(
             '</head>',
-            `<script>window.EASYAI_API_KEY = '${apiKey}'; console.log('API Key injected:', '${apiKey}');</script></head>`
+            `<script>window.EASYAI_API_KEY = '${apiKey}';</script></head>`
           );
           
           res.send(dashboardHtml);
