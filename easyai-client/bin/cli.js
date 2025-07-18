@@ -28,7 +28,7 @@ try {
 program
   .name('easyai')
   .description('EasyAI Client - Local development tools for AI prompt management')
-  .version('1.0.0');
+  .version('1.0.18');
 
 // Setup command - create .env file with API key
 program
@@ -151,7 +151,7 @@ program
           // Filter out problematic headers and add proper headers
           const filteredHeaders = {
             'Content-Type': req.headers['content-type'] || 'application/json',
-            'User-Agent': 'EasyAI-Client/1.0.11'
+            'User-Agent': 'EasyAI-Client/1.0.18'
           };
           
           // Add API key if available
@@ -187,7 +187,7 @@ program
       app.use(express.static(path.join(__dirname, '..')));
       
       // Main route - serve React dashboard
-      app.get('/', (req, res) => {
+      app.get('*', (req, res) => {
         try {
           // Read the .env file to get API key
           const envPath = path.join(process.cwd(), '.env');
@@ -205,10 +205,13 @@ program
           const dashboardPath = path.join(__dirname, '../index.html');
           let dashboardHtml = fs.readFileSync(dashboardPath, 'utf8');
           
-          // Inject API key into the dashboard
+          // Inject API key and API base URL into the dashboard
           dashboardHtml = dashboardHtml.replace(
             '</head>',
-            `<script>window.EASYAI_API_KEY = '${apiKey}';</script></head>`
+            `<script>
+              window.EASYAI_API_KEY = '${apiKey}';
+              window.EASYAI_BASE_URL = 'http://localhost:3001/api';
+            </script></head>`
           );
           
           res.send(dashboardHtml);

@@ -50,6 +50,63 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Simple test endpoint
+app.get('/test', (req, res) => {
+  res.json({ message: 'Test endpoint working!' });
+});
+
+// Temporary API key creation endpoint (for testing)
+app.get('/create-test-api-key', async (req, res) => {
+  try {
+    console.log('Creating test API key...');
+    const { User, ApiKey } = require('./models');
+    const crypto = require('crypto');
+    
+    // Find or create a test user
+    let user = await User.findOne({ where: { email: 'test@example.com' } });
+    
+    if (!user) {
+      user = await User.create({
+        email: 'test@example.com',
+        name: 'Test User',
+        is_active: true,
+        is_verified: true
+      });
+    }
+
+    // Create API key
+    const apiKey = 'easyai_49nyper78py';
+    const hash = crypto.createHash('sha256').update(apiKey).digest('hex');
+    
+    // Check if API key already exists
+    const existingKey = await ApiKey.findOne({ where: { key_hash: hash } });
+    
+    if (existingKey) {
+      return res.json({ message: 'API key already exists', key: 'easyai_49nyper78py' });
+    }
+
+    // Create new API key
+    const apiKeyRecord = await ApiKey.create({
+      user_id: user.id,
+      name: 'CLI Test Key',
+      key_hash: hash,
+      key_prefix: 'easyai_49nyper78py',
+      is_active: true,
+      permissions: ['read', 'write']
+    });
+
+    res.json({ 
+      message: 'API key created successfully',
+      key: 'easyai_49nyper78py',
+      user_email: user.email
+    });
+    
+  } catch (error) {
+    console.error('Error creating API key:', error);
+    res.status(500).json({ error: 'Failed to create API key' });
+  }
+});
+
 // Routes
 app.use('/auth', authRoutes);
 app.use('/api/prompts', promptRoutes);
