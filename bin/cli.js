@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { program } = require('commander');
-const inquirer = require('inquirer');
+const inquirer = require('inquirer').default;
 const chalk = require('chalk');
 // Simple spinner replacement - no external dependencies
 const ora = (text) => ({
@@ -1126,5 +1126,225 @@ program
       console.error(chalk.red(`Failed to start dashboard: ${error.message}`));
     }
   });
+
+// Add prompt command
+program
+  .command('add')
+  .description('Add a new prompt template')
+  .argument('<type>', 'Type of item to add (e.g., "prompt")')
+  .argument('<name>', 'Name of the prompt')
+  .action(async (type, name) => {
+    if (type !== 'prompt') {
+      console.log(chalk.red('❌ Only "prompt" type is supported'));
+      return;
+    }
+    
+    console.log(chalk.blue(`→ Creating prompt template: ${name}`));
+    
+    try {
+      // Get prompt details
+      const answers = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'category',
+          message: 'Category (development/testing/debugging/etc):',
+          default: 'development'
+        },
+        {
+          type: 'input',
+          name: 'description',
+          message: 'Description:'
+        },
+        {
+          type: 'input',
+          name: 'content',
+          message: 'Content (use {variable_name} for variables, end with EOF on new line):'
+        }
+      ]);
+      
+      // Get API key from .env file
+      const envPath = path.join(process.cwd(), '.env');
+      let apiKey = '';
+      
+      if (fs.existsSync(envPath)) {
+        const envContent = fs.readFileSync(envPath, 'utf8');
+        const match = envContent.match(/EASYAI_API_KEY=(.+)/);
+        if (match) {
+          apiKey = match[1].trim();
+        }
+      }
+      
+      if (!apiKey) {
+        console.log(chalk.red('❌ No API key found. Please run: easyai setup --api-key YOUR_KEY'));
+        return;
+      }
+      
+      // Create prompt via API
+      const response = await axios.post('http://localhost:4000/api/prompts', {
+        name,
+        category: answers.category,
+        description: answers.description,
+        content: answers.content
+      }, {
+        headers: {
+          'x-api-key': apiKey
+        }
+      });
+      
+      console.log(chalk.green(`✅ Prompt "${name}" created successfully`));
+      
+    } catch (error) {
+      console.log(chalk.red(`❌ Failed to create prompt: ${error.message}`));
+    }
+  });
+
+// List prompts command
+program
+  .command('list')
+  .description('List all prompt templates')
+  .argument('[type]', 'Type of items to list (e.g., "prompts")')
+  .action(async (type) => {
+    if (type && type !== 'prompts') {
+      console.log(chalk.red('❌ Only "prompts" type is supported'));
+      return;
+    }
+    
+    console.log(chalk.blue('→ Fetching prompts...'));
+    
+    try {
+      const response = await axios.get('http://localhost:4000/api/prompts', {
+        headers: {
+          'x-api-key': process.env.EASYAI_API_KEY
+        }
+      });
+      
+      const prompts = response.data;
+      
+      if (prompts.length === 0) {
+        console.log(chalk.yellow('📝 No prompts found'));
+        return;
+      }
+      
+      console.log(chalk.green(`\n📋 Found ${prompts.length} prompts:`));
+      
+      prompts.forEach(prompt => {
+        console.log(`\n${chalk.bold(prompt.name)} (${prompt.category})`);
+        console.log(`  ${chalk.gray(prompt.description)}`);
+      });
+      
+    } catch (error) {
+      console.log(chalk.red(`❌ Failed to fetch prompts: ${error.message}`));
+    }
+  });
+
+// Generate command
+program
+  .command('generate')
+  .description('Direct AI generation')
+  .argument('<prompt>', 'Prompt to generate')
+  .action(async (prompt) => {
+    console.log(chalk.blue('→ Generating response...'));
+    
+    try {
+      // Get model choice
+      const answers = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'model',
+          message: 'Model:',
+          choices: ['gpt-4', 'gpt-3.5-turbo', 'claude-3-sonnet'],
+          default: 'gpt-4'
+        }
+      ]);
+      
+      const response = await axios.post('http://localhost:4000/api/v1/generate', {
+        prompt,
+        model: answers.model
+      }, {
+        headers: {
+          'x-api-key': process.env.EASYAI_API_KEY
+        }
+      });
+      
+      console.log(chalk.green('\n✅ Response:'));
+      console.log(response.data.response);
+      
+    } catch (error) {
+      console.log(chalk.red(`❌ Generation failed: ${error.response?.data?.error || error.message}`));
+    }
+  });
+
+// History command
+program
+  .command('history')
+  .description('Show request history')
+  .option('--limit <number>', 'Limit number of results', '10')
+  .action(async (options) => {
+    console.log(chalk.blue(`→ Request history (last ${options.limit}):`));
+    
+    try {
+      const response = await axios.get(`http://localhost:4000/api/v1/history?limit=${options.limit}`, {
+        headers: {
+          'x-api-key': process.env.EASYAI_API_KEY
+        }
+      });
+      
+      const history = response.data;
+      
+      if (history.length === 0) {
+        console.log(chalk.yellow('📝 No history found'));
+        return;
+      }
+      
+      history.forEach(item => {
+        console.log(`\n${chalk.bold(item.model)} - ${item.timestamp}`);
+        console.log(`  ${chalk.gray(item.prompt.substring(0, 100))}...`);
+      });
+      
+    } catch (error) {
+      console.log(chalk.red(`❌ Failed to fetch history`));
+    }
+  });
+
+// Override the default help to show correct commands
+program.configureOutput({
+  writeOut: (str) => {
+    if (str.includes('Commands:')) {
+      console.log(`EasyAI CLI - Terminal shortcuts for EasyAI
+
+Usage: easyai <command> [options]
+
+Commands:
+  config                     Setup username/password
+  login                      Login and get token
+  
+  add prompt <name>          Add a new prompt template (interactive)
+  list prompts              List all prompt templates
+  use <prompt_name>         Use a prompt template (interactive)
+  delete prompt <name>      Delete a prompt template
+  
+  history                   Show request history
+  stats                     Show usage statistics
+  
+  generate <prompt>         Direct AI generation
+  models                    List available models
+  
+  help                      Show this help
+
+Examples:
+  easyai add prompt code_review
+  easyai use code_review
+  easyai history --limit 5
+  easyai generate "Explain quantum computing"
+
+Setup:
+  1. easyai config          # Set username/password
+  2. easyai login           # Get authentication token
+  3. easyai list prompts    # Verify connection`);
+    } else {
+      process.stdout.write(str);
+    }
+  }
+});
 
 program.parse();
