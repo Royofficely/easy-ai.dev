@@ -26,6 +26,8 @@ router.post('/register', rateLimiter, async (req, res) => {
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     const verificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
+    console.log('Generated verification code:', { email, verificationCode, verificationExpires });
+
     // Create user with temporary password
     const user = await User.create({
       email,
@@ -92,16 +94,32 @@ router.post('/verify', rateLimiter, async (req, res) => {
   try {
     const { email, verification_code } = req.body;
 
+    console.log('Verification attempt:', { email, verification_code });
+
     const user = await User.findOne({ where: { email } });
     if (!user) {
+      console.log('User not found:', email);
       return res.status(404).json({ error: 'User not found' });
     }
 
-    if (user.verification_code !== verification_code) {
+    console.log('User verification data:', {
+      stored_code: user.verification_code,
+      provided_code: verification_code,
+      expires: user.verification_expires,
+      current_time: new Date()
+    });
+
+    // Normalize codes for comparison (trim whitespace, ensure string)
+    const storedCode = String(user.verification_code || '').trim();
+    const providedCode = String(verification_code || '').trim();
+
+    if (storedCode !== providedCode) {
+      console.log('Code mismatch:', { storedCode, providedCode });
       return res.status(400).json({ error: 'Invalid verification code' });
     }
 
     if (user.verification_expires < new Date()) {
+      console.log('Code expired:', { expires: user.verification_expires, now: new Date() });
       return res.status(400).json({ error: 'Verification code expired' });
     }
 
@@ -205,11 +223,25 @@ router.post('/login', rateLimiter, async (req, res) => {
         return res.json({ message: 'Verification code sent to your email.' });
       } else {
         // Verify the code
-        if (user.verification_code !== code) {
+        console.log('Login verification attempt:', { email, code });
+        console.log('User verification data:', {
+          stored_code: user.verification_code,
+          provided_code: code,
+          expires: user.verification_expires,
+          current_time: new Date()
+        });
+
+        // Normalize codes for comparison (trim whitespace, ensure string)
+        const storedCode = String(user.verification_code || '').trim();
+        const providedCode = String(code || '').trim();
+
+        if (storedCode !== providedCode) {
+          console.log('Login code mismatch:', { storedCode, providedCode });
           return res.status(400).json({ error: 'Invalid verification code' });
         }
 
         if (user.verification_expires < new Date()) {
+          console.log('Login code expired:', { expires: user.verification_expires, now: new Date() });
           return res.status(400).json({ error: 'Verification code expired' });
         }
 
@@ -376,6 +408,42 @@ router.post('/resend-verification', rateLimiter, async (req, res) => {
   } catch (error) {
     console.error('Resend verification error:', error);
     res.status(500).json({ error: 'Failed to resend verification code' });
+  }
+});
+
+// Test webhook endpoint
+router.post('/test-webhook', async (req, res) => {
+  try {
+    const testPayload = {
+      email: 'test@example.com',
+      verification_code: '123456',
+      action: 'test',
+      source: 'easy-ai.dev',
+      timestamp: new Date().toISOString()
+    };
+    
+    console.log('Testing webhook with payload:', testPayload);
+    
+    const response = await axios.post('https://hook.eu1.make.com/ggrd1nilwumpay2envc5k8lqhwqtxlm7', testPayload, {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      timeout: 10000
+    });
+    
+    console.log('Webhook test response:', response.status, response.data);
+    
+    res.json({ 
+      success: true, 
+      webhook_response: response.data,
+      status: response.status
+    });
+  } catch (error) {
+    console.error('Webhook test failed:', error.response?.data || error.message);
+    res.status(500).json({ 
+      success: false, 
+      error: error.response?.data || error.message 
+    });
   }
 });
 
