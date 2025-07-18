@@ -25,7 +25,7 @@ const express = require('express');
 program
   .name('easyai')
   .description('EasyAI CLI tool for managing AI prompts and projects')
-  .version('1.3.13');
+  .version('1.3.14');
 
 // Initialize project
 program
@@ -774,7 +774,7 @@ program
           
           const response = await axios({
             method: req.method,
-            url: `https://easy-aidev-production.up.railway.app${req.path}`,
+            url: `http://localhost:3000${req.path}`,
             data: req.body,
             headers: filteredHeaders
           });
@@ -808,6 +808,10 @@ program
           // Read React dashboard index.html
           const dashboardPath = path.join(__dirname, '../dashboard-build/index.html');
           let dashboardHtml = fs.readFileSync(dashboardPath, 'utf8');
+          
+          // Fix relative paths to absolute paths
+          dashboardHtml = dashboardHtml.replace(/\.\/(static\/)/g, '/$1');
+          dashboardHtml = dashboardHtml.replace(/\.\/(favicon\.ico|logo192\.png|logo512\.png|manifest\.json)/g, '/$1');
           
           // Inject API key and API base URL into the dashboard - use localStorage
           dashboardHtml = dashboardHtml.replace(
@@ -992,7 +996,7 @@ program
           
           const response = await axios({
             method: req.method,
-            url: `https://easy-aidev-production.up.railway.app${req.path}`,
+            url: `http://localhost:3000${req.path}`,
             data: req.body,
             headers: filteredHeaders
           });
@@ -1026,6 +1030,10 @@ program
           // Read React dashboard index.html
           const dashboardPath = path.join(__dirname, '../dashboard/build/index.html');
           let dashboardHtml = fs.readFileSync(dashboardPath, 'utf8');
+          
+          // Fix relative paths to absolute paths
+          dashboardHtml = dashboardHtml.replace(/\.\/(static\/)/g, '/$1');
+          dashboardHtml = dashboardHtml.replace(/\.\/(favicon\.ico|logo192\.png|logo512\.png|manifest\.json)/g, '/$1');
           
           // Inject API key and API base URL into the dashboard
           dashboardHtml = dashboardHtml.replace(
