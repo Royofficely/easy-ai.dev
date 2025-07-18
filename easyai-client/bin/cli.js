@@ -210,7 +210,7 @@ program
             '</head>',
             `<script>
               window.EASYAI_API_KEY = '${apiKey}';
-              window.EASYAI_BASE_URL = 'http://localhost:3001/api';
+              window.EASYAI_BASE_URL = 'http://localhost:3001';
             </script></head>`
           );
           

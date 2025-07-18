@@ -57,15 +57,15 @@ const ApiKey = sequelize.define('ApiKey', {
 
 // Static methods
 ApiKey.generateKey = function() {
-  const prefix = 'eai_';
-  const key = crypto.randomBytes(32).toString('hex');
+  const prefix = 'easyai_';
+  const key = crypto.randomBytes(8).toString('hex'); // Shorter key
   const fullKey = prefix + key;
   const hash = crypto.createHash('sha256').update(fullKey).digest('hex');
   
   return {
     key: fullKey,
     hash: hash,
-    prefix: prefix + key.substring(0, 8) + '...'
+    prefix: prefix + key.substring(0, 4) + '...'
   };
 };
 
