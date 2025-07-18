@@ -1154,13 +1154,31 @@ program
           type: 'input',
           name: 'description',
           message: 'Description:'
-        },
-        {
-          type: 'input',
-          name: 'content',
-          message: 'Content (use {variable_name} for variables, end with EOF on new line):'
         }
       ]);
+      
+      // Get content with multiline support
+      console.log(chalk.blue('Content (use {variable_name} for variables, end with EOF on new line):'));
+      let content = '';
+      const readline = require('readline');
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+      });
+      
+      content = await new Promise((resolve) => {
+        let lines = [];
+        rl.on('line', (line) => {
+          if (line.trim() === 'EOF') {
+            rl.close();
+            resolve(lines.join('\n'));
+          } else {
+            lines.push(line);
+          }
+        });
+      });
+      
+      answers.content = content;
       
       // Get API key from .env file
       const envPath = path.join(process.cwd(), '.env');
