@@ -1,0 +1,35 @@
+# Source code - users don't need this
+src/
+dashboard/
+install-ide-integration.js
+create-api-key.js
+install-easyai-complete.sh
+package-cli.json
+public/
+
+# Development files
+.env
+.env.example
+.deployment-trigger
+.claude/
+database/
+node_modules/
+vercel.json
+railway.json
+
+# Documentation and landing page
+index.html
+landing-page.html
+CNAME
+
+# Git and development
+.git/
+.gitignore
+*.log
+*.tmp
+*.temp
+
+# Only include the CLI binary and essential files
+!bin/
+!package.json
+!README.md
