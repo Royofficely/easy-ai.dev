@@ -135,7 +135,11 @@ program
         }
       });
       
-      // Main route - serve HTML dashboard with API key injection
+      // Serve static files from React build
+      app.use('/static', express.static(path.join(__dirname, '../static')));
+      app.use(express.static(path.join(__dirname, '..')));
+      
+      // Main route - serve React dashboard
       app.get('/', (req, res) => {
         try {
           // Read the .env file to get API key
@@ -150,14 +154,14 @@ program
             }
           }
           
-          // Read dashboard HTML
-          const dashboardPath = path.join(__dirname, '../dashboard.html');
+          // Read React dashboard index.html
+          const dashboardPath = path.join(__dirname, '../index.html');
           let dashboardHtml = fs.readFileSync(dashboardPath, 'utf8');
           
           // Inject API key into the dashboard
           dashboardHtml = dashboardHtml.replace(
-            `let apiKey = localStorage.getItem('easyai_api_key') || process.env.EASYAI_API_KEY;`,
-            `let apiKey = localStorage.getItem('easyai_api_key') || '${apiKey}';`
+            '</head>',
+            `<script>window.EASYAI_API_KEY = '${apiKey}';</script></head>`
           );
           
           res.send(dashboardHtml);
