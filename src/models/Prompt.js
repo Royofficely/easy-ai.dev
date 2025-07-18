@@ -37,9 +37,17 @@ const Prompt = sequelize.define('Prompt', {
     type: DataTypes.JSON,
     defaultValue: []
   },
+  content: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  },
   template: {
     type: DataTypes.TEXT,
     allowNull: false
+  },
+  variables: {
+    type: DataTypes.JSON,
+    defaultValue: []
   },
   parameters: {
     type: DataTypes.JSON,

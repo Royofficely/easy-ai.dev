@@ -8,9 +8,25 @@ const router = express.Router();
 // Create prompt
 router.post('/', authenticateApiKey, checkPermission('write'), validateInput('createPrompt'), async (req, res) => {
   try {
+    // Generate a unique prompt_id if not provided
+    const promptId = req.body.prompt_id || `prompt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
     const promptData = {
-      ...req.body,
-      user_id: req.user.id
+      name: req.body.name,
+      prompt_id: promptId,
+      description: req.body.description || '',
+      category: req.body.category || 'development',
+      content: req.body.content,
+      template: req.body.content, // Map content to template for backward compatibility
+      variables: req.body.variables || [],
+      tags: req.body.tags || [],
+      parameters: req.body.parameters || {},
+      model_config: req.body.model_config || {},
+      options: req.body.options || {},
+      environments: req.body.environments || {},
+      user_id: req.user.id,
+      is_active: true,
+      version: 1
     };
 
     const prompt = await Prompt.create(promptData);

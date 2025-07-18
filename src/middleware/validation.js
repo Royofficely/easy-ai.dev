@@ -14,11 +14,11 @@ const schemas = {
   
   createPrompt: Joi.object({
     name: Joi.string().min(1).max(100).required(),
-    prompt_id: Joi.string().min(1).max(100).required(),
-    description: Joi.string().max(500).optional(),
+    description: Joi.string().max(500).optional().allow(''),
     category: Joi.string().max(50).optional(),
+    content: Joi.string().required(),
+    variables: Joi.array().items(Joi.string()).optional(),
     tags: Joi.array().items(Joi.string()).optional(),
-    template: Joi.string().required(),
     parameters: Joi.object().optional(),
     model_config: Joi.object({
       primary: Joi.string().required(),
