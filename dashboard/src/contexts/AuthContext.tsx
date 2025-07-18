@@ -1,21 +1,20 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 
 interface User {
   id: string;
   email: string;
-  name: string;
   role: string;
-  is_verified: boolean;
+  permissions: string[];
 }
 
 interface AuthContextType {
   user: User | null;
-  loading: boolean;
-  login: (email: string, code?: string) => Promise<void>;
+  token: string | null;
+  apiKey: string | null;
+  login: (email: string, verificationCode?: string) => Promise<void>;
   logout: () => void;
-  register: (email: string) => Promise<void>;
-  verifyEmail: (email: string, code: string) => Promise<void>;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,97 +27,94 @@ export const useAuth = () => {
   return context;
 };
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [apiKey, setApiKey] = useState<string | null>(localStorage.getItem('apiKey'));
+  const [isLoading, setIsLoading] = useState(true);
+
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    const apiKey = localStorage.getItem('easyai_api_key');
-    
-    if (token) {
-      checkAuthStatus(token);
-    } else if (apiKey) {
-      // Create a mock user for API key authentication
-      setUser({
-        id: 'api_user',
-        email: localStorage.getItem('easyai_email') || 'user@example.com',
-        name: 'API User',
-        role: 'user',
-        is_verified: true
-      });
-      setLoading(false);
-    } else {
-      setLoading(false);
-    }
-  }, []);
-
-  const checkAuthStatus = async (token: string) => {
-    try {
-      const response = await axios.get(`${API_BASE}/api/user`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+    const checkAuth = async () => {
+      const storedToken = localStorage.getItem('token');
+      const storedApiKey = localStorage.getItem('apiKey');
       
-      if (response.data) {
-        setUser(response.data);
+      if (storedToken || storedApiKey) {
+        try {
+          const headers: any = {};
+          if (storedApiKey) {
+            headers['x-api-key'] = storedApiKey;
+          } else if (storedToken) {
+            headers['Authorization'] = `Bearer ${storedToken}`;
+          }
+
+          const response = await axios.get(`${API_BASE_URL}/api/v1/user`, { headers });
+          setUser(response.data.user);
+          setToken(storedToken);
+          setApiKey(storedApiKey);
+        } catch (error) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('apiKey');
+          setUser(null);
+          setToken(null);
+          setApiKey(null);
+        }
       }
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, [API_BASE_URL]);
+
+  const login = async (email: string, verificationCode?: string) => {
+    try {
+      if (!verificationCode) {
+        // First step: send verification code
+        await axios.post(`${API_BASE_URL}/auth/login`, { email });
+        return;
+      }
+
+      // Second step: verify code and login
+      const response = await axios.post(`${API_BASE_URL}/auth/verify`, {
+        email,
+        verificationCode
+      });
+
+      const { token: newToken, apiKey: newApiKey, user: userData } = response.data;
+      
+      setUser(userData);
+      setToken(newToken);
+      setApiKey(newApiKey);
+      
+      if (newToken) localStorage.setItem('token', newToken);
+      if (newApiKey) localStorage.setItem('apiKey', newApiKey);
+      
     } catch (error) {
-      localStorage.removeItem('auth_token');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const login = async (email: string, code?: string) => {
-    try {
-      const response = await axios.post(`${API_BASE}/auth/login`, {
-        email,
-        code
-      });
-
-      const { token, user } = response.data;
-      localStorage.setItem('auth_token', token);
-      setUser(user);
-    } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Login failed');
-    }
-  };
-
-  const register = async (email: string) => {
-    try {
-      await axios.post(`${API_BASE}/auth/register`, {
-        email
-      });
-    } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Registration failed');
-    }
-  };
-
-  const verifyEmail = async (email: string, code: string) => {
-    try {
-      await axios.post(`${API_BASE}/auth/verify`, {
-        email,
-        verification_code: code
-      });
-    } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Verification failed');
+      console.error('Login failed:', error);
+      throw error;
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('auth_token');
     setUser(null);
+    setToken(null);
+    setApiKey(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('apiKey');
   };
 
   const value = {
     user,
-    loading,
+    token,
+    apiKey,
     login,
     logout,
-    register,
-    verifyEmail
+    isLoading
   };
 
   return (
