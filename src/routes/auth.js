@@ -295,9 +295,26 @@ router.post('/login', rateLimiter, async (req, res) => {
 
     // For verified users, login with last verification code
     if (code) {
-      const isValidPassword = await user.validatePassword(code);
-      if (!isValidPassword) {
+      console.log('Verified user login attempt:', { email, code });
+      console.log('User verification data:', {
+        stored_code: user.verification_code,
+        provided_code: code,
+        expires: user.verification_expires,
+        current_time: new Date()
+      });
+
+      // Use direct string comparison instead of validatePassword
+      const storedCode = String(user.verification_code || '').trim();
+      const providedCode = String(code || '').trim();
+
+      if (storedCode !== providedCode) {
+        console.log('Verified user code mismatch:', { storedCode, providedCode });
         return res.status(401).json({ error: 'Invalid code' });
+      }
+
+      if (user.verification_expires && user.verification_expires < new Date()) {
+        console.log('Verified user code expired:', { expires: user.verification_expires, now: new Date() });
+        return res.status(401).json({ error: 'Verification code expired' });
       }
 
       // Update last login
