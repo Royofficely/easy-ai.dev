@@ -277,8 +277,18 @@ app.get('/create-test-api-key', async (req, res) => {
 io.on('connection', (socket) => {
   console.log('🔗 Client connected:', socket.id);
   
+  // Send current client count to all clients
+  const clientCount = io.engine.clientsCount;
+  io.emit('client_count', clientCount);
+  
   socket.on('disconnect', () => {
     console.log('🔌 Client disconnected:', socket.id);
+    
+    // Update client count after disconnect
+    setTimeout(() => {
+      const clientCount = io.engine.clientsCount;
+      io.emit('client_count', clientCount);
+    }, 100);
   });
   
   socket.on('join_room', (room) => {
