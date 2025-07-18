@@ -154,19 +154,31 @@
     <script>
         // Configuration
         const API_BASE = 'http://localhost:3001';
-        let apiKey = localStorage.getItem('easyai_api_key');
+        let apiKey = localStorage.getItem('easyai_api_key') || process.env.EASYAI_API_KEY;
         let currentUser = null;
 
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
+            // Show simple success message if no API key is found
             if (!apiKey) {
-                window.location.href = '/';
+                showSimpleDashboard();
                 return;
             }
             
             loadUserData();
             loadDashboardData();
         });
+
+        // Show simple dashboard without API calls
+        function showSimpleDashboard() {
+            document.getElementById('userEmail').textContent = 'Local User';
+            document.getElementById('totalRequests').textContent = '0';
+            document.getElementById('totalCost').textContent = '$0.00';
+            document.getElementById('apiKeyCount').textContent = '0';
+            document.getElementById('apiKeysList').innerHTML = '<p class="text-gray-500">Configure your API key to see data.</p>';
+            document.getElementById('promptsList').innerHTML = '<p class="text-gray-500">Configure your API key to manage prompts.</p>';
+            document.getElementById('analyticsContent').innerHTML = '<p class="text-gray-500">Configure your API key to view analytics.</p>';
+        }
 
         // User management
         async function loadUserData() {

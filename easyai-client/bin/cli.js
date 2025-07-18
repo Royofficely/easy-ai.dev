@@ -135,9 +135,36 @@ program
         }
       });
       
-      // Main route - serve HTML dashboard
+      // Main route - serve HTML dashboard with API key injection
       app.get('/', (req, res) => {
-        res.sendFile(path.join(__dirname, '../dashboard.html'));
+        try {
+          // Read the .env file to get API key
+          const envPath = path.join(process.cwd(), '.env');
+          let apiKey = '';
+          
+          if (fs.existsSync(envPath)) {
+            const envContent = fs.readFileSync(envPath, 'utf8');
+            const match = envContent.match(/EASYAI_API_KEY=(.+)/);
+            if (match) {
+              apiKey = match[1];
+            }
+          }
+          
+          // Read dashboard HTML
+          const dashboardPath = path.join(__dirname, '../dashboard.html');
+          let dashboardHtml = fs.readFileSync(dashboardPath, 'utf8');
+          
+          // Inject API key into the dashboard
+          dashboardHtml = dashboardHtml.replace(
+            `let apiKey = localStorage.getItem('easyai_api_key') || process.env.EASYAI_API_KEY;`,
+            `let apiKey = localStorage.getItem('easyai_api_key') || '${apiKey}';`
+          );
+          
+          res.send(dashboardHtml);
+        } catch (error) {
+          console.error('Error serving dashboard:', error);
+          res.status(500).send('Error loading dashboard');
+        }
       });
       
       app.listen(port, () => {
