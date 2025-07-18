@@ -1324,11 +1324,12 @@ program
     }
   });
 
-// Override the default help to show correct commands
-program.configureOutput({
-  writeOut: (str) => {
-    if (str.includes('Commands:')) {
-      console.log(`EasyAI CLI - Terminal shortcuts for EasyAI
+// Custom help command
+program
+  .command('help')
+  .description('Show this help')
+  .action(() => {
+    console.log(`EasyAI CLI - Terminal shortcuts for EasyAI
 
 Usage: easyai <command> [options]
 
@@ -1359,10 +1360,6 @@ Setup:
   1. easyai config          # Set username/password
   2. easyai login           # Get authentication token
   3. easyai list prompts    # Verify connection`);
-    } else {
-      process.stdout.write(str);
-    }
-  }
-});
+  });
 
 program.parse();
