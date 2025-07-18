@@ -7,6 +7,32 @@ const { rateLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
 
+// Helper function to verify codes consistently
+function verifyCode(storedCode, providedCode, expirationTime) {
+  console.log('verifyCode called with:', { storedCode, providedCode, expirationTime });
+  
+  // Normalize codes
+  const normalizedStored = String(storedCode || '').trim();
+  const normalizedProvided = String(providedCode || '').trim();
+  
+  console.log('Normalized codes:', { normalizedStored, normalizedProvided });
+  
+  // Check if codes match
+  if (normalizedStored !== normalizedProvided) {
+    console.log('Code mismatch');
+    return { success: false, error: 'Invalid verification code' };
+  }
+  
+  // Check expiration
+  if (expirationTime && expirationTime < new Date()) {
+    console.log('Code expired');
+    return { success: false, error: 'Verification code expired' };
+  }
+  
+  console.log('Code verification successful');
+  return { success: true };
+}
+
 // Register new user
 router.post('/register', rateLimiter, async (req, res) => {
   try {
@@ -109,18 +135,11 @@ router.post('/verify', rateLimiter, async (req, res) => {
       current_time: new Date()
     });
 
-    // Normalize codes for comparison (trim whitespace, ensure string)
-    const storedCode = String(user.verification_code || '').trim();
-    const providedCode = String(verification_code || '').trim();
-
-    if (storedCode !== providedCode) {
-      console.log('Code mismatch:', { storedCode, providedCode });
-      return res.status(400).json({ error: 'Invalid verification code' });
-    }
-
-    if (user.verification_expires < new Date()) {
-      console.log('Code expired:', { expires: user.verification_expires, now: new Date() });
-      return res.status(400).json({ error: 'Verification code expired' });
+    // Use unified verification function
+    const verificationResult = verifyCode(user.verification_code, verification_code, user.verification_expires);
+    
+    if (!verificationResult.success) {
+      return res.status(400).json({ error: verificationResult.error });
     }
 
     // Mark user as verified and set the verification code as password
@@ -231,18 +250,11 @@ router.post('/login', rateLimiter, async (req, res) => {
           current_time: new Date()
         });
 
-        // Normalize codes for comparison (trim whitespace, ensure string)
-        const storedCode = String(user.verification_code || '').trim();
-        const providedCode = String(code || '').trim();
-
-        if (storedCode !== providedCode) {
-          console.log('Login code mismatch:', { storedCode, providedCode });
-          return res.status(400).json({ error: 'Invalid verification code' });
-        }
-
-        if (user.verification_expires < new Date()) {
-          console.log('Login code expired:', { expires: user.verification_expires, now: new Date() });
-          return res.status(400).json({ error: 'Verification code expired' });
+        // Use unified verification function
+        const verificationResult = verifyCode(user.verification_code, code, user.verification_expires);
+        
+        if (!verificationResult.success) {
+          return res.status(400).json({ error: verificationResult.error });
         }
 
         // Mark user as verified
@@ -303,18 +315,11 @@ router.post('/login', rateLimiter, async (req, res) => {
         current_time: new Date()
       });
 
-      // Use direct string comparison instead of validatePassword
-      const storedCode = String(user.verification_code || '').trim();
-      const providedCode = String(code || '').trim();
-
-      if (storedCode !== providedCode) {
-        console.log('Verified user code mismatch:', { storedCode, providedCode });
-        return res.status(401).json({ error: 'Invalid code' });
-      }
-
-      if (user.verification_expires && user.verification_expires < new Date()) {
-        console.log('Verified user code expired:', { expires: user.verification_expires, now: new Date() });
-        return res.status(401).json({ error: 'Verification code expired' });
+      // Use unified verification function
+      const verificationResult = verifyCode(user.verification_code, code, user.verification_expires);
+      
+      if (!verificationResult.success) {
+        return res.status(401).json({ error: verificationResult.error });
       }
 
       // Update last login
@@ -425,6 +430,42 @@ router.post('/resend-verification', rateLimiter, async (req, res) => {
   } catch (error) {
     console.error('Resend verification error:', error);
     res.status(500).json({ error: 'Failed to resend verification code' });
+  }
+});
+
+// Debug endpoint to check user verification state
+router.post('/debug-user', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+    
+    const user = await User.findOne({ where: { email } });
+    
+    if (!user) {
+      return res.json({ 
+        found: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    res.json({
+      found: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        is_verified: user.is_verified,
+        verification_code: user.verification_code,
+        verification_expires: user.verification_expires,
+        current_time: new Date(),
+        is_expired: user.verification_expires ? user.verification_expires < new Date() : null
+      }
+    });
+  } catch (error) {
+    console.error('Debug user error:', error);
+    res.status(500).json({ error: 'Debug failed' });
   }
 });
 
