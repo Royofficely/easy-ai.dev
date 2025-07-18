@@ -117,6 +117,7 @@ app.use('/api/monitoring', monitoringRoutes);
 
 // Serve dashboard static files
 app.use('/dashboard', express.static(path.join(__dirname, '../dashboard/build')));
+app.use('/static', express.static(path.join(__dirname, '../dashboard/build/static')));
 
 // Dashboard route - serve React app for any dashboard routes
 app.get('/dashboard*', (req, res) => {
