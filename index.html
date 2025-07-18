@@ -95,11 +95,11 @@
                 </div>
             </div>
             <div class="font-mono text-sm space-y-2">
-                <div class="text-gray-400">$ npm install -g easyai</div>
-                <div class="text-gray-400">$ easyai setup --api-key your-key</div>
-                <div class="text-gray-50">✅ Database initialized</div>
-                <div class="text-gray-50">✅ IDE integration active</div>
-                <div class="text-gray-50">✅ Dashboard running on port 3000</div>
+                <div class="text-gray-400">$ npm install -g @easyai/cli</div>
+                <div class="text-gray-400">$ easyai ui</div>
+                <div class="text-gray-50">✅ Server starting automatically</div>
+                <div class="text-gray-50">✅ Dashboard opening in browser</div>
+                <div class="text-gray-50">✅ Ready to use!</div>
                 <div class="text-gray-500 cursor-blink">🎯 Ready to use!</div>
             </div>
         </div>
@@ -533,8 +533,8 @@
                                         </button>
                                     </div>
                                     <div class="bg-gray-900 rounded p-2 font-mono text-xs text-gray-300">
-                                        <div>npm install -g easyai</div>
-                                        <div>easyai setup --api-key ${apiKey}</div>
+                                        <div>npm install -g @easyai/cli</div>
+                                        <div>easyai ui</div>
                                     </div>
                                 </div>
                                 <p class="text-gray-400 text-sm">
@@ -682,6 +682,22 @@
 
         function copyApiKey(apiKey) {
             navigator.clipboard.writeText(apiKey).then(() => {
+                // Show copied feedback
+                const button = event.target.closest('button');
+                const icon = button.querySelector('i');
+                icon.setAttribute('data-lucide', 'check');
+                lucide.createIcons();
+                setTimeout(() => {
+                    icon.setAttribute('data-lucide', 'copy');
+                    lucide.createIcons();
+                }, 2000);
+            });
+        }
+
+        function copySetupCommands(apiKey) {
+            const commands = `npm install -g @easyai/cli
+easyai ui`;
+            navigator.clipboard.writeText(commands).then(() => {
                 // Show copied feedback
                 const button = event.target.closest('button');
                 const icon = button.querySelector('i');
