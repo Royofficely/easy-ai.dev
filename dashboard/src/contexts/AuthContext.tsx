@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [apiKey, setApiKey] = useState<string | null>(localStorage.getItem('apiKey'));
   const [isLoading, setIsLoading] = useState(true);
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
   useEffect(() => {
     const checkAuth = async () => {
