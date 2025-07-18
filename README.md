@@ -8,7 +8,7 @@ Building AI features shouldn't mean wrestling with hardcoded prompts, surprise c
 
 ```bash
 # Install the CLI
-npm install -g easyai-cli
+npm install -g @easyai/cli
 
 # Get your API key from https://easy-ai.dev
 # Then setup everything in one command

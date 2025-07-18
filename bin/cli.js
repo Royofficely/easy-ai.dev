@@ -3,7 +3,17 @@
 const { program } = require('commander');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
-const ora = require('ora');
+// Simple spinner replacement - no external dependencies
+const ora = (text) => ({
+  start: () => {
+    console.log(chalk.blue(text));
+    return {
+      succeed: (msg) => console.log(chalk.green(msg)),
+      fail: (msg) => console.log(chalk.red(msg)),
+      text: text
+    };
+  }
+});
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
@@ -15,7 +25,7 @@ const express = require('express');
 program
   .name('easyai')
   .description('EasyAI CLI tool for managing AI prompts and projects')
-  .version('1.2.0');
+  .version('1.3.12');
 
 // Initialize project
 program
@@ -424,17 +434,9 @@ program
     const setupSpinner = ora('Creating configuration...').start();
     
     try {
-      // Check if we're in the right directory
-      if (!fs.existsSync('./src/server.js')) {
-        setupSpinner.fail('Setup failed: Not in EasyAI project directory');
-        console.log(chalk.red('❌ Please run this command from your EasyAI project directory'));
-        console.log(chalk.yellow('💡 First clone the project: git clone https://github.com/your-repo/easyai.git'));
-        return;
-      }
-      
       // Create .env file
       const envContent = `EASYAI_API_KEY=${apiKey}
-EASYAI_BASE_URL=http://localhost:3001
+EASYAI_BASE_URL=https://easy-aidev-production.up.railway.app
 JWT_SECRET=your-jwt-secret-key-${Math.random().toString(36).substring(2, 15)}
 DATABASE_URL=sqlite:./database.sqlite
 PORT=3001
@@ -448,22 +450,23 @@ DEEPSEEK_API_KEY=
       
       fs.writeFileSync('.env', envContent);
       
-      // Install dependencies if not already installed
-      if (!fs.existsSync('./node_modules')) {
-        setupSpinner.text = 'Installing dependencies...';
-        await execAsync('npm install');
+      // Create database directory
+      if (!fs.existsSync('./database')) {
+        fs.mkdirSync('./database');
       }
       
-      // Initialize database
-      setupSpinner.text = 'Initializing database...';
-      await execAsync('npm run db:init');
+      // Create basic SQLite database
+      const dbPath = './database/easyai.sqlite';
+      if (!fs.existsSync(dbPath)) {
+        fs.writeFileSync(dbPath, '');
+      }
       
       setupSpinner.succeed('EasyAI setup completed successfully!');
       
       console.log(chalk.green('\n🎉 EasyAI is configured and ready!'));
       console.log(chalk.yellow('\n📊 Next steps:'));
       console.log(chalk.gray('  1. Run: easyai ui'));
-      console.log(chalk.gray('  2. Your dashboard will open at http://localhost:3001/dashboard'));
+      console.log(chalk.gray('  2. Your dashboard will open at http://localhost:3001'));
       console.log(chalk.gray('  3. Start building with AI!'));
       
     } catch (error) {
@@ -716,48 +719,130 @@ program
         console.log(chalk.gray('📝 No existing process found on port 3001'));
       }
       
-      // Check if we're in the right directory
-      if (!fs.existsSync('./src/server.js')) {
-        console.error(chalk.red('❌ Error: src/server.js not found'));
-        console.log(chalk.yellow('💡 Please run this command from your EasyAI project directory'));
-        console.log(chalk.gray('   Current directory: ' + process.cwd()));
-        console.log(chalk.blue('💡 To set up EasyAI locally:'));
-        console.log(chalk.gray('   1. Clone: git clone https://github.com/your-repo/easyai.git'));
-        console.log(chalk.gray('   2. Install: npm install'));
-        console.log(chalk.gray('   3. Run: easyai setup --api-key YOUR_API_KEY'));
-        console.log(chalk.gray('   4. Run: easyai ui'));
+      // Check if .env file exists
+      if (!fs.existsSync('.env')) {
+        console.log(chalk.red('❌ No configuration found.'));
+        console.log(chalk.yellow('💡 Please run: easyai setup --api-key YOUR_API_KEY'));
         return;
       }
       
-      // Start the server
-      console.log(chalk.blue('🚀 Starting EasyAI server...'));
-      const serverPath = './src/server.js';
-      const env = { ...process.env, PORT: '3001' };
+      // Start the dashboard server
+      console.log(chalk.blue('🚀 Starting EasyAI dashboard...'));
+      const app = express();
+      const port = 3001;
       
-      // Start server in background
-      const server = exec(`node ${serverPath}`, { env, detached: true, stdio: 'ignore' });
-      server.unref(); // Allow the parent process to exit
+      // Add body parsing middleware
+      app.use(express.json());
+      app.use(express.urlencoded({ extended: true }));
       
-      // Wait for server to start
-      let attempts = 0;
-      const maxAttempts = 15;
-      
-      while (attempts < maxAttempts) {
+      // API proxy to cloud backend
+      app.use('/api', async (req, res) => {
         try {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          await axios.get('http://localhost:3001/health', { timeout: 2000 });
-          console.log(chalk.green('✅ Server started successfully'));
-          console.log(chalk.yellow('📊 Dashboard: http://localhost:3001/dashboard'));
-          openInUI('dashboard');
-          return;
+          // Get API key from .env file
+          const envPath = path.join(process.cwd(), '.env');
+          let apiKey = '';
+          
+          if (fs.existsSync(envPath)) {
+            const envContent = fs.readFileSync(envPath, 'utf8');
+            const match = envContent.match(/EASYAI_API_KEY=(.+)/);
+            if (match) {
+              apiKey = match[1].trim();
+            }
+          }
+          
+          // Use env API key if header is null, undefined, or 'null' string
+          const headerApiKey = req.headers['x-api-key'];
+          const finalApiKey = (headerApiKey && headerApiKey !== 'null' && headerApiKey !== 'undefined') ? headerApiKey : apiKey;
+          
+          // Debug logging
+          console.log('API Proxy Debug:', {
+            path: req.path,
+            method: req.method,
+            envApiKey: apiKey.slice(0, 10) + '...',
+            headerApiKey: req.headers['x-api-key'] ? req.headers['x-api-key'].slice(0, 10) + '...' : 'none',
+            finalApiKey: finalApiKey ? finalApiKey.slice(0, 10) + '...' : 'none'
+          });
+          
+          const filteredHeaders = {
+            'Content-Type': req.headers['content-type'] || 'application/json',
+            'User-Agent': 'EasyAI-CLI/1.3.10'
+          };
+          
+          if (finalApiKey) {
+            filteredHeaders['X-API-Key'] = finalApiKey;
+          }
+          
+          const response = await axios({
+            method: req.method,
+            url: `https://easy-aidev-production.up.railway.app${req.path}`,
+            data: req.body,
+            headers: filteredHeaders
+          });
+          res.json(response.data);
         } catch (error) {
-          attempts++;
-          console.log(chalk.gray(`⏳ Waiting for server to start... (${attempts}/${maxAttempts})`));
+          res.status(error.response?.status || 500).json({
+            error: error.response?.data || error.message
+          });
         }
-      }
+      });
       
-      console.error(chalk.red('❌ Server failed to start within expected time'));
-      console.log(chalk.yellow('💡 Try running: npm start'));
+      // Serve static files from React build
+      app.use('/static', express.static(path.join(__dirname, '../dashboard-build/static')));
+      app.use(express.static(path.join(__dirname, '../dashboard-build')));
+      
+      // Main route - serve React dashboard
+      app.get('*', (req, res) => {
+        try {
+          // Read the .env file to get API key
+          const envPath = path.join(process.cwd(), '.env');
+          let apiKey = '';
+          
+          if (fs.existsSync(envPath)) {
+            const envContent = fs.readFileSync(envPath, 'utf8');
+            const match = envContent.match(/EASYAI_API_KEY=(.+)/);
+            if (match) {
+              apiKey = match[1].trim();
+            }
+          }
+          
+          // Read React dashboard index.html
+          const dashboardPath = path.join(__dirname, '../dashboard-build/index.html');
+          let dashboardHtml = fs.readFileSync(dashboardPath, 'utf8');
+          
+          // Inject API key and API base URL into the dashboard - use localStorage
+          dashboardHtml = dashboardHtml.replace(
+            '<head>',
+            `<head>
+            <script>
+              localStorage.setItem('easyai_api_key', '${apiKey}');
+              window.EASYAI_API_KEY = '${apiKey}';
+              window.EASYAI_BASE_URL = 'http://localhost:3001';
+              console.log('API Key set in localStorage:', localStorage.getItem('easyai_api_key'));
+            </script>`
+          );
+          
+          res.send(dashboardHtml);
+        } catch (error) {
+          console.error('Error serving dashboard:', error);
+          res.status(500).send('Error loading dashboard');
+        }
+      });
+      
+      app.listen(port, () => {
+        console.log(chalk.green(`✅ Dashboard running at http://localhost:${port}`));
+        
+        // Open browser
+        const command = process.platform === 'win32' ? 'start' : 
+                        process.platform === 'darwin' ? 'open' : 
+                        'xdg-open';
+        
+        exec(`${command} http://localhost:${port}`, (error) => {
+          if (error) {
+            console.log(chalk.yellow(`Could not open browser automatically.`));
+            console.log(chalk.blue(`Please visit: http://localhost:${port}`));
+          }
+        });
+      });
       
     } catch (error) {
       console.error(chalk.red(`Failed to start server: ${error.message}`));
@@ -882,40 +967,28 @@ program
       // API proxy to cloud backend
       app.use('/api', async (req, res) => {
         try {
-          // Get API key from .env file as fallback
+          // Get API key from .env file
           const envPath = path.join(process.cwd(), '.env');
-          let fallbackApiKey = '';
+          let apiKey = '';
           
           if (fs.existsSync(envPath)) {
             const envContent = fs.readFileSync(envPath, 'utf8');
             const match = envContent.match(/EASYAI_API_KEY=(.+)/);
             if (match) {
-              fallbackApiKey = match[1];
+              apiKey = match[1].trim();
             }
           }
           
-          // Extract API key from headers or use fallback
-          const apiKey = req.headers['x-api-key'] || 
-                        req.headers['authorization']?.replace('Bearer ', '') ||
-                        fallbackApiKey;
+          const finalApiKey = req.headers['x-api-key'] || apiKey;
           
-          // Filter out problematic headers and add proper headers
           const filteredHeaders = {
             'Content-Type': req.headers['content-type'] || 'application/json',
-            'User-Agent': 'EasyAI-CLI/1.2.0'
+            'User-Agent': 'EasyAI-CLI/1.3.0'
           };
           
-          // Add API key if available
-          if (apiKey) {
-            filteredHeaders['X-API-Key'] = apiKey;
+          if (finalApiKey) {
+            filteredHeaders['X-API-Key'] = finalApiKey;
           }
-          
-          // Remove undefined values
-          Object.keys(filteredHeaders).forEach(key => {
-            if (filteredHeaders[key] === undefined) {
-              delete filteredHeaders[key];
-            }
-          });
           
           const response = await axios({
             method: req.method,
