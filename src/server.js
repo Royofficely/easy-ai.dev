@@ -117,8 +117,8 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/playground', playgroundRoutes);
 app.use('/api/monitoring', monitoringRoutes);
 
-// Dashboard route - serve React app
-app.get('/dashboard*', (req, res) => {
+// Dashboard route - serve React app (but exclude API routes)
+app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, '../dashboard/build/index.html'));
 });
 
