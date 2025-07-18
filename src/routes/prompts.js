@@ -14,6 +14,18 @@ router.post('/', authenticateApiKey, checkPermission('write'), validateInput('cr
     };
 
     const prompt = await Prompt.create(promptData);
+    
+    // Emit WebSocket event for real-time updates
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('prompt_created', {
+        prompt: prompt,
+        user_id: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+      console.log('📡 WebSocket: Prompt created event emitted');
+    }
+    
     res.status(201).json(prompt);
   } catch (error) {
     console.error('Prompt creation error:', error);
@@ -88,6 +100,17 @@ router.put('/:prompt_id', authenticateApiKey, checkPermission('write'), async (r
       version: prompt.version + 1
     });
 
+    // Emit WebSocket event for real-time updates
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('prompt_updated', {
+        prompt: prompt,
+        user_id: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+      console.log('📡 WebSocket: Prompt updated event emitted');
+    }
+
     res.json(prompt);
   } catch (error) {
     console.error('Prompt update error:', error);
@@ -111,6 +134,17 @@ router.delete('/:prompt_id', authenticateApiKey, checkPermission('write'), async
 
     prompt.is_active = false;
     await prompt.save();
+
+    // Emit WebSocket event for real-time updates
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('prompt_deleted', {
+        prompt_id: req.params.prompt_id,
+        user_id: req.user.id,
+        timestamp: new Date().toISOString()
+      });
+      console.log('📡 WebSocket: Prompt deleted event emitted');
+    }
 
     res.json({ message: 'Prompt deleted successfully' });
   } catch (error) {

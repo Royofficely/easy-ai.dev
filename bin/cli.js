@@ -10,7 +10,7 @@ const axios = require('axios');
 program
   .name('easyai')
   .description('EasyAI CLI tool for managing AI prompts and projects')
-  .version('1.3.20');
+  .version('1.3.21');
 
 // Setup command
 program

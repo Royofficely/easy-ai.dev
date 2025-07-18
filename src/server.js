@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
+const http = require('http');
+const { Server } = require('socket.io');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -17,6 +19,13 @@ const monitoringRoutes = require('./routes/monitoring');
 const { initializeDatabase } = require('./models');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
 const PORT = process.env.PORT || 4000;
 
 // Middleware
@@ -52,6 +61,164 @@ app.get('/health', (req, res) => {
 // Simple test endpoint
 app.get('/test', (req, res) => {
   res.json({ message: 'Test endpoint working!' });
+});
+
+// API key creation endpoint - creates unique user for each API key
+app.get('/create-api-key/:key', async (req, res) => {
+  try {
+    const apiKey = req.params.key;
+    console.log('Creating API key:', apiKey);
+    
+    const { User, ApiKey } = require('./models');
+    const crypto = require('crypto');
+    
+    // Create API key hash
+    const hash = crypto.createHash('sha256').update(apiKey).digest('hex');
+    
+    // Check if API key already exists
+    const existingKey = await ApiKey.findOne({ where: { key_hash: hash } });
+    
+    if (existingKey) {
+      const existingUser = await User.findByPk(existingKey.user_id);
+      return res.json({ 
+        message: 'API key already exists', 
+        key: apiKey,
+        user_email: existingUser.email,
+        user_id: existingUser.id
+      });
+    }
+
+    // Create a unique user for this API key
+    const userEmail = `user_${apiKey.slice(-8)}@easyai.local`;
+    const userName = `EasyAI User ${apiKey.slice(-8)}`;
+    
+    const user = await User.create({
+      email: userEmail,
+      name: userName,
+      is_active: true,
+      is_verified: true
+    });
+
+    // Create new API key linked to the unique user
+    const apiKeyRecord = await ApiKey.create({
+      user_id: user.id,
+      name: 'Website API Key',
+      key_hash: hash,
+      key_prefix: apiKey.substring(0, 20),
+      is_active: true,
+      permissions: ['read', 'write']
+    });
+
+    console.log(`✅ Created user ${user.email} (ID: ${user.id}) with API key ${apiKey}`);
+
+    res.json({ 
+      message: 'API key created successfully',
+      key: apiKey,
+      user_email: user.email,
+      user_id: user.id
+    });
+    
+  } catch (error) {
+    console.error('Error creating API key:', error);
+    res.status(500).json({ error: 'Failed to create API key' });
+  }
+});
+
+// Delete API key endpoint (for testing/migration)
+app.delete('/delete-api-key/:key', async (req, res) => {
+  try {
+    const apiKey = req.params.key;
+    console.log('Deleting API key:', apiKey);
+    
+    const { User, ApiKey } = require('./models');
+    const crypto = require('crypto');
+    
+    // Create API key hash
+    const hash = crypto.createHash('sha256').update(apiKey).digest('hex');
+    
+    // Find and delete the API key
+    const existingKey = await ApiKey.findOne({ where: { key_hash: hash } });
+    
+    if (!existingKey) {
+      return res.json({ message: 'API key not found', key: apiKey });
+    }
+
+    await existingKey.destroy();
+    console.log(`🗑️ Deleted API key ${apiKey}`);
+
+    res.json({ 
+      message: 'API key deleted successfully',
+      key: apiKey
+    });
+    
+  } catch (error) {
+    console.error('Error deleting API key:', error);
+    res.status(500).json({ error: 'Failed to delete API key' });
+  }
+});
+
+// Website API key creation endpoint
+app.get('/create-website-api-key', async (req, res) => {
+  try {
+    console.log('Creating website API key...');
+    const { User, ApiKey } = require('./models');
+    const crypto = require('crypto');
+    
+    // Create unique user for website API key
+    const apiKey = 'easyai_7665c7976651405d';
+    const userEmail = `user_${apiKey.slice(-8)}@easyai.local`;
+    const userName = `EasyAI User ${apiKey.slice(-8)}`;
+    
+    // Check if user already exists
+    let user = await User.findOne({ where: { email: userEmail } });
+    
+    if (!user) {
+      user = await User.create({
+        email: userEmail,
+        name: userName,
+        is_active: true,
+        is_verified: true
+      });
+    }
+
+    // Create API key hash
+    const hash = crypto.createHash('sha256').update(apiKey).digest('hex');
+    
+    // Check if API key already exists
+    const existingKey = await ApiKey.findOne({ where: { key_hash: hash } });
+    
+    if (existingKey) {
+      return res.json({ 
+        message: 'API key already exists', 
+        key: apiKey,
+        user_email: user.email,
+        user_id: user.id
+      });
+    }
+
+    // Create new API key
+    const apiKeyRecord = await ApiKey.create({
+      user_id: user.id,
+      name: 'Website API Key',
+      key_hash: hash,
+      key_prefix: apiKey.substring(0, 20),
+      is_active: true,
+      permissions: ['read', 'write']
+    });
+
+    console.log(`✅ Created user ${user.email} (ID: ${user.id}) with API key ${apiKey}`);
+
+    res.json({ 
+      message: 'API key created successfully',
+      key: apiKey,
+      user_email: user.email,
+      user_id: user.id
+    });
+    
+  } catch (error) {
+    console.error('Error creating API key:', error);
+    res.status(500).json({ error: 'Failed to create API key' });
+  }
 });
 
 // Temporary API key creation endpoint (for testing)
@@ -105,6 +272,23 @@ app.get('/create-test-api-key', async (req, res) => {
     res.status(500).json({ error: 'Failed to create API key' });
   }
 });
+
+// WebSocket connection handling
+io.on('connection', (socket) => {
+  console.log('🔗 Client connected:', socket.id);
+  
+  socket.on('disconnect', () => {
+    console.log('🔌 Client disconnected:', socket.id);
+  });
+  
+  socket.on('join_room', (room) => {
+    socket.join(room);
+    console.log(`👥 Client ${socket.id} joined room: ${room}`);
+  });
+});
+
+// Make io available to routes
+app.set('io', io);
 
 // Routes
 app.use('/auth', authRoutes);
@@ -206,10 +390,11 @@ async function startServer() {
     await initializeDatabase();
     console.log('Database initialized successfully');
     
-    app.listen(PORT, '0.0.0.0', () => {
+    server.listen(PORT, '0.0.0.0', () => {
       console.log(`EasyAI Platform running on port ${PORT}`);
       console.log(`Dashboard: http://localhost:${PORT}/dashboard`);
       console.log(`API: http://localhost:${PORT}/api/v1`);
+      console.log(`WebSocket: Ready for real-time updates`);
     });
   } catch (error) {
     console.error('Failed to initialize database:', error);
