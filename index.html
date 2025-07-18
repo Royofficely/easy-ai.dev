@@ -529,28 +529,32 @@
                                 </div>
                                 <div class="bg-gray-800 border border-gray-700 rounded p-3 mb-3">
                                     <div class="flex items-center justify-between mb-2">
-                                        <p class="text-gray-300 text-sm font-medium">Quick Setup (Run locally):</p>
+                                        <p class="text-gray-300 text-sm font-medium">Run this command to get started:</p>
                                         <button onclick="copySetupCommands('${apiKey}')" class="text-gray-400 hover:text-gray-50">
                                             <i data-lucide="copy" class="w-4 h-4"></i>
                                         </button>
                                     </div>
                                     <div class="bg-gray-900 rounded p-2 font-mono text-xs text-gray-300">
-                                        <div>npm install -g @easyai/client</div>
-                                        <div>easyai setup --api-key ${apiKey}</div>
-                                        <div>easyai ui</div>
+                                        <div>npm install -g @easyai/client && easyai setup --api-key ${apiKey} && easyai ui</div>
                                     </div>
                                 </div>
+                                <div class="bg-blue-900/20 border border-blue-800 rounded p-3 mb-3">
+                                    <p class="text-blue-300 text-sm font-medium mb-1">⚠️ Important:</p>
+                                    <p class="text-blue-200 text-sm">
+                                        Copy and run this command in your terminal. Your dashboard will open at localhost:3001 after setup.
+                                    </p>
+                                </div>
                                 <p class="text-gray-400 text-sm">
-                                    That's it! EasyAI will handle everything: database, IDE integration, and dashboard.
+                                    The dashboard runs locally on your machine for free. No need to stay on this page.
                                 </p>
                             </div>
                             <div class="space-y-2">
                                 <a href="https://github.com/Royofficely/easy-ai.dev#quick-start" target="_blank"
                                    class="block w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors text-center">
-                                    View Setup Instructions
+                                    View Documentation
                                 </a>
                                 <button onclick="hideAuth()" class="w-full border border-gray-700 text-gray-50 py-2 text-sm font-medium rounded-md hover:bg-gray-800 transition-colors">
-                                    Continue
+                                    Close
                                 </button>
                             </div>
                         </div>
@@ -595,15 +599,28 @@
                     document.getElementById('authContent').innerHTML = `
                         <div class="space-y-4">
                             <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-                                <h3 class="font-medium mb-2">Welcome back</h3>
+                                <h3 class="font-medium mb-2">Welcome back! 👋</h3>
+                                <p class="text-gray-400 text-sm mb-3">
+                                    You're signed in. Here's your command to start:
+                                </p>
+                                <div class="bg-gray-800 border border-gray-700 rounded p-3 mb-3">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <p class="text-gray-300 text-sm font-medium">Run this command:</p>
+                                        <button onclick="copySetupCommands('${localStorage.getItem('easyai_api_key') || 'your-api-key'}')" class="text-gray-400 hover:text-gray-50">
+                                            <i data-lucide="copy" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                    <div class="bg-gray-900 rounded p-2 font-mono text-xs text-gray-300">
+                                        <div>npm install -g @easyai/client && easyai setup --api-key ${localStorage.getItem('easyai_api_key') || 'your-api-key'} && easyai ui</div>
+                                    </div>
+                                </div>
                                 <p class="text-gray-400 text-sm">
-                                    You're signed in. Open your dashboard to continue.
+                                    Your dashboard will open at localhost:3001 after running this command.
                                 </p>
                             </div>
-                            <a href="http://localhost:3000" 
-                               class="block w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors text-center">
-                                Open dashboard
-                            </a>
+                            <button onclick="hideAuth()" class="w-full border border-gray-700 text-gray-50 py-2 text-sm font-medium rounded-md hover:bg-gray-800 transition-colors">
+                                Close
+                            </button>
                         </div>
                     `;
                 } else {
@@ -641,15 +658,28 @@
                         document.getElementById('authContent').innerHTML = `
                             <div class="space-y-4">
                                 <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-                                    <h3 class="font-medium mb-2">Welcome back</h3>
+                                    <h3 class="font-medium mb-2">Welcome back! 👋</h3>
+                                    <p class="text-gray-400 text-sm mb-3">
+                                        You're signed in. Here's your command to start:
+                                    </p>
+                                    <div class="bg-gray-800 border border-gray-700 rounded p-3 mb-3">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <p class="text-gray-300 text-sm font-medium">Run this command:</p>
+                                            <button onclick="copySetupCommands('${localStorage.getItem('easyai_api_key') || 'your-api-key'}')" class="text-gray-400 hover:text-gray-50">
+                                                <i data-lucide="copy" class="w-4 h-4"></i>
+                                            </button>
+                                        </div>
+                                        <div class="bg-gray-900 rounded p-2 font-mono text-xs text-gray-300">
+                                            <div>npm install -g @easyai/client && easyai setup --api-key ${localStorage.getItem('easyai_api_key') || 'your-api-key'} && easyai ui</div>
+                                        </div>
+                                    </div>
                                     <p class="text-gray-400 text-sm">
-                                        You're signed in. Open your dashboard to continue.
+                                        Your dashboard will open at localhost:3001 after running this command.
                                     </p>
                                 </div>
-                                <a href="http://localhost:3000" 
-                                   class="block w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors text-center">
-                                    Open dashboard
-                                </a>
+                                <button onclick="hideAuth()" class="w-full border border-gray-700 text-gray-50 py-2 text-sm font-medium rounded-md hover:bg-gray-800 transition-colors">
+                                    Close
+                                </button>
                             </div>
                         `;
                     } else {
@@ -698,9 +728,7 @@
         }
 
         function copySetupCommands(apiKey) {
-            const commands = `npm install -g @easyai/client
-easyai setup --api-key ${apiKey}
-easyai ui`;
+            const commands = `npm install -g @easyai/client && easyai setup --api-key ${apiKey} && easyai ui`;
             navigator.clipboard.writeText(commands).then(() => {
                 // Show copied feedback
                 const button = event.target.closest('button');
