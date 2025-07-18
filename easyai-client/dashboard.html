@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyAI Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+</head>
+<body class="bg-gray-50">
+    <div id="app" class="min-h-screen">
+        <!-- Navigation -->
+        <nav class="bg-white border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+                                <span class="text-white font-bold text-sm">AI</span>
+                            </div>
+                            <span class="font-semibold text-lg">EasyAI Dashboard</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span id="userEmail" class="text-gray-600"></span>
+                        <button onclick="logout()" class="text-gray-600 hover:text-gray-900">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <div class="px-4 py-6 sm:px-0">
+                <!-- Welcome Section -->
+                <div class="bg-white overflow-hidden shadow rounded-lg mb-6">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h1 class="text-2xl font-bold text-gray-900 mb-2">Welcome to EasyAI</h1>
+                        <p class="text-gray-600">Manage your AI prompts, monitor usage, and generate API keys.</p>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-white overflow-hidden shadow rounded-lg">
+                        <div class="px-4 py-5 sm:p-6">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                        <span class="text-white text-sm">📊</span>
+                                    </div>
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-sm font-medium text-gray-500 truncate">Total Requests</dt>
+                                        <dd class="text-lg font-medium text-gray-900" id="totalRequests">0</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white overflow-hidden shadow rounded-lg">
+                        <div class="px-4 py-5 sm:p-6">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                        <span class="text-white text-sm">💰</span>
+                                    </div>
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-sm font-medium text-gray-500 truncate">Total Cost</dt>
+                                        <dd class="text-lg font-medium text-gray-900" id="totalCost">$0.00</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white overflow-hidden shadow rounded-lg">
+                        <div class="px-4 py-5 sm:p-6">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                                        <span class="text-white text-sm">🔑</span>
+                                    </div>
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-sm font-medium text-gray-500 truncate">API Keys</dt>
+                                        <dd class="text-lg font-medium text-gray-900" id="apiKeyCount">0</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="bg-white shadow rounded-lg">
+                    <div class="border-b border-gray-200">
+                        <nav class="-mb-px flex space-x-8 px-6">
+                            <button onclick="showTab('api-keys')" class="tab-button border-b-2 border-black text-black py-4 px-1 text-sm font-medium">
+                                API Keys
+                            </button>
+                            <button onclick="showTab('prompts')" class="tab-button border-b-2 border-transparent text-gray-500 hover:text-gray-700 py-4 px-1 text-sm font-medium">
+                                Prompts
+                            </button>
+                            <button onclick="showTab('analytics')" class="tab-button border-b-2 border-transparent text-gray-500 hover:text-gray-700 py-4 px-1 text-sm font-medium">
+                                Analytics
+                            </button>
+                        </nav>
+                    </div>
+
+                    <!-- API Keys Tab -->
+                    <div id="api-keys-tab" class="tab-content p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-medium text-gray-900">API Keys</h2>
+                            <button onclick="createApiKey()" class="bg-black text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800">
+                                Create New Key
+                            </button>
+                        </div>
+                        <div id="apiKeysList" class="space-y-4">
+                            <!-- API keys will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Prompts Tab -->
+                    <div id="prompts-tab" class="tab-content p-6 hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-medium text-gray-900">Prompts</h2>
+                            <button onclick="createPrompt()" class="bg-black text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800">
+                                Create New Prompt
+                            </button>
+                        </div>
+                        <div id="promptsList" class="space-y-4">
+                            <!-- Prompts will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Analytics Tab -->
+                    <div id="analytics-tab" class="tab-content p-6 hidden">
+                        <h2 class="text-lg font-medium text-gray-900 mb-4">Analytics</h2>
+                        <div id="analyticsContent">
+                            <!-- Analytics will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE = 'http://localhost:3001';
+        let apiKey = localStorage.getItem('easyai_api_key');
+        let currentUser = null;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!apiKey) {
+                window.location.href = '/';
+                return;
+            }
+            
+            loadUserData();
+            loadDashboardData();
+        });
+
+        // User management
+        async function loadUserData() {
+            try {
+                // Get API key from localStorage
+                const apiKey = localStorage.getItem('easyai_api_key');
+                if (!apiKey) {
+                    logout();
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/api/user`, {
+                    headers: { 'X-API-Key': apiKey }
+                });
+
+                if (response.ok) {
+                    currentUser = await response.json();
+                    document.getElementById('userEmail').textContent = currentUser.email;
+                } else {
+                    logout();
+                }
+            } catch (error) {
+                console.error('Failed to load user data:', error);
+                logout();
+            }
+        }
+
+        async function logout() {
+            localStorage.removeItem('auth_token');
+            window.location.href = '/';
+        }
+
+        // Tab management
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Remove active styling from all tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('border-black', 'text-black');
+                button.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            // Show selected tab
+            document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+            
+            // Style active tab button
+            event.target.classList.remove('border-transparent', 'text-gray-500');
+            event.target.classList.add('border-black', 'text-black');
+            
+            // Load tab-specific data
+            if (tabName === 'api-keys') {
+                loadApiKeys();
+            } else if (tabName === 'prompts') {
+                loadPrompts();
+            } else if (tabName === 'analytics') {
+                loadAnalytics();
+            }
+        }
+
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                const analyticsResponse = await fetch(`${API_BASE}/api/analytics?days=30`, {
+                    headers: { 'X-API-Key': apiKey }
+                });
+
+                if (analyticsResponse.ok) {
+                    const analytics = await analyticsResponse.json();
+                    document.getElementById('totalRequests').textContent = analytics.total_requests || 0;
+                    document.getElementById('totalCost').textContent = `$${(analytics.total_cost || 0).toFixed(4)}`;
+                }
+            } catch (error) {
+                console.error('Failed to load dashboard data:', error);
+            }
+            
+            loadApiKeys();
+        }
+
+        // API Keys management
+        async function loadApiKeys() {
+            try {
+                const response = await fetch(`${API_BASE}/api/api-keys`, {
+                    headers: { 'X-API-Key': apiKey }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const apiKeys = data.api_keys || [];
+                    
+                    document.getElementById('apiKeyCount').textContent = apiKeys.length;
+                    
+                    const html = apiKeys.map(key => `
+                        <div class="border rounded-lg p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-medium text-gray-900">${key.name}</h3>
+                                    <p class="text-sm text-gray-500">${key.key_prefix}</p>
+                                    <p class="text-xs text-gray-400">
+                                        Used ${key.usage_count} times
+                                        ${key.last_used ? `• Last used: ${new Date(key.last_used).toLocaleDateString()}` : ''}
+                                    </p>
+                                </div>
+                                <button onclick="deleteApiKey('${key.id}')" class="text-red-600 hover:text-red-800 text-sm">
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    document.getElementById('apiKeysList').innerHTML = html || '<p class="text-gray-500">No API keys found.</p>';
+                }
+            } catch (error) {
+                console.error('Failed to load API keys:', error);
+            }
+        }
+
+        async function createApiKey() {
+            const name = prompt('Enter a name for your API key:');
+            if (!name) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/api-keys`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': apiKey
+                    },
+                    body: JSON.stringify({ name })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Show the API key to the user
+                    alert(`API Key created successfully!\n\nKey: ${data.api_key}\n\nSave this key securely - you won't be able to see it again.`);
+                    
+                    loadApiKeys();
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to create API key: ${error.error}`);
+                }
+            } catch (error) {
+                console.error('Failed to create API key:', error);
+                alert('Failed to create API key. Please try again.');
+            }
+        }
+
+        async function deleteApiKey(keyId) {
+            if (!confirm('Are you sure you want to delete this API key?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/api-keys/${keyId}`, {
+                    method: 'DELETE',
+                    headers: { 'X-API-Key': apiKey }
+                });
+
+                if (response.ok) {
+                    loadApiKeys();
+                } else {
+                    alert('Failed to delete API key');
+                }
+            } catch (error) {
+                console.error('Failed to delete API key:', error);
+                alert('Failed to delete API key. Please try again.');
+            }
+        }
+
+        // Prompts management
+        async function loadPrompts() {
+            try {
+                const response = await fetch(`${API_BASE}/api/prompts`, {
+                    headers: { 'X-API-Key': apiKey }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const prompts = data.prompts || [];
+                    
+                    const html = prompts.map(prompt => `
+                        <div class="border rounded-lg p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-medium text-gray-900">${prompt.name}</h3>
+                                    <p class="text-sm text-gray-500">${prompt.prompt_id}</p>
+                                    <p class="text-xs text-gray-400">
+                                        Category: ${prompt.category} • Model: ${prompt.model_config?.primary || 'N/A'}
+                                    </p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button onclick="testPrompt('${prompt.prompt_id}')" class="text-blue-600 hover:text-blue-800 text-sm">
+                                        Test
+                                    </button>
+                                    <button onclick="deletePrompt('${prompt.prompt_id}')" class="text-red-600 hover:text-red-800 text-sm">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    document.getElementById('promptsList').innerHTML = html || '<p class="text-gray-500">No prompts found.</p>';
+                }
+            } catch (error) {
+                console.error('Failed to load prompts:', error);
+            }
+        }
+
+        async function createPrompt() {
+            // Simple prompt creation - in a real app, this would be a modal/form
+            const name = prompt('Prompt name:');
+            if (!name) return;
+            
+            const promptId = prompt('Prompt ID (unique identifier):');
+            if (!promptId) return;
+            
+            const template = prompt('Template (use {{variable}} for parameters):');
+            if (!template) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/prompts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': authToken
+                    },
+                    body: JSON.stringify({
+                        name,
+                        prompt_id: promptId,
+                        template,
+                        category: 'general'
+                    })
+                });
+
+                if (response.ok) {
+                    loadPrompts();
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to create prompt: ${error.error}`);
+                }
+            } catch (error) {
+                console.error('Failed to create prompt:', error);
+                alert('Failed to create prompt. Please try again.');
+            }
+        }
+
+        async function testPrompt(promptId) {
+            const params = prompt('Enter parameters as JSON (e.g., {"name": "John"}):');
+            let parameters = {};
+            
+            if (params) {
+                try {
+                    parameters = JSON.parse(params);
+                } catch (e) {
+                    alert('Invalid JSON parameters');
+                    return;
+                }
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/gateway/v1/completions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': authToken
+                    },
+                    body: JSON.stringify({
+                        prompt_id: promptId,
+                        parameters
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    alert(`Response: ${data.content}\n\nTokens: ${data.tokens_used}\nCost: $${data.cost.toFixed(6)}`);
+                } else {
+                    const error = await response.json();
+                    alert(`Test failed: ${error.error}`);
+                }
+            } catch (error) {
+                console.error('Failed to test prompt:', error);
+                alert('Failed to test prompt. Please try again.');
+            }
+        }
+
+        async function deletePrompt(promptId) {
+            if (!confirm('Are you sure you want to delete this prompt?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/prompts/${promptId}`, {
+                    method: 'DELETE',
+                    headers: { 'X-API-Key': authToken }
+                });
+
+                if (response.ok) {
+                    loadPrompts();
+                } else {
+                    alert('Failed to delete prompt');
+                }
+            } catch (error) {
+                console.error('Failed to delete prompt:', error);
+                alert('Failed to delete prompt. Please try again.');
+            }
+        }
+
+        // Analytics
+        async function loadAnalytics() {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/analytics?days=30`, {
+                    headers: { 'X-API-Key': authToken }
+                });
+
+                if (response.ok) {
+                    const analytics = await response.json();
+                    
+                    const html = `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <h3 class="font-medium text-gray-900 mb-2">Usage Summary (Last 30 Days)</h3>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span>Total Requests:</span>
+                                        <span class="font-medium">${analytics.total_requests || 0}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Successful:</span>
+                                        <span class="font-medium text-green-600">${analytics.successful_requests || 0}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Failed:</span>
+                                        <span class="font-medium text-red-600">${analytics.failed_requests || 0}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Total Tokens:</span>
+                                        <span class="font-medium">${analytics.total_tokens || 0}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Total Cost:</span>
+                                        <span class="font-medium">$${(analytics.total_cost || 0).toFixed(4)}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Avg Duration:</span>
+                                        <span class="font-medium">${(analytics.average_duration || 0).toFixed(0)}ms</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <h3 class="font-medium text-gray-900 mb-2">Models Used</h3>
+                                <div class="space-y-1 text-sm">
+                                    ${(analytics.models_used || []).map(model => `
+                                        <div class="flex justify-between">
+                                            <span>${model}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.getElementById('analyticsContent').innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Failed to load analytics:', error);
+            }
+        }
+    </script>
+</body>
+</html>

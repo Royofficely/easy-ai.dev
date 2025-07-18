@@ -3,11 +3,27 @@
 const { program } = require('commander');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
-const ora = require('ora');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const { exec } = require('child_process');
+
+// Try to import ora, fallback to console.log if not available
+let ora;
+try {
+  ora = require('ora');
+} catch (e) {
+  // Fallback spinner implementation
+  ora = (text) => ({
+    start: () => {
+      console.log(chalk.blue(text));
+      return {
+        succeed: (msg) => console.log(chalk.green(msg)),
+        fail: (msg) => console.log(chalk.red(msg))
+      };
+    }
+  });
+}
 
 program
   .name('easyai')
@@ -102,9 +118,6 @@ program
       const app = express();
       const port = 3001;
       
-      // Serve static files
-      app.use(express.static(path.join(__dirname, '../dashboard')));
-      
       // API proxy to cloud backend
       app.use('/api', async (req, res) => {
         try {
@@ -122,9 +135,9 @@ program
         }
       });
       
-      // Main route
+      // Main route - serve HTML dashboard
       app.get('/', (req, res) => {
-        res.sendFile(path.join(__dirname, '../dashboard/index.html'));
+        res.sendFile(path.join(__dirname, '../dashboard.html'));
       });
       
       app.listen(port, () => {
@@ -151,10 +164,130 @@ program
 // Prompts command
 program
   .command('prompts')
-  .description('Manage prompts')
-  .action(() => {
-    console.log(chalk.blue('📝 Prompt management coming soon...'));
-    console.log(chalk.yellow('💡 Use the web dashboard: easyai ui'));
+  .description('List all prompts')
+  .action(async () => {
+    try {
+      const apiKey = process.env.EASYAI_API_KEY;
+      if (!apiKey) {
+        console.log(chalk.red('❌ No API key found. Run: easyai setup --api-key YOUR_KEY'));
+        return;
+      }
+
+      const response = await axios.get('https://easy-aidev-production.up.railway.app/api/prompts', {
+        headers: { 'X-API-Key': apiKey }
+      });
+
+      const prompts = response.data.prompts || [];
+      
+      if (prompts.length === 0) {
+        console.log(chalk.yellow('No prompts found. Create one with: easyai add'));
+        return;
+      }
+
+      console.log(chalk.blue('📝 Your Prompts:'));
+      prompts.forEach(prompt => {
+        console.log(`  ${chalk.green(prompt.prompt_id)} - ${prompt.name}`);
+        console.log(`    Category: ${prompt.category} | Model: ${prompt.model_config?.primary || 'N/A'}`);
+      });
+    } catch (error) {
+      console.error(chalk.red('Failed to load prompts:', error.message));
+    }
+  });
+
+// Add prompt command
+program
+  .command('add')
+  .description('Add a new prompt')
+  .argument('[name]', 'Prompt name')
+  .action(async (name) => {
+    try {
+      const apiKey = process.env.EASYAI_API_KEY;
+      if (!apiKey) {
+        console.log(chalk.red('❌ No API key found. Run: easyai setup --api-key YOUR_KEY'));
+        return;
+      }
+
+      if (!name) {
+        const answers = await inquirer.prompt([
+          { type: 'input', name: 'name', message: 'Prompt name:', validate: input => input.length > 0 },
+          { type: 'input', name: 'prompt_id', message: 'Prompt ID (unique):', validate: input => input.length > 0 },
+          { type: 'input', name: 'template', message: 'Template (use {{variable}} for parameters):', validate: input => input.length > 0 },
+          { type: 'list', name: 'category', message: 'Category:', choices: ['general', 'code', 'writing', 'education', 'business'] },
+          { type: 'list', name: 'model', message: 'Primary model:', choices: ['gpt-4', 'gpt-3.5-turbo', 'claude-3-sonnet', 'gemini-pro'] }
+        ]);
+
+        const response = await axios.post('https://easy-aidev-production.up.railway.app/api/prompts', {
+          name: answers.name,
+          prompt_id: answers.prompt_id,
+          template: answers.template,
+          category: answers.category,
+          model_config: { primary: answers.model }
+        }, {
+          headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' }
+        });
+
+        console.log(chalk.green('✅ Prompt created successfully!'));
+        console.log(chalk.blue(`Test it with: easyai test ${answers.prompt_id}`));
+      }
+    } catch (error) {
+      console.error(chalk.red('Failed to create prompt:', error.response?.data?.error || error.message));
+    }
+  });
+
+// Test prompt command
+program
+  .command('test')
+  .description('Test a prompt')
+  .argument('<prompt_id>', 'Prompt ID to test')
+  .action(async (promptId) => {
+    try {
+      const apiKey = process.env.EASYAI_API_KEY;
+      if (!apiKey) {
+        console.log(chalk.red('❌ No API key found. Run: easyai setup --api-key YOUR_KEY'));
+        return;
+      }
+
+      const answers = await inquirer.prompt([
+        { type: 'input', name: 'params', message: 'Parameters (JSON format, e.g. {"name": "John"}):' }
+      ]);
+
+      let parameters = {};
+      if (answers.params) {
+        try {
+          parameters = JSON.parse(answers.params);
+        } catch (e) {
+          console.log(chalk.red('Invalid JSON format'));
+          return;
+        }
+      }
+
+      const spinner = ora('Testing prompt...').start();
+
+      const response = await axios.post('https://easy-aidev-production.up.railway.app/gateway/v1/completions', {
+        prompt_id: promptId,
+        parameters
+      }, {
+        headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' }
+      });
+
+      spinner.succeed('Test completed!');
+      
+      console.log(chalk.blue('\n📝 Response:'));
+      console.log(response.data.content);
+      console.log(chalk.gray(`\nTokens: ${response.data.tokens_used} | Cost: $${response.data.cost.toFixed(6)} | Duration: ${response.data.duration_ms}ms`));
+    } catch (error) {
+      console.error(chalk.red('Test failed:', error.response?.data?.error || error.message));
+    }
+  });
+
+// Edit prompt command
+program
+  .command('edit')
+  .description('Edit a prompt')
+  .argument('<prompt_id>', 'Prompt ID to edit')
+  .action(async (promptId) => {
+    console.log(chalk.blue(`🔧 Editing prompt: ${promptId}`));
+    console.log(chalk.yellow('💡 Use the web dashboard for full editing: easyai ui'));
   });
 
 program.parse();

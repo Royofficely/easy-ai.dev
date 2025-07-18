@@ -311,21 +311,16 @@ router.post('/login', rateLimiter, async (req, res) => {
       }
     }
 
-    // For verified users, login with last verification code
+    // For verified users, login with stored password (which is the hashed verification code)
     if (code) {
       console.log('Verified user login attempt:', { email, code });
-      console.log('User verification data:', {
-        stored_code: user.verification_code,
-        provided_code: code,
-        expires: user.verification_expires,
-        current_time: new Date()
-      });
+      console.log('User stored password:', user.password);
 
-      // Use unified verification function
-      const verificationResult = verifyCode(user.verification_code, code, user.verification_expires);
+      // For verified users, use bcrypt to compare against stored password
+      const passwordMatch = await user.validatePassword(code);
       
-      if (!verificationResult.success) {
-        return res.status(401).json({ error: verificationResult.error });
+      if (!passwordMatch) {
+        return res.status(401).json({ error: 'Invalid verification code' });
       }
 
       // Update last login
