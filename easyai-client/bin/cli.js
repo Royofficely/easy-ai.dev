@@ -118,15 +118,45 @@ program
       const app = express();
       const port = 3001;
       
+      // Add body parsing middleware
+      app.use(express.json());
+      app.use(express.urlencoded({ extended: true }));
+      
       // API proxy to cloud backend
       app.use('/api', async (req, res) => {
         try {
+          // Get API key from .env file as fallback
+          const envPath = path.join(process.cwd(), '.env');
+          let fallbackApiKey = '';
+          
+          if (fs.existsSync(envPath)) {
+            const envContent = fs.readFileSync(envPath, 'utf8');
+            const match = envContent.match(/EASYAI_API_KEY=(.+)/);
+            if (match) {
+              fallbackApiKey = match[1];
+            }
+          }
+          
+          // Extract API key from headers or use fallback
+          const apiKey = req.headers['x-api-key'] || 
+                        req.headers['authorization']?.replace('Bearer ', '') ||
+                        fallbackApiKey;
+          
+          console.log('API Request:', req.method, req.path);
+          console.log('API Key from headers:', req.headers['x-api-key']);
+          console.log('Fallback API Key:', fallbackApiKey);
+          console.log('Final API Key:', apiKey);
+          
           // Filter out problematic headers and add proper headers
           const filteredHeaders = {
             'Content-Type': req.headers['content-type'] || 'application/json',
-            'X-API-Key': req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', ''),
-            'User-Agent': 'EasyAI-Client/1.0.10'
+            'User-Agent': 'EasyAI-Client/1.0.11'
           };
+          
+          // Add API key if available
+          if (apiKey) {
+            filteredHeaders['X-API-Key'] = apiKey;
+          }
           
           // Remove undefined values
           Object.keys(filteredHeaders).forEach(key => {
@@ -175,7 +205,7 @@ program
           // Inject API key into the dashboard
           dashboardHtml = dashboardHtml.replace(
             '</head>',
-            `<script>window.EASYAI_API_KEY = '${apiKey}';</script></head>`
+            `<script>window.EASYAI_API_KEY = '${apiKey}'; console.log('API Key injected:', '${apiKey}');</script></head>`
           );
           
           res.send(dashboardHtml);
