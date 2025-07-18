@@ -1,0 +1,17 @@
+# Development files
+src/
+dashboard/src/
+*.log
+.env*
+.git/
+.DS_Store
+node_modules/
+coverage/
+*.tgz
+
+# Keep only distribution files
+!bin/
+!scripts/
+!server/info.json
+!README.md
+!package.json

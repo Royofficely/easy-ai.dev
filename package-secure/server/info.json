@@ -1,0 +1,9 @@
+{
+  "message": "EasyAI server runs on our secure cloud infrastructure",
+  "endpoints": {
+    "api": "https://api.easy-ai.dev",
+    "dashboard": "https://easy-ai.dev/dashboard",
+    "docs": "https://docs.easy-ai.dev"
+  },
+  "status": "https://status.easy-ai.dev"
+}

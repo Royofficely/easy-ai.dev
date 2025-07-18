@@ -14,6 +14,8 @@ const gatewayRoutes = require('./routes/gateway');
 const settingsRoutes = require('./routes/settings');
 const playgroundRoutes = require('./routes/playground');
 const monitoringRoutes = require('./routes/monitoring');
+const setupRoutes = require('./routes/setup');
+const proxyRoutes = require('./routes/proxy');
 
 // Initialize database
 const { initializeDatabase } = require('./models');
@@ -274,15 +276,104 @@ app.get('/create-test-api-key', async (req, res) => {
 });
 
 // WebSocket connection handling
+// Enhanced WebSocket handling with user rooms and better error handling
 io.on('connection', (socket) => {
   console.log('🔗 Client connected:', socket.id);
+  
+  // Store user info on socket for easy access
+  socket.userData = {};
   
   // Send current client count to all clients
   const clientCount = io.engine.clientsCount;
   io.emit('client_count', clientCount);
   
-  socket.on('disconnect', () => {
-    console.log('🔌 Client disconnected:', socket.id);
+  // Send welcome message
+  socket.emit('server_message', {
+    type: 'welcome',
+    message: 'Connected to EasyAI real-time system',
+    timestamp: new Date().toISOString()
+  });
+  
+  // Handle user room joining (for targeted updates)
+  socket.on('join_user_room', async (data) => {
+    try {
+      const { apiKey } = data;
+      if (!apiKey) return;
+      
+      // Validate API key and get user info
+      const { ApiKey, User } = require('./models');
+      const crypto = require('crypto');
+      const hash = crypto.createHash('sha256').update(apiKey).digest('hex');
+      
+      const apiKeyRecord = await ApiKey.findOne({ where: { key_hash: hash } });
+      if (apiKeyRecord) {
+        const user = await User.findByPk(apiKeyRecord.user_id);
+        if (user) {
+          const userRoom = `user_${user.id}`;
+          socket.join(userRoom);
+          socket.userData = { userId: user.id, userEmail: user.email, apiKey };
+          
+          console.log(`👥 User ${user.email} joined room: ${userRoom}`);
+          
+          // Send personalized welcome
+          socket.emit('server_message', {
+            type: 'user_authenticated',
+            message: `Welcome back, ${user.name || user.email}!`,
+            user: { id: user.id, email: user.email },
+            timestamp: new Date().toISOString()
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error joining user room:', error);
+      socket.emit('server_message', {
+        type: 'error',
+        message: 'Failed to authenticate user',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+  
+  // Handle generic room joining
+  socket.on('join_room', (room) => {
+    socket.join(room);
+    console.log(`👥 Client ${socket.id} joined room: ${room}`);
+  });
+  
+  // Handle ping/pong for connection health
+  socket.on('ping', () => {
+    socket.emit('pong', { timestamp: new Date().toISOString() });
+  });
+  
+  // Handle user activity tracking
+  socket.on('user_activity', (data) => {
+    if (socket.userData.userId) {
+      // Broadcast user activity to other clients in same user room
+      socket.to(`user_${socket.userData.userId}`).emit('user_activity', {
+        type: data.type,
+        user: socket.userData.userEmail,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+  
+  // Handle errors
+  socket.on('error', (error) => {
+    console.error('Socket error:', error);
+    socket.emit('server_message', {
+      type: 'error',
+      message: 'Connection error occurred',
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  socket.on('disconnect', (reason) => {
+    console.log(`🔌 Client disconnected: ${socket.id}, reason: ${reason}`);
+    
+    // If user was authenticated, log their disconnection
+    if (socket.userData.userEmail) {
+      console.log(`👤 User ${socket.userData.userEmail} disconnected`);
+    }
     
     // Update client count after disconnect
     setTimeout(() => {
@@ -291,9 +382,9 @@ io.on('connection', (socket) => {
     }, 100);
   });
   
-  socket.on('join_room', (room) => {
-    socket.join(room);
-    console.log(`👥 Client ${socket.id} joined room: ${room}`);
+  // Handle connection errors
+  socket.on('connect_error', (error) => {
+    console.error('Connection error:', error);
   });
 });
 
@@ -308,6 +399,8 @@ app.use('/gateway', gatewayRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/playground', playgroundRoutes);
 app.use('/api/monitoring', monitoringRoutes);
+app.use('/api/setup', setupRoutes);
+app.use('/api/proxy', proxyRoutes);
 
 // Serve dashboard static files
 app.use('/dashboard', express.static(path.join(__dirname, '../dashboard/build')));

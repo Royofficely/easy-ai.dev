@@ -25,7 +25,24 @@ const RequestLog = sequelize.define('RequestLog', {
   },
   prompt_id: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true // Allow null for proxy requests that don't use prompts
+  },
+  provider: {
+    type: DataTypes.STRING,
+    allowNull: true // 'openai', 'anthropic', 'google', etc.
+  },
+  endpoint: {
+    type: DataTypes.STRING,
+    allowNull: true // '/v1/chat/completions', '/v1/messages', etc.
+  },
+  method: {
+    type: DataTypes.STRING,
+    allowNull: true // 'GET', 'POST', etc.
+  },
+  source: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: 'api' // 'api', 'cli', 'ide_proxy', 'dashboard'
   },
   model_used: {
     type: DataTypes.STRING,
