@@ -95,6 +95,8 @@
                 </div>
             </div>
             <div class="font-mono text-sm space-y-2">
+                <div class="text-gray-400">$ git clone https://github.com/your-repo/easyai.git</div>
+                <div class="text-gray-400">$ cd easyai && npm install</div>
                 <div class="text-gray-400">$ npm install -g @easyai/cli</div>
                 <div class="text-gray-400">$ easyai ui</div>
                 <div class="text-gray-50">✅ Server starting automatically</div>
@@ -527,12 +529,14 @@
                                 </div>
                                 <div class="bg-gray-800 border border-gray-700 rounded p-3 mb-3">
                                     <div class="flex items-center justify-between mb-2">
-                                        <p class="text-gray-300 text-sm font-medium">Quick Setup (One Command):</p>
+                                        <p class="text-gray-300 text-sm font-medium">Quick Setup (Run locally):</p>
                                         <button onclick="copySetupCommands('${apiKey}')" class="text-gray-400 hover:text-gray-50">
                                             <i data-lucide="copy" class="w-4 h-4"></i>
                                         </button>
                                     </div>
                                     <div class="bg-gray-900 rounded p-2 font-mono text-xs text-gray-300">
+                                        <div>git clone https://github.com/your-repo/easyai.git</div>
+                                        <div>cd easyai && npm install</div>
                                         <div>npm install -g @easyai/cli</div>
                                         <div>easyai ui</div>
                                     </div>
@@ -695,7 +699,9 @@
         }
 
         function copySetupCommands(apiKey) {
-            const commands = `npm install -g @easyai/cli
+            const commands = `git clone https://github.com/your-repo/easyai.git
+cd easyai && npm install
+npm install -g @easyai/cli
 easyai ui`;
             navigator.clipboard.writeText(commands).then(() => {
                 // Show copied feedback

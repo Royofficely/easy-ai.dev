@@ -14,7 +14,7 @@ const execAsync = util.promisify(exec);
 program
   .name('easyai')
   .description('EasyAI CLI tool for managing AI prompts and projects')
-  .version('1.1.0');
+  .version('1.1.1');
 
 // Initialize project
 program
@@ -717,40 +717,86 @@ program
   .command('ui')
   .description('Open EasyAI web interface')
   .action(async () => {
-    console.log(chalk.blue('🚀 Opening EasyAI web interface...'));
+    console.log(chalk.blue('🚀 Starting EasyAI web interface...'));
     
     try {
-      // Check if local server is running first
+      // Check if server is already running
       try {
         await axios.get('http://localhost:3001/health', { timeout: 2000 });
-        console.log(chalk.green('✅ Local server detected'));
+        console.log(chalk.green('✅ Server is already running'));
         openInUI('dashboard');
         return;
       } catch (error) {
-        // Local server not running, use production
-        console.log(chalk.yellow('💡 Opening production dashboard...'));
+        // Server not running, start it automatically
+        console.log(chalk.yellow('⚠️  Server not running, starting automatically...'));
       }
       
-      // Open production dashboard
-      console.log(chalk.green('🌐 Opening EasyAI dashboard...'));
-      const productionUrl = 'https://easy-aidev-production.up.railway.app/dashboard';
-      
-      const command = process.platform === 'win32' ? 'start' : 
-                      process.platform === 'darwin' ? 'open' : 
-                      'xdg-open';
-      
-      exec(`${command} ${productionUrl}`, (error) => {
-        if (error) {
-          console.log(chalk.yellow(`Could not open browser automatically.`));
-          console.log(chalk.blue(`Please visit: ${productionUrl}`));
-        } else {
-          console.log(chalk.green(`✅ Dashboard opened in browser`));
-          console.log(chalk.gray(`URL: ${productionUrl}`));
+      // Kill any existing process on port 3001
+      try {
+        console.log(chalk.gray('🔍 Checking for existing processes on port 3001...'));
+        const killCommand = process.platform === 'win32' ? 
+          'netstat -ano | findstr :3001' : 
+          'lsof -ti:3001';
+        
+        const { stdout } = await execAsync(killCommand);
+        if (stdout.trim()) {
+          console.log(chalk.yellow('🔄 Killing existing process on port 3001...'));
+          const killCmd = process.platform === 'win32' ? 
+            `taskkill /F /PID ${stdout.trim().split(/\s+/).pop()}` : 
+            'lsof -ti:3001 | xargs kill -9';
+          await execAsync(killCmd);
+          console.log(chalk.green('✅ Existing process killed'));
         }
-      });
+      } catch (error) {
+        // No existing process, continue
+        console.log(chalk.gray('📝 No existing process found on port 3001'));
+      }
+      
+      // Check if we're in the right directory
+      if (!fs.existsSync('./src/server.js')) {
+        console.error(chalk.red('❌ Error: src/server.js not found'));
+        console.log(chalk.yellow('💡 Please run this command from your EasyAI project directory'));
+        console.log(chalk.gray('   Current directory: ' + process.cwd()));
+        console.log(chalk.blue('💡 To set up EasyAI locally:'));
+        console.log(chalk.gray('   1. Clone: git clone https://github.com/your-repo/easyai.git'));
+        console.log(chalk.gray('   2. Install: npm install'));
+        console.log(chalk.gray('   3. Run: easyai ui'));
+        return;
+      }
+      
+      // Start the server
+      console.log(chalk.blue('🚀 Starting EasyAI server...'));
+      const serverPath = './src/server.js';
+      const env = { ...process.env, PORT: '3001' };
+      
+      // Start server in background
+      const server = exec(`node ${serverPath}`, { env, detached: true, stdio: 'ignore' });
+      server.unref(); // Allow the parent process to exit
+      
+      // Wait for server to start
+      let attempts = 0;
+      const maxAttempts = 15;
+      
+      while (attempts < maxAttempts) {
+        try {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          await axios.get('http://localhost:3001/health', { timeout: 2000 });
+          console.log(chalk.green('✅ Server started successfully'));
+          console.log(chalk.yellow('📊 Dashboard: http://localhost:3001/dashboard'));
+          openInUI('dashboard');
+          return;
+        } catch (error) {
+          attempts++;
+          console.log(chalk.gray(`⏳ Waiting for server to start... (${attempts}/${maxAttempts})`));
+        }
+      }
+      
+      console.error(chalk.red('❌ Server failed to start within expected time'));
+      console.log(chalk.yellow('💡 Try running: npm start'));
       
     } catch (error) {
-      console.error(chalk.red(`Failed to open dashboard: ${error.message}`));
+      console.error(chalk.red(`Failed to start server: ${error.message}`));
+      console.log(chalk.yellow('💡 Try running: npm start'));
     }
   });
 
