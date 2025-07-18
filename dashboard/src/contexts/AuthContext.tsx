@@ -82,7 +82,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Second step: verify code and login
       const response = await axios.post(`${API_BASE_URL}/auth/verify`, {
         email,
-        verificationCode
+        verification_code: verificationCode
       });
 
       const { token: newToken, apiKey: newApiKey, user: userData } = response.data;
