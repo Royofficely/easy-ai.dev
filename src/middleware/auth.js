@@ -29,18 +29,36 @@ const authenticateToken = async (req, res, next) => {
 const authenticateApiKey = async (req, res, next) => {
   const apiKey = req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '');
 
+  console.log('=== API Key Auth Debug ===');
+  console.log('Received API Key:', apiKey);
+  console.log('Headers:', req.headers);
+
   if (!apiKey) {
+    console.log('No API key provided');
     return res.status(401).json({ error: 'API key required' });
   }
 
   try {
     const keyHash = ApiKey.validateKey(apiKey);
+    console.log('Generated Hash:', keyHash);
+    
     const apiKeyRecord = await ApiKey.findOne({ 
       where: { key_hash: keyHash, is_active: true },
       include: [{ model: User, as: 'user' }]
     });
 
+    console.log('Database lookup result:', apiKeyRecord ? 'Found' : 'Not found');
+    if (apiKeyRecord) {
+      console.log('API Key details:', {
+        id: apiKeyRecord.id,
+        name: apiKeyRecord.name,
+        is_active: apiKeyRecord.is_active,
+        expires_at: apiKeyRecord.expires_at
+      });
+    }
+
     if (!apiKeyRecord) {
+      console.log('API key not found in database');
       return res.status(401).json({ error: 'Invalid API key' });
     }
 

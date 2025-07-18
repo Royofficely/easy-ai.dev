@@ -42,7 +42,9 @@ const Dashboard: React.FC = () => {
         failed_requests: analyticsData.failed_requests || 0
       });
     } catch (err: any) {
-      setError(err.message);
+      const errorMessage = err.message || 'Failed to load dashboard data';
+      setError(errorMessage);
+      console.error('Dashboard error:', err);
     } finally {
       setLoading(false);
     }

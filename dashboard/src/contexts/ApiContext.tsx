@@ -23,9 +23,11 @@ const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
 
 export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const getAuthHeaders = () => {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      return { 'X-API-Key': token };
+    // Get API key from injected window variable or localStorage
+    const apiKey = (window as any).EASYAI_API_KEY || localStorage.getItem('auth_token') || localStorage.getItem('easyai_api_key');
+    console.log('API Key available:', apiKey ? 'Yes' : 'No');
+    if (apiKey) {
+      return { 'X-API-Key': apiKey };
     }
     return {};
   };
@@ -44,7 +46,12 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const response = await axios(`${API_BASE}${endpoint}`, config);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'API call failed');
+      console.error('API call failed:', error);
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          error.message || 
+                          'API call failed';
+      throw new Error(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage));
     }
   };
 

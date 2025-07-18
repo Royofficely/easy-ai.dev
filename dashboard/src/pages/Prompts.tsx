@@ -39,17 +39,27 @@ const Prompts: React.FC = () => {
 
   const fetchPrompts = async () => {
     try {
-      const response = await fetch('/api/settings/prompts', {
+      const response = await fetch('/api/prompts', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          'X-API-Key': (window as any).EASYAI_API_KEY || localStorage.getItem('auth_token') || localStorage.getItem('easyai_api_key')
         }
       });
       
       if (response.ok) {
         const data = await response.json();
-        setCategories(data.categories);
+        // Group prompts by category
+        const groupedPrompts = (data.prompts || []).reduce((acc: any, prompt: any) => {
+          const category = prompt.category || 'general';
+          if (!acc[category]) {
+            acc[category] = [];
+          }
+          acc[category].push(prompt);
+          return acc;
+        }, {});
+        
+        setCategories(groupedPrompts);
         // Auto-expand all categories initially
-        setExpandedCategories(new Set(Object.keys(data.categories)));
+        setExpandedCategories(new Set(Object.keys(groupedPrompts)));
       }
     } catch (error) {
       console.error('Failed to fetch prompts:', error);
