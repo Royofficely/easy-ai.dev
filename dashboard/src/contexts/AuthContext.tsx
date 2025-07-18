@@ -76,27 +76,67 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (!verificationCode) {
         // First step: send verification code
         console.log('Sending verification code to:', email);
-        await axios.post(`${API_BASE_URL}/auth/login`, { email });
-        return;
+        
+        // Try login first (for existing users)
+        try {
+          await axios.post(`${API_BASE_URL}/auth/login`, { email });
+          return;
+        } catch (error: any) {
+          console.log('Login failed, trying registration:', error.response?.data);
+          
+          // If login fails, try registration (for new users)
+          if (error.response?.status === 401 || error.response?.status === 404) {
+            await axios.post(`${API_BASE_URL}/auth/register`, { email });
+            return;
+          }
+          
+          throw error;
+        }
       }
 
       // Second step: verify code and login
       console.log('Verifying code:', verificationCode, 'for email:', email);
-      const response = await axios.post(`${API_BASE_URL}/auth/verify`, {
-        email,
-        verification_code: verificationCode
-      });
-
-      console.log('Verification response:', response.data);
-
-      const { token: newToken, apiKey: newApiKey, user: userData } = response.data;
       
-      setUser(userData);
-      setToken(newToken);
-      setApiKey(newApiKey);
-      
-      if (newToken) localStorage.setItem('token', newToken);
-      if (newApiKey) localStorage.setItem('apiKey', newApiKey);
+      // Try verification first
+      try {
+        const response = await axios.post(`${API_BASE_URL}/auth/verify`, {
+          email,
+          verification_code: verificationCode
+        });
+
+        console.log('Verification response:', response.data);
+
+        const { token: newToken, apiKey: newApiKey, user: userData } = response.data;
+        
+        setUser(userData);
+        setToken(newToken);
+        setApiKey(newApiKey);
+        
+        if (newToken) localStorage.setItem('token', newToken);
+        if (newApiKey) localStorage.setItem('apiKey', newApiKey);
+        
+      } catch (error: any) {
+        console.log('Verification failed, trying login with code:', error.response?.data);
+        
+        // If verification fails, try login with code (for existing verified users)
+        if (error.response?.status === 400) {
+          const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+            email,
+            code: verificationCode
+          });
+
+          console.log('Login with code response:', response.data);
+
+          const { token: newToken, user: userData } = response.data;
+          
+          setUser(userData);
+          setToken(newToken);
+          
+          if (newToken) localStorage.setItem('token', newToken);
+        } else {
+          throw error;
+        }
+      }
       
     } catch (error: any) {
       console.error('Login failed:', error);
