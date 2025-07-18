@@ -28,7 +28,8 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://unpkg.com"],
       imgSrc: ["'self'", "data:", "https:"],
       fontSrc: ["'self'", "https:"],
-      connectSrc: ["'self'", "https://easy-aidev-production.up.railway.app"]
+      connectSrc: ["'self'", "https://easy-aidev-production.up.railway.app"],
+      upgradeInsecureRequests: null
     }
   }
 }));

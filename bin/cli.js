@@ -14,7 +14,7 @@ const execAsync = util.promisify(exec);
 program
   .name('easyai')
   .description('EasyAI CLI tool for managing AI prompts and projects')
-  .version('1.0.4');
+  .version('1.0.9');
 
 // Initialize project
 program
@@ -670,10 +670,19 @@ program
   .option('-p, --port <port>', 'Port to run server on', '3001')
   .action(async (options) => {
     console.log(chalk.blue('🚀 Starting EasyAI web server...'));
+    console.log(chalk.yellow('📝 Make sure to run this from your EasyAI project directory'));
     
     try {
+      // Check if we're in the right directory
+      if (!fs.existsSync('./src/server.js')) {
+        console.error(chalk.red('❌ Error: src/server.js not found'));
+        console.log(chalk.yellow('💡 Please run this command from your EasyAI project directory'));
+        console.log(chalk.gray('   Or run: npm start'));
+        return;
+      }
+      
       // Start the server
-      const serverPath = path.join(path.dirname(__dirname), 'src/server.js');
+      const serverPath = './src/server.js';
       const env = { ...process.env, PORT: options.port };
       
       const server = exec(`node ${serverPath}`, { env }, (error, stdout, stderr) => {
@@ -718,25 +727,72 @@ program
         openInUI('dashboard');
         return;
       } catch (error) {
-        // Server not running, start it
-        console.log(chalk.yellow('⚠️  Server not running, starting...'));
+        // Server not running, start it automatically
+        console.log(chalk.yellow('⚠️  Server not running, starting automatically...'));
+      }
+      
+      // Kill any existing process on port 3001
+      try {
+        console.log(chalk.gray('🔍 Checking for existing processes on port 3001...'));
+        const killCommand = process.platform === 'win32' ? 
+          'netstat -ano | findstr :3001' : 
+          'lsof -ti:3001';
+        
+        const { stdout } = await execAsync(killCommand);
+        if (stdout.trim()) {
+          console.log(chalk.yellow('🔄 Killing existing process on port 3001...'));
+          const killCmd = process.platform === 'win32' ? 
+            `taskkill /F /PID ${stdout.trim().split(/\s+/).pop()}` : 
+            'lsof -ti:3001 | xargs kill -9';
+          await execAsync(killCmd);
+          console.log(chalk.green('✅ Existing process killed'));
+        }
+      } catch (error) {
+        // No existing process, continue
+        console.log(chalk.gray('📝 No existing process found on port 3001'));
+      }
+      
+      // Check if we're in the right directory
+      if (!fs.existsSync('./src/server.js')) {
+        console.error(chalk.red('❌ Error: src/server.js not found'));
+        console.log(chalk.yellow('💡 Please run this command from your EasyAI project directory'));
+        console.log(chalk.gray('   Current directory: ' + process.cwd()));
+        return;
       }
       
       // Start the server
-      const serverPath = path.join(path.dirname(__dirname), 'src/server.js');
+      console.log(chalk.blue('🚀 Starting EasyAI server...'));
+      const serverPath = './src/server.js';
       const env = { ...process.env, PORT: '3001' };
       
-      exec(`node ${serverPath}`, { env, detached: true, stdio: 'ignore' });
+      // Start server in background
+      const server = exec(`node ${serverPath}`, { env, detached: true, stdio: 'ignore' });
+      server.unref(); // Allow the parent process to exit
       
       // Wait for server to start
-      setTimeout(() => {
-        console.log(chalk.green('✅ Server started on http://localhost:3001'));
-        console.log(chalk.yellow('📊 Dashboard: http://localhost:3001/dashboard'));
-        openInUI('dashboard');
-      }, 3000);
+      let attempts = 0;
+      const maxAttempts = 15;
+      
+      while (attempts < maxAttempts) {
+        try {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          await axios.get('http://localhost:3001/health', { timeout: 2000 });
+          console.log(chalk.green('✅ Server started successfully'));
+          console.log(chalk.yellow('📊 Dashboard: http://localhost:3001/dashboard'));
+          openInUI('dashboard');
+          return;
+        } catch (error) {
+          attempts++;
+          console.log(chalk.gray(`⏳ Waiting for server to start... (${attempts}/${maxAttempts})`));
+        }
+      }
+      
+      console.error(chalk.red('❌ Server failed to start within expected time'));
+      console.log(chalk.yellow('💡 Try running: npm start'));
       
     } catch (error) {
       console.error(chalk.red(`Failed to start server: ${error.message}`));
+      console.log(chalk.yellow('💡 Try running: npm start'));
     }
   });
 

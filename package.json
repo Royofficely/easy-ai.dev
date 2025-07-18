@@ -1,6 +1,6 @@
 {
-  "name": "easyai-cli",
-  "version": "1.0.4",
+  "name": "@easyai/cli",
+  "version": "1.0.9",
   "description": "Stop wrestling with AI code. Unified prompts, real-time costs, model switching, and IDE integration.",
   "main": "src/index.js",
   "bin": {
@@ -39,7 +39,7 @@
   "dependencies": {
     "axios": "^1.5.0",
     "bcryptjs": "^2.4.3",
-    "chalk": "^5.3.0",
+    "chalk": "^4.1.2",
     "commander": "^11.0.0",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",

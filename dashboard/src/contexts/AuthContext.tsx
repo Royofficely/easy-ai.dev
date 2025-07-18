@@ -36,8 +36,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
+    const apiKey = localStorage.getItem('easyai_api_key');
+    
     if (token) {
       checkAuthStatus(token);
+    } else if (apiKey) {
+      // Create a mock user for API key authentication
+      setUser({
+        id: 'api_user',
+        email: localStorage.getItem('easyai_email') || 'user@example.com',
+        name: 'API User',
+        role: 'user',
+        is_verified: true
+      });
+      setLoading(false);
     } else {
       setLoading(false);
     }
