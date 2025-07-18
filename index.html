@@ -95,7 +95,7 @@
                 </div>
             </div>
             <div class="font-mono text-sm space-y-2">
-                <div class="text-gray-400">$ npm install -g @easyai/client</div>
+                <div class="text-gray-400">$ npm install -g @easyai/cli</div>
                 <div class="text-gray-400">$ easyai setup --api-key YOUR_API_KEY</div>
                 <div class="text-gray-400">$ easyai ui</div>
                 <div class="text-gray-50">✅ Configuration created</div>
@@ -535,7 +535,7 @@
                                         </button>
                                     </div>
                                     <div class="bg-gray-900 rounded p-2 font-mono text-xs text-gray-300">
-                                        <div>npm install -g @easyai/client && easyai setup --api-key ${apiKey} && easyai ui</div>
+                                        <div>npm install -g @easyai/cli && easyai setup --api-key ${apiKey} && easyai ui</div>
                                     </div>
                                 </div>
                                 <div class="bg-blue-900/20 border border-blue-800 rounded p-3 mb-3">
@@ -611,7 +611,7 @@
                                         </button>
                                     </div>
                                     <div class="bg-gray-900 rounded p-2 font-mono text-xs text-gray-300">
-                                        <div>npm install -g @easyai/client && easyai setup --api-key ${localStorage.getItem('easyai_api_key') || 'your-api-key'} && easyai ui</div>
+                                        <div>npm install -g @easyai/cli && easyai setup --api-key ${localStorage.getItem('easyai_api_key') || 'your-api-key'} && easyai ui</div>
                                     </div>
                                 </div>
                                 <p class="text-gray-400 text-sm">
@@ -670,7 +670,7 @@
                                             </button>
                                         </div>
                                         <div class="bg-gray-900 rounded p-2 font-mono text-xs text-gray-300">
-                                            <div>npm install -g @easyai/client && easyai setup --api-key ${localStorage.getItem('easyai_api_key') || 'your-api-key'} && easyai ui</div>
+                                            <div>npm install -g @easyai/cli && easyai setup --api-key ${localStorage.getItem('easyai_api_key') || 'your-api-key'} && easyai ui</div>
                                         </div>
                                     </div>
                                     <p class="text-gray-400 text-sm">
@@ -728,7 +728,7 @@
         }
 
         function copySetupCommands(apiKey) {
-            const commands = `npm install -g @easyai/client && easyai setup --api-key ${apiKey} && easyai ui`;
+            const commands = `npm install -g @easyai/cli && easyai setup --api-key ${apiKey} && easyai ui`;
             navigator.clipboard.writeText(commands).then(() => {
                 // Show copied feedback
                 const button = event.target.closest('button');
