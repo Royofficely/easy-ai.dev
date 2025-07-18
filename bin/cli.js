@@ -25,7 +25,7 @@ const express = require('express');
 program
   .name('easyai')
   .description('EasyAI CLI tool for managing AI prompts and projects')
-  .version('1.3.12');
+  .version('1.3.13');
 
 // Initialize project
 program
