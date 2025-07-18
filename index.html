@@ -98,6 +98,7 @@
                 <div class="text-gray-400">$ git clone https://github.com/your-repo/easyai.git</div>
                 <div class="text-gray-400">$ cd easyai && npm install</div>
                 <div class="text-gray-400">$ npm install -g @easyai/cli</div>
+                <div class="text-gray-400">$ easyai setup --api-key YOUR_API_KEY</div>
                 <div class="text-gray-400">$ easyai ui</div>
                 <div class="text-gray-50">✅ Server starting automatically</div>
                 <div class="text-gray-50">✅ Dashboard opening in browser</div>
@@ -538,6 +539,7 @@
                                         <div>git clone https://github.com/your-repo/easyai.git</div>
                                         <div>cd easyai && npm install</div>
                                         <div>npm install -g @easyai/cli</div>
+                                        <div>easyai setup --api-key ${apiKey}</div>
                                         <div>easyai ui</div>
                                     </div>
                                 </div>
@@ -702,6 +704,7 @@
             const commands = `git clone https://github.com/your-repo/easyai.git
 cd easyai && npm install
 npm install -g @easyai/cli
+easyai setup --api-key ${apiKey}
 easyai ui`;
             navigator.clipboard.writeText(commands).then(() => {
                 // Show copied feedback

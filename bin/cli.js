@@ -14,7 +14,7 @@ const execAsync = util.promisify(exec);
 program
   .name('easyai')
   .description('EasyAI CLI tool for managing AI prompts and projects')
-  .version('1.1.1');
+  .version('1.1.2');
 
 // Initialize project
 program
@@ -397,57 +397,44 @@ function openInUI(route) {
   });
 }
 
-// Setup command - one command to install everything
+// Setup command - create .env file with API key
 program
   .command('setup')
-  .description('Complete EasyAI setup - install everything in one command')
-  .option('--token <token>', 'Your EasyAI authentication token')
+  .description('Setup EasyAI with your API key')
   .option('--api-key <apiKey>', 'Your EasyAI API key')
   .action(async (options) => {
-    console.log(chalk.blue('🚀 Starting EasyAI Complete Setup...'));
-    console.log(chalk.gray('This will install and configure everything you need\n'));
+    console.log(chalk.blue('🚀 Setting up EasyAI...'));
     
     let apiKey = options.apiKey;
-    let token = options.token;
     
-    // If no API key provided, try to get from localStorage or prompt
+    // If no API key provided, prompt for it
     if (!apiKey) {
-      if (typeof localStorage !== 'undefined' && localStorage.getItem('easyai_api_key')) {
-        apiKey = localStorage.getItem('easyai_api_key');
-      } else {
-        const answers = await inquirer.prompt([
-          {
-            type: 'input',
-            name: 'apiKey',
-            message: 'Enter your EasyAI API key:',
-            validate: (input) => input.length > 0 || 'API key is required'
-          }
-        ]);
-        apiKey = answers.apiKey;
-      }
+      const answers = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'apiKey',
+          message: 'Enter your EasyAI API key (from https://easy-ai.dev):',
+          validate: (input) => input.length > 0 || 'API key is required'
+        }
+      ]);
+      apiKey = answers.apiKey;
     }
     
-    const setupSpinner = ora('Setting up EasyAI...').start();
+    const setupSpinner = ora('Creating configuration...').start();
     
     try {
-      // Step 1: Install dependencies
-      setupSpinner.text = 'Installing dependencies...';
-      await execAsync('npm install', { cwd: __dirname });
+      // Check if we're in the right directory
+      if (!fs.existsSync('./src/server.js')) {
+        setupSpinner.fail('Setup failed: Not in EasyAI project directory');
+        console.log(chalk.red('❌ Please run this command from your EasyAI project directory'));
+        console.log(chalk.yellow('💡 First clone the project: git clone https://github.com/your-repo/easyai.git'));
+        return;
+      }
       
-      // Step 2: Initialize database
-      setupSpinner.text = 'Initializing database...';
-      await execAsync('npm run db:init', { cwd: path.dirname(__dirname) });
-      
-      // Step 3: Set up IDE integration
-      setupSpinner.text = 'Setting up IDE integration...';
-      process.env.EASYAI_API_KEY = apiKey;
-      await execAsync(`node install-ide-integration.js ${apiKey}`, { cwd: path.dirname(__dirname) });
-      
-      // Step 4: Create .env file
-      setupSpinner.text = 'Creating configuration files...';
+      // Create .env file
       const envContent = `EASYAI_API_KEY=${apiKey}
 EASYAI_BASE_URL=http://localhost:3001
-JWT_SECRET=your-jwt-secret-key
+JWT_SECRET=your-jwt-secret-key-${Math.random().toString(36).substring(2, 15)}
 DATABASE_URL=sqlite:./database.sqlite
 PORT=3001
 
@@ -458,54 +445,30 @@ GOOGLE_API_KEY=
 DEEPSEEK_API_KEY=
 `;
       
-      fs.writeFileSync(path.join(path.dirname(__dirname), '.env'), envContent);
+      fs.writeFileSync('.env', envContent);
       
-      // Step 5: Start services
-      setupSpinner.text = 'Starting services...';
+      // Install dependencies if not already installed
+      if (!fs.existsSync('./node_modules')) {
+        setupSpinner.text = 'Installing dependencies...';
+        await execAsync('npm install');
+      }
       
-      // Start backend server in background
-      exec('npm start', { cwd: path.dirname(__dirname), detached: true, stdio: 'ignore' });
-      
-      // Build dashboard
-      setupSpinner.text = 'Building dashboard...';
-      await execAsync('cd dashboard && npm install && npm run build', { cwd: path.dirname(__dirname) });
-      
-      // Wait a moment for services to start
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Initialize database
+      setupSpinner.text = 'Initializing database...';
+      await execAsync('npm run db:init');
       
       setupSpinner.succeed('EasyAI setup completed successfully!');
       
-      console.log(chalk.green('\n🎉 EasyAI is now ready to use!'));
-      console.log(chalk.yellow('\n📊 Dashboard: http://localhost:3001/dashboard'));
-      console.log(chalk.yellow('🔗 API: http://localhost:3001'));
-      console.log(chalk.yellow('🚀 Proxy: http://localhost:8888'));
-      
-      console.log(chalk.blue('\n✨ What\'s configured:'));
-      console.log(chalk.gray('  ✅ Backend server running'));
-      console.log(chalk.gray('  ✅ Dashboard running'));
-      console.log(chalk.gray('  ✅ IDE integration active'));
-      console.log(chalk.gray('  ✅ Claude Code configured'));
-      console.log(chalk.gray('  ✅ Cursor configured'));
-      console.log(chalk.gray('  ✅ Database initialized'));
-      
-      console.log(chalk.blue('\n🎯 Next steps:'));
-      console.log(chalk.gray('  1. Visit http://localhost:3001/dashboard to use the dashboard'));
-      console.log(chalk.gray('  2. Use your IDE - it will automatically route through EasyAI'));
-      console.log(chalk.gray('  3. Run "easyai prompts list" to see your prompts'));
-      console.log(chalk.gray('  4. Run "easyai --help" for more commands'));
-      
-      // Open dashboard automatically
-      setTimeout(() => {
-        openInUI('dashboard');
-      }, 2000);
+      console.log(chalk.green('\n🎉 EasyAI is configured and ready!'));
+      console.log(chalk.yellow('\n📊 Next steps:'));
+      console.log(chalk.gray('  1. Run: easyai ui'));
+      console.log(chalk.gray('  2. Your dashboard will open at http://localhost:3001/dashboard'));
+      console.log(chalk.gray('  3. Start building with AI!'));
       
     } catch (error) {
       setupSpinner.fail(`Setup failed: ${error.message}`);
       console.log(chalk.red('\n❌ Setup failed. Please check the error above.'));
-      console.log(chalk.yellow('💡 You can try running individual commands:'));
-      console.log(chalk.gray('  - npm install'));
-      console.log(chalk.gray('  - npm run db:init'));
-      console.log(chalk.gray('  - npm run setup-ide'));
+      console.log(chalk.yellow('💡 Make sure you have Node.js installed and try again'));
     }
   });
 
@@ -760,7 +723,8 @@ program
         console.log(chalk.blue('💡 To set up EasyAI locally:'));
         console.log(chalk.gray('   1. Clone: git clone https://github.com/your-repo/easyai.git'));
         console.log(chalk.gray('   2. Install: npm install'));
-        console.log(chalk.gray('   3. Run: easyai ui'));
+        console.log(chalk.gray('   3. Run: easyai setup --api-key YOUR_API_KEY'));
+        console.log(chalk.gray('   4. Run: easyai ui'));
         return;
       }
       

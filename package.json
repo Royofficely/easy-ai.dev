@@ -1,6 +1,6 @@
 {
   "name": "@easyai/cli",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Stop wrestling with AI code. Unified prompts, real-time costs, model switching, and IDE integration.",
   "main": "src/index.js",
   "bin": {
