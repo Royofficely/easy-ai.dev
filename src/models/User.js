@@ -10,8 +10,7 @@ const User = sequelize.define('User', {
   },
   clerk_id: {
     type: DataTypes.STRING,
-    allowNull: true,
-    unique: true
+    allowNull: true
   },
   email: {
     type: DataTypes.STRING,

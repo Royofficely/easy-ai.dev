@@ -140,25 +140,37 @@ async function handleUserDeleted(event) {
 // Sync user data from Clerk (called from frontend after sign in)
 router.post('/sync', async (req, res) => {
   try {
+    console.log('=== CLERK SYNC REQUEST ===');
+    console.log('Request body:', req.body);
+    
     const { clerkId, email, name } = req.body;
     
     if (!clerkId || !email) {
+      console.log('Missing required fields:', { clerkId, email });
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    console.log('Looking for user with clerk_id:', clerkId);
+    
     // Find or create user
     let user = await User.findOne({ where: { clerk_id: clerkId } });
+    console.log('User found by clerk_id:', !!user);
     
     if (!user) {
+      console.log('Checking by email:', email);
       // Check by email as fallback
       user = await User.findOne({ where: { email } });
+      console.log('User found by email:', !!user);
       
       if (user) {
+        console.log('Updating existing user with Clerk ID');
         // Update existing user with Clerk ID
         user.clerk_id = clerkId;
         user.is_verified = true;
         await user.save();
+        console.log('User updated successfully');
       } else {
+        console.log('Creating new user');
         // Create new user
         user = await User.create({
           clerk_id: clerkId,
@@ -168,17 +180,32 @@ router.post('/sync', async (req, res) => {
           role: 'developer',
           plan: 'free'
         });
+        console.log('New user created:', user.id);
       }
+    } else {
+      console.log('User exists, updating info');
+      user.email = email;
+      user.name = name || user.name;
+      user.is_verified = true;
+      await user.save();
+      console.log('Existing user updated');
     }
 
+    console.log('Looking for API key for user:', user.id);
+    
     // Get or create API key
     let apiKey = await ApiKey.findOne({ 
       where: { user_id: user.id },
       order: [['created_at', 'DESC']]
     });
+    
+    console.log('Existing API key found:', !!apiKey);
 
     if (!apiKey) {
+      console.log('Creating new API key');
       const keyData = ApiKey.generateKey();
+      console.log('Generated key data:', { prefix: keyData.prefix });
+      
       apiKey = await ApiKey.create({
         user_id: user.id,
         name: 'Default API Key',
@@ -188,8 +215,10 @@ router.post('/sync', async (req, res) => {
         expires_at: null
       });
       
+      console.log('API key created successfully');
+      
       // Return the actual key only on creation
-      return res.json({
+      const response = {
         user: {
           id: user.id,
           email: user.email,
@@ -199,11 +228,14 @@ router.post('/sync', async (req, res) => {
         },
         api_key: keyData.key,
         new_key: true
-      });
+      };
+      
+      console.log('Returning response for new user:', response);
+      return res.json(response);
     }
 
     // For existing keys, only return the prefix
-    res.json({
+    const response = {
       user: {
         id: user.id,
         email: user.email,
@@ -213,10 +245,15 @@ router.post('/sync', async (req, res) => {
       },
       api_key_prefix: apiKey.key_prefix,
       new_key: false
-    });
+    };
+    
+    console.log('Returning response for existing user:', response);
+    res.json(response);
   } catch (error) {
-    console.error('Sync error:', error);
-    res.status(500).json({ error: 'Failed to sync user data' });
+    console.error('=== SYNC ERROR ===');
+    console.error('Error details:', error);
+    console.error('Stack trace:', error.stack);
+    res.status(500).json({ error: 'Failed to sync user data', details: error.message });
   }
 });
 

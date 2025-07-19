@@ -137,6 +137,11 @@ app.get('/test', (req, res) => {
   res.json({ message: 'Test endpoint working!' });
 });
 
+// Serve the landing page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../index.html'));
+});
+
 // API key creation endpoint - creates unique user for each API key
 app.get('/create-api-key/:key', async (req, res) => {
   try {
