@@ -8,12 +8,12 @@ const router = express.Router();
 // Get current environment settings
 router.get('/env', authenticateApiKey, async (req, res) => {
   try {
-    // Use workspace-specific .env if in workspace mode
+    // Use workspace-specific easyai.env if in workspace mode
     const workspacePath = process.env.EASYAI_WORKSPACE_PATH || process.cwd();
-    const envPath = path.join(workspacePath, '.env');
+    const envPath = path.join(workspacePath, 'easyai.env');
     const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
     
-    // Parse .env content safely
+    // Parse easyai.env content safely
     const settings = {};
     const lines = envContent.split('\n').filter(line => line.trim() && !line.startsWith('#'));
     
@@ -29,7 +29,7 @@ router.get('/env', authenticateApiKey, async (req, res) => {
     
     res.json({ settings });
   } catch (error) {
-    console.error('Error reading .env:', error);
+    console.error('Error reading easyai.env:', error);
     res.status(500).json({ error: 'Failed to read settings' });
   }
 });
@@ -38,11 +38,11 @@ router.get('/env', authenticateApiKey, async (req, res) => {
 router.put('/env', authenticateApiKey, async (req, res) => {
   try {
     const { settings } = req.body;
-    // Use workspace-specific .env if in workspace mode
+    // Use workspace-specific easyai.env if in workspace mode
     const workspacePath = process.env.EASYAI_WORKSPACE_PATH || process.cwd();
-    const envPath = path.join(workspacePath, '.env');
+    const envPath = path.join(workspacePath, 'easyai.env');
     
-    // Read existing .env
+    // Read existing easyai.env
     let envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
     let lines = envContent.split('\n');
     
@@ -63,7 +63,7 @@ router.put('/env', authenticateApiKey, async (req, res) => {
       }
     });
     
-    // Write back to .env
+    // Write back to easyai.env
     fs.writeFileSync(envPath, lines.join('\n'));
     
     // Reload process.env (note: this won't restart the server)
@@ -71,7 +71,7 @@ router.put('/env', authenticateApiKey, async (req, res) => {
     
     res.json({ message: 'Settings updated successfully' });
   } catch (error) {
-    console.error('Error updating .env:', error);
+    console.error('Error updating easyai.env:', error);
     res.status(500).json({ error: 'Failed to update settings' });
   }
 });
@@ -79,12 +79,12 @@ router.put('/env', authenticateApiKey, async (req, res) => {
 // Get current API keys (masked for security)
 router.get('/api-keys', authenticateApiKey, async (req, res) => {
   try {
-    // Use workspace-specific .env if in workspace mode
+    // Use workspace-specific easyai.env if in workspace mode
     const workspacePath = process.env.EASYAI_WORKSPACE_PATH || process.cwd();
-    const envPath = path.join(workspacePath, '.env');
+    const envPath = path.join(workspacePath, 'easyai.env');
     const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
     
-    // Parse .env content for API keys
+    // Parse easyai.env content for API keys
     const apiKeys = {};
     const lines = envContent.split('\n').filter(line => line.trim() && !line.startsWith('#'));
     
@@ -115,11 +115,11 @@ router.get('/api-keys', authenticateApiKey, async (req, res) => {
 router.put('/api-keys', authenticateApiKey, async (req, res) => {
   try {
     const { apiKeys } = req.body;
-    // Use workspace-specific .env if in workspace mode
+    // Use workspace-specific easyai.env if in workspace mode
     const workspacePath = process.env.EASYAI_WORKSPACE_PATH || process.cwd();
-    const envPath = path.join(workspacePath, '.env');
+    const envPath = path.join(workspacePath, 'easyai.env');
     
-    // Read existing .env
+    // Read existing easyai.env
     let envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
     let lines = envContent.split('\n');
     
@@ -145,7 +145,7 @@ router.put('/api-keys', authenticateApiKey, async (req, res) => {
       }
     });
     
-    // Write back to .env
+    // Write back to easyai.env
     fs.writeFileSync(envPath, lines.join('\n'));
     
     // Reload process.env

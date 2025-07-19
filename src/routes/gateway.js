@@ -55,7 +55,7 @@ router.post('/v1/completions',
       // Create request log
       requestLog = await RequestLog.create({
         user_id: req.user.id,
-        api_key_id: req.apiKey.id,
+        api_key_id: (req.user.workspace_mode || req.apiKey?.workspace_mode) ? null : req.apiKey?.id,
         prompt_id: prompt_id,
         model_used: modelToUse,
         request_data: {
@@ -162,7 +162,7 @@ router.post('/v1/completions/direct',
       // Create request log
       requestLog = await RequestLog.create({
         user_id: req.user.id,
-        api_key_id: req.apiKey.id,
+        api_key_id: (req.user.workspace_mode || req.apiKey?.workspace_mode) ? null : req.apiKey?.id,
         prompt_id: 'direct',
         model_used: model,
         request_data: {

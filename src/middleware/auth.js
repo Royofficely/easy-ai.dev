@@ -72,33 +72,33 @@ const authenticateApiKey = async (req, res, next) => {
         console.log('✅ API key validated from environment');
       }
       
-      // Check .env file in workspace
+      // Check easyai.env file in workspace
       if (!validApiKey) {
         try {
           const workspacePath = process.env.EASYAI_WORKSPACE_PATH || process.cwd();
-          const envPath = path.join(workspacePath, '.env');
-          console.log('🔍 Checking workspace .env at:', envPath);
-          console.log('🔍 .env file exists:', fs.existsSync(envPath));
+          const envPath = path.join(workspacePath, 'easyai.env');
+          console.log('🔍 Checking workspace easyai.env at:', envPath);
+          console.log('🔍 easyai.env file exists:', fs.existsSync(envPath));
           
           if (fs.existsSync(envPath)) {
             const envContent = fs.readFileSync(envPath, 'utf8');
-            console.log('🔍 .env file content:', envContent.substring(0, 100) + '...');
+            console.log('🔍 easyai.env file content:', envContent.substring(0, 100) + '...');
             const match = envContent.match(/EASYAI_API_KEY=(.+)/);
             console.log('🔍 Regex match:', match);
             console.log('🔍 Provided API key:', apiKey);
-            console.log('🔍 .env API key:', match ? match[1].trim() : 'NOT_FOUND');
+            console.log('🔍 easyai.env API key:', match ? match[1].trim() : 'NOT_FOUND');
             
             if (match && match[1].trim() === apiKey) {
               validApiKey = apiKey;
-              console.log('✅ API key validated from workspace .env');
+              console.log('✅ API key validated from workspace easyai.env');
             } else {
-              console.log('❌ API key mismatch or not found in .env');
+              console.log('❌ API key mismatch or not found in easyai.env');
             }
           } else {
-            console.log('❌ .env file does not exist at:', envPath);
+            console.log('❌ easyai.env file does not exist at:', envPath);
           }
         } catch (error) {
-          console.log('Could not read workspace .env:', error.message);
+          console.log('Could not read workspace easyai.env:', error.message);
         }
       }
       

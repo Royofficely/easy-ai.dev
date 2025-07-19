@@ -22,9 +22,9 @@ function getApiKey() {
     if (config.apiKey) return config.apiKey;
   }
   
-  // Check local .env file
-  if (fs.existsSync('.env')) {
-    const envContent = fs.readFileSync('.env', 'utf8');
+  // Check local easyai.env file
+  if (fs.existsSync('easyai.env')) {
+    const envContent = fs.readFileSync('easyai.env', 'utf8');
     const match = envContent.match(/EASYAI_API_KEY=(.+)/);
     if (match) return match[1].trim();
   }
@@ -331,9 +331,9 @@ program
     // Save API key globally with user info
     saveApiKey(apiKey, userEmail, userName);
     
-    // Also create local .env file
+    // Also create local easyai.env file
     const envContent = `EASYAI_API_KEY=${apiKey}\n`;
-    fs.writeFileSync('.env', envContent);
+    fs.writeFileSync('easyai.env', envContent);
     
     // Register user with backend if email/name provided
     if (userEmail || userName) {
@@ -1676,8 +1676,8 @@ async function initializeWorkspace() {
     }
   }
   
-  // Create .env file with API key
-  const envPath = path.join(workspaceDir, '.env');
+  // Create easyai.env file with API key
+  const envPath = path.join(workspaceDir, 'easyai.env');
   const apiKey = getApiKey();
   
   if (!fs.existsSync(envPath) && apiKey) {
@@ -1697,7 +1697,7 @@ DB_PATH=./data/easyai.db
 `;
     
     fs.writeFileSync(envPath, envContent);
-    console.log(chalk.green('✅ Created .env file with API configuration'));
+    console.log(chalk.green('✅ Created easyai.env file with API configuration'));
   }
   
   // Create initial prompts structure and copy template prompts
