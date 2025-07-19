@@ -11,9 +11,10 @@ interface PromptModalProps {
 const PromptModal: React.FC<PromptModalProps> = ({ isOpen, onClose, onSave, editingPrompt }) => {
   const [formData, setFormData] = useState({
     name: editingPrompt?.name || '',
-    category: editingPrompt?.category || 'development',
+    category: editingPrompt?.category || 'General',
     description: editingPrompt?.description || '',
     content: editingPrompt?.content || '',
+    model: editingPrompt?.model || 'gpt-4',
     variables: editingPrompt?.variables ? editingPrompt.variables.join(', ') : ''
   });
 
@@ -25,17 +26,19 @@ const PromptModal: React.FC<PromptModalProps> = ({ isOpen, onClose, onSave, edit
     if (editingPrompt) {
       setFormData({
         name: editingPrompt.name || '',
-        category: editingPrompt.category || 'development',
+        category: editingPrompt.category || 'General',
         description: editingPrompt.description || '',
         content: editingPrompt.content || '',
+        model: editingPrompt.model || 'gpt-4',
         variables: editingPrompt.variables ? editingPrompt.variables.join(', ') : ''
       });
     } else {
       setFormData({
         name: '',
-        category: 'development',
+        category: 'General',
         description: '',
         content: '',
+        model: 'gpt-4',
         variables: ''
       });
     }
@@ -55,9 +58,10 @@ const PromptModal: React.FC<PromptModalProps> = ({ isOpen, onClose, onSave, edit
       onClose();
       setFormData({
         name: '',
-        category: 'development',
+        category: 'General',
         description: '',
         content: '',
+        model: 'gpt-4',
         variables: ''
       });
     } catch (error) {
@@ -105,7 +109,7 @@ const PromptModal: React.FC<PromptModalProps> = ({ isOpen, onClose, onSave, edit
               value={formData.name}
               onChange={handleChange}
               placeholder="Untitled"
-              className="modal-title-input"
+              className="notion-prompt-title-input"
               required
             />
           </div>
@@ -118,69 +122,62 @@ const PromptModal: React.FC<PromptModalProps> = ({ isOpen, onClose, onSave, edit
         </div>
 
         <form onSubmit={handleSubmit} className="prompt-form">
-          <div className="form-meta">
-            <div className="form-group-inline">
+          <div className="notion-prompt-form-fields">
+            <input
+              type="text"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="Brief description (optional)"
+              className="notion-prompt-description-input"
+            />
+            
+            <div className="notion-prompt-form-row">
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="category-select"
+                className="notion-prompt-select"
                 required
               >
-                <option value="development">🔧 Development</option>
-                <option value="testing">🧪 Testing</option>
-                <option value="debugging">🐛 Debugging</option>
-                <option value="documentation">📚 Documentation</option>
-                <option value="code-review">👁️ Code Review</option>
-                <option value="general">📝 General</option>
+                <option value="General">General</option>
+                <option value="Development">Development</option>
+                <option value="Creative">Creative</option>
+                <option value="Business">Business</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Research">Research</option>
+                <option value="Education">Education</option>
               </select>
-            </div>
-            
-            <div className="form-group-inline">
-              <input
-                type="text"
-                name="description"
-                value={formData.description}
+              
+              <select
+                name="model"
+                value={formData.model}
                 onChange={handleChange}
-                placeholder="Add a description..."
-                className="description-input"
-              />
+                className="notion-prompt-select"
+                required
+              >
+                <option value="gpt-4">GPT-4</option>
+                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                <option value="claude-3-haiku">Claude 3 Haiku</option>
+                <option value="gemini-pro">Gemini Pro</option>
+              </select>
             </div>
           </div>
 
-          <div className="content-section">
-            <div className="content-toolbar">
-              <span className="content-label">Prompt Content</span>
-              <div className="toolbar-actions">
-                <span className="variable-hint">Use {`{variable_name}`} for variables</span>
-              </div>
-            </div>
-            <div className={`content-editor ${contentFocused ? 'focused' : ''}`}>
-              <textarea
-                name="content"
-                value={formData.content}
-                onChange={handleChange}
-                onKeyDown={handleContentKeyDown}
-                onFocus={() => setContentFocused(true)}
-                onBlur={() => setContentFocused(false)}
-                required
-                rows={12}
-                className="content-textarea"
-                placeholder="Start writing your prompt here...
-
-You can use variables like {language}, {code}, or {question} to make your prompts dynamic.
-
-Example:
-Please review this {language} code and provide feedback:
-
-{code}
-
-Focus on:
-- Code quality
-- Best practices
-- Potential bugs"
-              />
-            </div>
+          <div className="notion-prompt-content">
+            <textarea
+              name="content"
+              value={formData.content}
+              onChange={handleChange}
+              onKeyDown={handleContentKeyDown}
+              onFocus={() => setContentFocused(true)}
+              onBlur={() => setContentFocused(false)}
+              required
+              rows={12}
+              className="notion-prompt-content-textarea"
+              placeholder="Start writing your prompt here..."
+            />
           </div>
 
           {formData.variables && (
@@ -198,11 +195,11 @@ Focus on:
             </div>
           )}
 
-          <div className="form-actions">
-            <button type="button" onClick={onClose} className="secondary-button">
+          <div className="notion-prompt-actions">
+            <button type="button" onClick={onClose} className="btn-secondary btn-sm">
               Cancel
             </button>
-            <button type="submit" disabled={saving || !formData.name.trim()} className="primary-button">
+            <button type="submit" disabled={saving || !formData.name.trim()} className="btn-primary btn-sm">
               {saving ? (
                 <>
                   <svg className="loading-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
