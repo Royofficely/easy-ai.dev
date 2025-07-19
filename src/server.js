@@ -114,7 +114,7 @@ app.get('/health', (req, res) => {
       status: 'healthy', 
       timestamp: new Date().toISOString(),
       service: 'easyai-backend',
-      version: '1.8.8',
+      version: '1.8.9',
       port: PORT,
       environment: process.env.NODE_ENV || 'development',
       railway: !!process.env.RAILWAY_ENVIRONMENT_NAME,

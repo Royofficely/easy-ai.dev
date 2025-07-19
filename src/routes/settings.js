@@ -8,7 +8,9 @@ const router = express.Router();
 // Get current environment settings
 router.get('/env', authenticateApiKey, async (req, res) => {
   try {
-    const envPath = path.join(process.cwd(), '.env');
+    // Use workspace-specific .env if in workspace mode
+    const workspacePath = process.env.EASYAI_WORKSPACE_PATH || process.cwd();
+    const envPath = path.join(workspacePath, '.env');
     const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
     
     // Parse .env content safely
@@ -36,7 +38,9 @@ router.get('/env', authenticateApiKey, async (req, res) => {
 router.put('/env', authenticateApiKey, async (req, res) => {
   try {
     const { settings } = req.body;
-    const envPath = path.join(process.cwd(), '.env');
+    // Use workspace-specific .env if in workspace mode
+    const workspacePath = process.env.EASYAI_WORKSPACE_PATH || process.cwd();
+    const envPath = path.join(workspacePath, '.env');
     
     // Read existing .env
     let envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
@@ -75,7 +79,9 @@ router.put('/env', authenticateApiKey, async (req, res) => {
 // Get current API keys (masked for security)
 router.get('/api-keys', authenticateApiKey, async (req, res) => {
   try {
-    const envPath = path.join(process.cwd(), '.env');
+    // Use workspace-specific .env if in workspace mode
+    const workspacePath = process.env.EASYAI_WORKSPACE_PATH || process.cwd();
+    const envPath = path.join(workspacePath, '.env');
     const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
     
     // Parse .env content for API keys
@@ -109,7 +115,9 @@ router.get('/api-keys', authenticateApiKey, async (req, res) => {
 router.put('/api-keys', authenticateApiKey, async (req, res) => {
   try {
     const { apiKeys } = req.body;
-    const envPath = path.join(process.cwd(), '.env');
+    // Use workspace-specific .env if in workspace mode
+    const workspacePath = process.env.EASYAI_WORKSPACE_PATH || process.cwd();
+    const envPath = path.join(workspacePath, '.env');
     
     // Read existing .env
     let envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';

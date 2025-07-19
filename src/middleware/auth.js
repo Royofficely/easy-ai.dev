@@ -38,6 +38,87 @@ const authenticateApiKey = async (req, res, next) => {
     return res.status(401).json({ error: 'API key required' });
   }
 
+  // Check if we're in workspace mode
+  const workspaceSync = req.app.get('workspaceSync');
+  
+  if (workspaceSync) {
+    console.log('🏢 Workspace mode detected - using config-based authentication');
+    
+    // In workspace mode, check against config files and environment
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const os = require('os');
+      
+      // First check CLI config
+      let validApiKey = null;
+      try {
+        const configPath = path.join(os.homedir(), '.easyai', 'config.json');
+        if (fs.existsSync(configPath)) {
+          const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+          if (config.apiKey === apiKey) {
+            validApiKey = config.apiKey;
+            console.log('✅ API key validated from CLI config');
+          }
+        }
+      } catch (error) {
+        console.log('Could not read CLI config:', error.message);
+      }
+      
+      // Check environment variable
+      if (!validApiKey && process.env.EASYAI_API_KEY === apiKey) {
+        validApiKey = process.env.EASYAI_API_KEY;
+        console.log('✅ API key validated from environment');
+      }
+      
+      // Check .env file in workspace
+      if (!validApiKey) {
+        try {
+          const workspacePath = process.env.EASYAI_WORKSPACE_PATH || process.cwd();
+          const envPath = path.join(workspacePath, '.env');
+          if (fs.existsSync(envPath)) {
+            const envContent = fs.readFileSync(envPath, 'utf8');
+            const match = envContent.match(/EASYAI_API_KEY=(.+)/);
+            if (match && match[1].trim() === apiKey) {
+              validApiKey = apiKey;
+              console.log('✅ API key validated from workspace .env');
+            }
+          }
+        } catch (error) {
+          console.log('Could not read workspace .env:', error.message);
+        }
+      }
+      
+      if (validApiKey) {
+        // Create a mock user for workspace mode
+        req.user = {
+          id: 'workspace-user',
+          email: 'workspace@easyai.local',
+          name: 'Workspace User',
+          role: 'developer',
+          is_verified: true,
+          workspace_mode: true
+        };
+        req.apiKey = {
+          id: 'workspace-api-key',
+          name: 'Workspace API Key',
+          permissions: ['read', 'write'],
+          is_active: true,
+          workspace_mode: true
+        };
+        console.log('✅ Workspace authentication successful');
+        return next();
+      } else {
+        console.log('❌ API key not found in workspace config');
+        return res.status(401).json({ error: 'Invalid API key for workspace mode' });
+      }
+    } catch (error) {
+      console.error('Workspace authentication error:', error);
+      return res.status(401).json({ error: 'Authentication error in workspace mode' });
+    }
+  }
+
+  // Database mode (original logic)
   try {
     const keyHash = ApiKey.validateKey(apiKey);
     console.log('Generated Hash:', keyHash);
