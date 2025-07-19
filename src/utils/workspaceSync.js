@@ -67,29 +67,35 @@ class WorkspaceSync {
     try {
       console.log(`📁 File ${action}: ${filePath}`);
       
-      // Prevent infinite loop - ignore changes to index.json during sync
-      if (filePath.endsWith('index.json') && this.isSyncing) {
-        console.log(`🔄 Ignoring index.json change during sync operation`);
+      // Prevent infinite loop - ignore ALL changes to index.json
+      if (filePath.endsWith('index.json')) {
+        console.log(`🔄 Ignoring index.json change to prevent infinite loop`);
         return;
       }
       
-      // Only process .json files for prompts
+      // Only process .json files for prompts (except index.json)
       if (type === 'prompts' && !filePath.endsWith('.json')) {
         console.log(`🔄 Ignoring non-JSON file: ${filePath}`);
         return;
       }
       
+      // Prevent rapid-fire changes
+      if (this.isSyncing) {
+        console.log(`🔄 Sync already in progress, skipping: ${path.basename(filePath)}`);
+        return;
+      }
+      
       if (type === 'prompts') {
-        // Set sync flag to prevent infinite loop
+        // Set sync flag to prevent overlapping syncs
         this.isSyncing = true;
         
         try {
           console.log(`🔄 Processing ${action} for prompt file: ${path.basename(filePath)}`);
           
-          // Load all prompts from files (this will pick up new/changed files)
-          const prompts = await this.loadPrompts();
+          // Load all prompts from individual files (NOT from index)
+          const prompts = await this.loadPromptsFromFiles();
           
-          // Update the index with current prompts without triggering watchers
+          // Update the index file with current prompts
           await this.updatePromptsIndex(prompts);
           
           // Emit comprehensive workspace prompts data to UI
@@ -121,8 +127,15 @@ class WorkspaceSync {
             timestamp: new Date().toISOString(),
             source: 'file_change'
           });
-        } finally {
+          
+          // Add a delay before allowing next sync
+          setTimeout(() => {
+            this.isSyncing = false;
+          }, 1000);
+          
+        } catch (error) {
           this.isSyncing = false;
+          throw error;
         }
       } else if (type === 'config') {
         // Immediately sync config to all connected clients
@@ -295,8 +308,8 @@ class WorkspaceSync {
     }
   }
 
-  // Load prompts from workspace (load from individual files AND index)
-  async loadPrompts() {
+  // Load prompts from individual files only (no index update)
+  async loadPromptsFromFiles() {
     try {
       const promptsDir = path.join(this.workspacePath, 'prompts');
       const prompts = [];
@@ -324,12 +337,18 @@ class WorkspaceSync {
         }
       }
       
-      console.log(`📋 Loaded ${prompts.length} prompts from workspace`);
+      console.log(`📋 Loaded ${prompts.length} prompts from files`);
       return prompts;
     } catch (error) {
-      console.error('Error loading prompts from workspace:', error);
+      console.error('Error loading prompts from files:', error);
       return [];
     }
+  }
+
+  // Load prompts from workspace (load from individual files AND index)
+  async loadPrompts() {
+    // Use the file-only loader to prevent infinite loops
+    return await this.loadPromptsFromFiles();
   }
 
   // Update prompts index

@@ -11,7 +11,7 @@ const os = require('os');
 program
   .name('easyai')
   .description('EasyAI CLI tool for managing AI prompts and projects')
-  .version('1.7.1');
+  .version('1.7.2');
 
 // Helper functions
 function getApiKey() {
@@ -1846,12 +1846,13 @@ async function startServer(port = 4000, workspaceDir = null) {
       // Start server with workspace as working directory
       const serverProcess = spawn('node', [serverPath], {
         cwd: cwd,
-        detached: true, // Run in background
-        stdio: 'ignore', // Hide server output in production
+        detached: false, // Don't run in background for debugging
+        stdio: 'inherit', // Show server output for debugging
         env: { 
           ...process.env, 
           PORT: port,
-          EASYAI_WORKSPACE_PATH: cwd // Explicitly pass workspace path
+          EASYAI_WORKSPACE_PATH: cwd, // Explicitly pass workspace path
+          NODE_ENV: 'development' // Enable development logging
         }
       });
       
