@@ -1822,8 +1822,8 @@ async function startServer(port = 4000, workspaceDir = null) {
       // Start server with workspace as working directory
       const serverProcess = spawn('node', [serverPath], {
         cwd: cwd,
-        detached: false, // Keep attached for debugging
-        stdio: 'inherit', // Show server output for debugging
+        detached: true, // Run in background
+        stdio: 'ignore', // Hide server output in production
         env: { 
           ...process.env, 
           PORT: port,
@@ -1831,8 +1831,7 @@ async function startServer(port = 4000, workspaceDir = null) {
         }
       });
       
-      // Don't unref in debug mode so we can see output
-      // serverProcess.unref();
+      serverProcess.unref();
       
       // Give the server time to start
       setTimeout(() => {

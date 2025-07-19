@@ -1,6 +1,6 @@
 {
   "name": "@easyai/cli",
-  "version": "1.6.6",
+  "version": "1.6.7",
   "description": "EasyAI CLI - Unified AI prompts, real-time costs, model switching, and IDE integration.",
   "main": "bin/cli.js",
   "bin": {

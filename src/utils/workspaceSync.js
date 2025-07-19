@@ -15,6 +15,7 @@ class WorkspaceSync {
     this.io = io;
     this.watchers = new Map();
     this.isWatching = false;
+    this.isSyncing = false; // Flag to prevent infinite loops
   }
 
   // Initialize workspace watching
@@ -66,17 +67,30 @@ class WorkspaceSync {
     try {
       console.log(`📁 File ${action}: ${filePath}`);
       
+      // Prevent infinite loop - ignore changes to index.json during sync
+      if (filePath.endsWith('index.json') && this.isSyncing) {
+        console.log(`🔄 Ignoring index.json change during sync operation`);
+        return;
+      }
+      
       if (type === 'prompts') {
-        // Immediately sync prompts to all connected clients
-        await this.syncPrompts();
+        // Set sync flag to prevent infinite loop
+        this.isSyncing = true;
         
-        // Also emit specific file change event for real-time UI updates
-        this.io.emit('workspace:file:changed', {
-          type: 'prompts',
-          action,
-          filePath,
-          timestamp: new Date().toISOString()
-        });
+        try {
+          // Immediately sync prompts to all connected clients
+          await this.syncPrompts();
+          
+          // Also emit specific file change event for real-time UI updates
+          this.io.emit('workspace:file:changed', {
+            type: 'prompts',
+            action,
+            filePath,
+            timestamp: new Date().toISOString()
+          });
+        } finally {
+          this.isSyncing = false;
+        }
       } else if (type === 'config') {
         // Immediately sync config to all connected clients
         await this.syncConfig();
@@ -93,6 +107,9 @@ class WorkspaceSync {
       console.log(`✅ Real-time sync completed for ${type}`);
     } catch (error) {
       console.error('Error handling file change:', error);
+      
+      // Reset sync flag on error
+      this.isSyncing = false;
       
       // Emit error to UI
       this.io.emit('workspace:error', {
@@ -273,9 +290,6 @@ class WorkspaceSync {
           console.error(`Error loading prompt file ${file}:`, error);
         }
       }
-      
-      // Update index with loaded prompts
-      await this.updatePromptsIndex(prompts);
       
       console.log(`📋 Loaded ${prompts.length} prompts from workspace`);
       return prompts;
