@@ -731,50 +731,19 @@ async function startServer() {
     await initializeDatabase();
     console.log('Database initialized successfully');
     
-    // Initialize workspace sync if workspace exists
+    // Initialize workspace sync - use current working directory as workspace
     const fs = require('fs');
-    let workspacePath = null;
+    const workspacePath = process.cwd(); // Use current directory as workspace
     
-    // Check multiple possible workspace locations
-    const possiblePaths = [
-      process.cwd(), // Current directory (if already in easyai workspace)
-      path.join(process.cwd(), 'easyai'), // Standard subdirectory
-      path.join(process.cwd(), '..'), // Parent directory 
-      path.join(process.cwd(), '..', 'easyai'), // Parent's easyai subdirectory
-    ];
+    console.log(`🏢 Using current directory as workspace: ${workspacePath}`);
     
-    console.log(`🔍 Searching for workspace from: ${process.cwd()}`);
+    // Check if workspace has the required structure
+    const hasPrompts = fs.existsSync(path.join(workspacePath, 'prompts'));
+    const hasConfig = fs.existsSync(path.join(workspacePath, 'config'));
     
-    for (const possiblePath of possiblePaths) {
-      // Check if this directory has workspace structure (prompts, config dirs)
-      const hasPrompts = fs.existsSync(path.join(possiblePath, 'prompts'));
-      const hasConfig = fs.existsSync(path.join(possiblePath, 'config'));
-      const hasEasyaiSubdir = fs.existsSync(path.join(possiblePath, 'easyai'));
-      
-      console.log(`🔍 Checking: ${possiblePath} (prompts: ${hasPrompts}, config: ${hasConfig})`);
-      
-      if (hasPrompts && hasConfig) {
-        workspacePath = possiblePath;
-        console.log(`📂 Found workspace at: ${workspacePath}`);
-        break;
-      }
-      
-      // If we find an 'easyai' subdirectory, check inside it too
-      if (hasEasyaiSubdir) {
-        const subPath = path.join(possiblePath, 'easyai');
-        const subHasPrompts = fs.existsSync(path.join(subPath, 'prompts'));
-        const subHasConfig = fs.existsSync(path.join(subPath, 'config'));
-        console.log(`🔍 Checking subdirectory: ${subPath} (prompts: ${subHasPrompts}, config: ${subHasConfig})`);
-        
-        if (subHasPrompts && subHasConfig) {
-          workspacePath = subPath;
-          console.log(`📂 Found workspace in subdirectory: ${workspacePath}`);
-          break;
-        }
-      }
-    }
+    console.log(`📁 Workspace structure - prompts: ${hasPrompts}, config: ${hasConfig}`);
     
-    if (workspacePath && fs.existsSync(workspacePath)) {
+    if (hasPrompts && hasConfig) {
       console.log('🏢 Workspace detected, initializing sync...');
       console.log(`📁 Workspace path: ${workspacePath}`);
       

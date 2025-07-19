@@ -1635,15 +1635,12 @@ async function killPort(port) {
 // Helper function to initialize local easyai workspace
 async function initializeWorkspace() {
   const fs = require('fs');
-  const workspaceDir = path.join(process.cwd(), 'easyai');
+  const workspaceDir = process.cwd(); // Use current directory as workspace
   
   console.log(chalk.blue('📁 Initializing EasyAI workspace...'));
+  console.log(chalk.gray(`📂 Workspace location: ${workspaceDir}`));
   
-  // Create main easyai directory
-  if (!fs.existsSync(workspaceDir)) {
-    fs.mkdirSync(workspaceDir, { recursive: true });
-    console.log(chalk.green('✅ Created easyai directory'));
-  }
+  // No need to create main directory - use current directory
   
   // Create subdirectories
   const subdirs = ['prompts', 'data', 'config', 'logs'];
