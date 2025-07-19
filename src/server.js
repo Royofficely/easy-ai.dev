@@ -731,11 +731,15 @@ async function startServer() {
     await initializeDatabase();
     console.log('Database initialized successfully');
     
-    // Initialize workspace sync - use current working directory as workspace
+    // Initialize workspace sync - use environment variable or current directory
     const fs = require('fs');
-    const workspacePath = process.cwd(); // Use current directory as workspace
+    const workspacePath = process.env.EASYAI_WORKSPACE_PATH || process.cwd();
     
-    console.log(`🏢 Using current directory as workspace: ${workspacePath}`);
+    console.log(`🏢 Using workspace directory: ${workspacePath}`);
+    console.log(`📍 Current working directory: ${process.cwd()}`);
+    if (process.env.EASYAI_WORKSPACE_PATH) {
+      console.log(`🔧 Using environment workspace path: ${process.env.EASYAI_WORKSPACE_PATH}`);
+    }
     
     // Check if workspace has the required structure
     const hasPrompts = fs.existsSync(path.join(workspacePath, 'prompts'));

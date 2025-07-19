@@ -1822,8 +1822,12 @@ async function startServer(port = 4000, workspaceDir = null) {
       const serverProcess = spawn('node', [serverPath], {
         cwd: cwd,
         detached: true,
-        stdio: 'ignore',
-        env: { ...process.env, PORT: port }
+        stdio: 'inherit', // Show server output for debugging
+        env: { 
+          ...process.env, 
+          PORT: port,
+          EASYAI_WORKSPACE_PATH: cwd // Explicitly pass workspace path
+        }
       });
       
       serverProcess.unref();
