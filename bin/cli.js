@@ -877,7 +877,14 @@ program
     } catch (error) {
       if (options.autoStart !== false) {
         console.log(chalk.yellow('🔄 Server not running, starting automatically...'));
-        await startServer(options.port);
+        try {
+          await startServer(options.port);
+        } catch (serverStartError) {
+          console.log(chalk.red('❌ Failed to start server automatically'));
+          console.log(chalk.red(`Error: ${serverStartError.message}`));
+          console.log(chalk.yellow('💡 Please run manually: cd easyai-dev && npm start'));
+          return;
+        }
         
         // Wait a moment for server to start
         await new Promise(resolve => setTimeout(resolve, 3000));
@@ -890,6 +897,7 @@ program
           await openBrowser(url);
         } catch (startError) {
           console.log(chalk.red('❌ Failed to start server automatically'));
+          console.log(chalk.red(`Error: ${startError.message}`));
           console.log(chalk.yellow('💡 Please run manually: cd easyai-dev && npm start'));
         }
       } else {
@@ -1523,6 +1531,7 @@ async function killPort(port) {
 // Helper function to start the server
 async function startServer(port = 4000) {
   const { spawn } = require('child_process');
+  const fs = require('fs');
   
   console.log(chalk.blue(`🧹 Cleaning port ${port}...`));
   await killPort(port);
@@ -1535,24 +1544,68 @@ async function startServer(port = 4000) {
   return new Promise((resolve, reject) => {
     // When installed globally, we need to use the package directory
     const packagePath = path.dirname(__dirname);
+    const serverPath = path.join(packagePath, 'src', 'server.js');
     
-    const serverProcess = spawn('node', ['src/server.js'], {
-      cwd: packagePath,
-      detached: true,
-      stdio: 'ignore',
-      env: { ...process.env, PORT: port }
-    });
+    // Check if server file exists
+    if (!fs.existsSync(serverPath)) {
+      reject(new Error(`Server file not found at ${serverPath}`));
+      return;
+    }
     
-    serverProcess.unref();
+    // Check if node_modules exists
+    const nodeModulesPath = path.join(packagePath, 'node_modules');
+    if (!fs.existsSync(nodeModulesPath)) {
+      // Try to install dependencies first
+      console.log(chalk.blue('📦 Installing dependencies...'));
+      const installProcess = spawn('npm', ['install'], {
+        cwd: packagePath,
+        stdio: 'pipe'
+      });
+      
+      installProcess.on('close', (code) => {
+        if (code === 0) {
+          // Dependencies installed, now start server
+          startServerProcess();
+        } else {
+          reject(new Error('Failed to install dependencies'));
+        }
+      });
+    } else {
+      startServerProcess();
+    }
     
-    // Give the server time to start
-    setTimeout(() => {
-      resolve(serverProcess);
-    }, 3000);
-    
-    serverProcess.on('error', (error) => {
-      reject(error);
-    });
+    function startServerProcess() {
+      const serverProcess = spawn('node', ['src/server.js'], {
+        cwd: packagePath,
+        detached: true,
+        stdio: ['ignore', 'pipe', 'pipe'],
+        env: { ...process.env, PORT: port }
+      });
+      
+      let serverOutput = '';
+      serverProcess.stdout.on('data', (data) => {
+        serverOutput += data.toString();
+      });
+      
+      serverProcess.stderr.on('data', (data) => {
+        serverOutput += data.toString();
+      });
+      
+      serverProcess.unref();
+      
+      // Give the server time to start
+      setTimeout(() => {
+        if (serverOutput.includes('Error') || serverOutput.includes('error')) {
+          reject(new Error(`Server startup failed: ${serverOutput}`));
+        } else {
+          resolve(serverProcess);
+        }
+      }, 5000);
+      
+      serverProcess.on('error', (error) => {
+        reject(error);
+      });
+    }
   });
 }
 
