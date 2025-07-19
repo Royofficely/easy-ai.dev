@@ -105,18 +105,27 @@ app.use('/public', express.static(path.join(__dirname, '../public')));
 
 // Health check endpoint for Railway - should respond immediately
 app.get('/health', (req, res) => {
-  console.log('🌐 GET /health');
-  
-  res.status(200).json({ 
-    status: 'healthy', 
-    timestamp: new Date().toISOString(),
-    service: 'easyai-backend',
-    version: '1.8.3',
-    port: PORT,
-    environment: process.env.NODE_ENV || 'development',
-    railway: !!process.env.RAILWAY_ENVIRONMENT_NAME,
-    uptime: process.uptime()
-  });
+  try {
+    console.log('🌐 GET /health');
+    
+    res.status(200).json({ 
+      status: 'healthy', 
+      timestamp: new Date().toISOString(),
+      service: 'easyai-backend',
+      version: '1.8.6',
+      port: PORT,
+      environment: process.env.NODE_ENV || 'development',
+      railway: !!process.env.RAILWAY_ENVIRONMENT_NAME,
+      uptime: process.uptime()
+    });
+  } catch (error) {
+    console.error('Health check error:', error);
+    res.status(500).json({
+      status: 'unhealthy',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // Simple test endpoint
@@ -1024,14 +1033,6 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../index.html'));
 });
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
-});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -1062,6 +1063,22 @@ async function startServer() {
     console.log('✅ Database initialized successfully');
     
     // Initialize workspace sync - skip in production/Railway for faster startup
+    // Also start the server immediately and do workspace sync after
+    
+    // Start server first for health check
+    const httpServer = server.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 EasyAI Platform running on port ${PORT}`);
+      console.log(`📊 Dashboard: http://localhost:${PORT}/dashboard`);
+      console.log(`🔗 API: http://localhost:${PORT}/api/v1`);
+      console.log(`⚡ WebSocket: Ready for real-time updates`);
+      if (isProduction) {
+        console.log(`🌐 Production mode: ${process.env.RAILWAY_ENVIRONMENT_NAME || 'Unknown'}`);
+      }
+    });
+    
+    // Store the server instance for graceful shutdown
+    server = httpServer;
+    
     if (!isProduction) {
       const fs = require('fs');
       const workspacePath = process.env.EASYAI_WORKSPACE_PATH || process.cwd();
@@ -1122,21 +1139,10 @@ async function startServer() {
       app.set('workspaceSync', null);
     }
     
-    const httpServer = server.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 EasyAI Platform running on port ${PORT}`);
-      console.log(`📊 Dashboard: http://localhost:${PORT}/dashboard`);
-      console.log(`🔗 API: http://localhost:${PORT}/api/v1`);
-      console.log(`⚡ WebSocket: Ready for real-time updates`);
-      if (isProduction) {
-        console.log(`🌐 Production mode: ${process.env.RAILWAY_ENVIRONMENT_NAME || 'Unknown'}`);
-      }
-      if (workspaceSync) {
-        console.log(`📁 Workspace: ${workspacePath}`);
-      }
-    });
-    
-    // Store the server instance for graceful shutdown
-    server = httpServer;
+    // Log workspace info if available
+    if (workspaceSync) {
+      console.log(`📁 Workspace: ${process.env.EASYAI_WORKSPACE_PATH || process.cwd()}`);
+    }
   } catch (error) {
     console.error('Failed to initialize database:', error);
     process.exit(1);
