@@ -111,7 +111,9 @@ router.post('/complete', async (req, res) => {
       googleKey,
       defaultModel,
       temperature,
-      maxTokens 
+      maxTokens,
+      userEmail,
+      userName
     } = req.body;
     
     // Create or update user and API key
@@ -124,13 +126,15 @@ router.post('/complete', async (req, res) => {
       user = await User.findByPk(existingKey.user_id);
       apiKeyRecord = existingKey;
     } else {
-      // Create new user
-      const userEmail = `user_${apiKey.slice(-8)}@easyai.local`;
-      const userName = `EasyAI User ${apiKey.slice(-8)}`;
+      // Create new user - use provided email/name or fallback to generated ones
+      const finalUserEmail = userEmail || `user_${apiKey.slice(-8)}@easyai.local`;
+      const finalUserName = userName || `EasyAI User ${apiKey.slice(-8)}`;
+      
+      console.log(`🔑 Creating new user: ${finalUserEmail} (${finalUserName})`);
       
       user = await User.create({
-        email: userEmail,
-        name: userName,
+        email: finalUserEmail,
+        name: finalUserName,
         is_active: true,
         is_verified: true
       });

@@ -37,7 +37,7 @@ function getApiKey() {
   return null;
 }
 
-function saveApiKey(apiKey) {
+function saveApiKey(apiKey, userEmail = null, userName = null) {
   const configDir = path.join(os.homedir(), '.easyai');
   if (!fs.existsSync(configDir)) {
     fs.mkdirSync(configDir, { recursive: true });
@@ -48,6 +48,14 @@ function saveApiKey(apiKey) {
   
   config.apiKey = apiKey;
   config.lastUpdated = new Date().toISOString();
+  
+  // Save user info if provided
+  if (userEmail) {
+    config.userEmail = userEmail;
+  }
+  if (userName) {
+    config.userName = userName;
+  }
   
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
 }
@@ -263,11 +271,15 @@ program
   .command('setup')
   .description('Setup EasyAI with your API key')
   .option('--api-key <apiKey>', 'Your EasyAI API key')
+  .option('--email <email>', 'Your email address (from easy-ai.dev signup)')
+  .option('--name <name>', 'Your full name')
   .option('--integrate', 'Automatically integrate with IDEs')
   .action(async (options) => {
     console.log(chalk.blue('🚀 Setting up EasyAI...'));
     
     let apiKey = options.apiKey;
+    let userEmail = options.email;
+    let userName = options.name;
     
     if (!apiKey) {
       const answers = await inquirer.prompt([
@@ -281,12 +293,61 @@ program
       apiKey = answers.apiKey;
     }
     
-    // Save API key globally
-    saveApiKey(apiKey);
+    // If no email provided, ask for it to personalize the dashboard
+    if (!userEmail) {
+      console.log(chalk.yellow('\n💡 To personalize your dashboard, provide your email from easy-ai.dev:'));
+      const emailAnswers = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'email',
+          message: 'Your email (optional, press Enter to skip):',
+          validate: (input) => {
+            if (!input) return true; // Allow empty
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(input) || 'Please enter a valid email address';
+          }
+        }
+      ]);
+      userEmail = emailAnswers.email;
+      
+      // If email provided, ask for name too
+      if (userEmail) {
+        const nameAnswers = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'name',
+            message: 'Your full name (optional):',
+          }
+        ]);
+        userName = nameAnswers.name;
+      }
+    }
+    
+    // Save API key globally with user info
+    saveApiKey(apiKey, userEmail, userName);
     
     // Also create local .env file
     const envContent = `EASYAI_API_KEY=${apiKey}\n`;
     fs.writeFileSync('.env', envContent);
+    
+    // Register user with backend if email/name provided
+    if (userEmail || userName) {
+      try {
+        console.log(chalk.blue('🔄 Registering user with backend...'));
+        await makeRequest('/api/setup/complete', {
+          method: 'POST',
+          body: {
+            apiKey,
+            userEmail,
+            userName
+          }
+        });
+        console.log(chalk.green('✅ User registered successfully!'));
+      } catch (error) {
+        console.log(chalk.yellow(`⚠️ Warning: Could not register user with backend: ${error.message}`));
+        console.log(chalk.gray('   Your setup is still valid, but your email may not appear in the dashboard.'));
+      }
+    }
     
     console.log(chalk.green('✅ EasyAI setup completed successfully!'));
     

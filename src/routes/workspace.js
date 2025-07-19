@@ -207,10 +207,31 @@ router.get('/user', (req, res) => {
     const workspaceSync = req.app.get('workspaceSync');
     
     if (workspaceSync) {
+      // Try to get user email from config if available
+      const os = require('os');
+      
+      let userEmail = 'workspace@easyai.local';
+      let userName = 'Workspace User';
+      
+      try {
+        const configPath = path.join(os.homedir(), '.easyai', 'config.json');
+        if (fs.existsSync(configPath)) {
+          const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+          if (config.userEmail) {
+            userEmail = config.userEmail;
+          }
+          if (config.userName) {
+            userName = config.userName;
+          }
+        }
+      } catch (error) {
+        console.log('Could not read user config, using defaults');
+      }
+      
       return res.json({
         id: 'workspace-user',
-        email: 'workspace@easyai.local',
-        name: 'Workspace User',
+        email: userEmail,
+        name: userName,
         role: 'user',
         is_verified: true,
         workspace_mode: true,
