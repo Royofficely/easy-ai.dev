@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 
 // Try to load chokidar, fallback if not available
 let chokidar = null;
@@ -16,6 +17,42 @@ class WorkspaceSync {
     this.watchers = new Map();
     this.isWatching = false;
     this.isSyncing = false; // Flag to prevent infinite loops
+    this.workspaceUserId = null; // Will be set when we get/create the workspace user
+  }
+
+  // Ensure workspace user exists in database
+  async ensureWorkspaceUser() {
+    try {
+      // Dynamically import models to avoid circular dependencies
+      const { User } = require('../models');
+      
+      const workspaceUserId = '550e8400-e29b-41d4-a716-446655440000'; // Fixed UUID for workspace user
+      
+      let user = await User.findByPk(workspaceUserId);
+      
+      if (!user) {
+        console.log('👤 Creating workspace user in database...');
+        user = await User.create({
+          id: workspaceUserId,
+          email: 'workspace@easyai.local',
+          name: 'Workspace User',
+          role: 'developer',
+          is_verified: true,
+          is_active: true
+        });
+        console.log('✅ Workspace user created');
+      } else {
+        console.log('👤 Workspace user exists in database');
+      }
+      
+      this.workspaceUserId = workspaceUserId;
+      return user;
+    } catch (error) {
+      console.error('Error ensuring workspace user:', error);
+      // Fallback to workspace-user string for compatibility
+      this.workspaceUserId = 'workspace-user';
+      return null;
+    }
   }
 
   // Initialize workspace watching
@@ -169,13 +206,106 @@ class WorkspaceSync {
     }
   }
 
-  // Sync prompts with frontend
+  // Sync a single prompt to database
+  async syncPromptToDatabase(prompt) {
+    try {
+      if (!this.workspaceUserId) {
+        await this.ensureWorkspaceUser();
+      }
+      
+      if (!this.workspaceUserId) {
+        console.log('❌ Cannot sync to database - no workspace user');
+        return false;
+      }
+      
+      // Dynamically import models to avoid circular dependencies
+      const { Prompt } = require('../models');
+      
+      // Check if prompt already exists in database
+      let dbPrompt = await Prompt.findOne({
+        where: {
+          prompt_id: prompt.prompt_id,
+          user_id: this.workspaceUserId
+        }
+      });
+      
+      const promptData = {
+        user_id: this.workspaceUserId,
+        name: prompt.name,
+        prompt_id: prompt.prompt_id,
+        description: prompt.description || '',
+        category: prompt.category || 'general',
+        tags: prompt.tags || [],
+        content: prompt.content || '',
+        template: prompt.template || prompt.content || '',
+        variables: prompt.variables || [],
+        parameters: prompt.parameters || {},
+        model_config: prompt.model_config || {
+          primary: 'gpt-4',
+          fallbacks: ['gpt-3.5-turbo']
+        },
+        options: prompt.options || {
+          temperature: 0.7,
+          max_tokens: 1000
+        },
+        environments: prompt.environments || {
+          development: {},
+          staging: {},
+          production: {}
+        },
+        version: prompt.version || 1,
+        is_active: true
+      };
+      
+      if (dbPrompt) {
+        // Update existing prompt
+        await dbPrompt.update(promptData);
+        console.log(`📝 Updated prompt in database: ${prompt.name}`);
+      } else {
+        // Create new prompt
+        dbPrompt = await Prompt.create(promptData);
+        console.log(`✅ Created prompt in database: ${prompt.name}`);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error(`Error syncing prompt ${prompt.name} to database:`, error);
+      return false;
+    }
+  }
+
+  // Sync all workspace prompts to database
+  async syncPromptsToDatabase(prompts) {
+    if (!prompts || prompts.length === 0) {
+      console.log('📋 No prompts to sync to database');
+      return;
+    }
+    
+    console.log(`🔄 Syncing ${prompts.length} prompts to database...`);
+    let synced = 0;
+    
+    for (const prompt of prompts) {
+      try {
+        const success = await this.syncPromptToDatabase(prompt);
+        if (success) synced++;
+      } catch (error) {
+        console.error(`Error syncing prompt ${prompt.name}:`, error);
+      }
+    }
+    
+    console.log(`✅ Synced ${synced}/${prompts.length} prompts to database`);
+  }
+
+  // Sync prompts with frontend and database
   async syncPrompts() {
     try {
       const prompts = await this.loadPrompts();
       const categories = [...new Set(prompts.map(p => p.category).filter(Boolean))];
       
-      console.log(`🔄 Syncing ${prompts.length} prompts to UI`);
+      console.log(`🔄 Syncing ${prompts.length} prompts to UI and database`);
+      
+      // Sync to database first
+      await this.syncPromptsToDatabase(prompts);
       
       // Emit comprehensive workspace prompts data to UI
       this.io.emit('workspace:prompts:sync', { 

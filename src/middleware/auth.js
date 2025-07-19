@@ -103,9 +103,9 @@ const authenticateApiKey = async (req, res, next) => {
       }
       
       if (validApiKey) {
-        // Create a mock user for workspace mode
+        // Create a mock user for workspace mode using the same UUID as in WorkspaceSync
         req.user = {
-          id: 'workspace-user',
+          id: '550e8400-e29b-41d4-a716-446655440000',
           email: 'workspace@easyai.local',
           name: 'Workspace User',
           role: 'developer',
