@@ -62,17 +62,47 @@ class WorkspaceSync {
   }
 
   // Handle file system changes
-  handleFileChange(type, action, filePath) {
+  async handleFileChange(type, action, filePath) {
     try {
       console.log(`📁 File ${action}: ${filePath}`);
       
       if (type === 'prompts') {
-        this.syncPrompts();
+        // Immediately sync prompts to all connected clients
+        await this.syncPrompts();
+        
+        // Also emit specific file change event for real-time UI updates
+        this.io.emit('workspace:file:changed', {
+          type: 'prompts',
+          action,
+          filePath,
+          timestamp: new Date().toISOString()
+        });
       } else if (type === 'config') {
-        this.syncConfig();
+        // Immediately sync config to all connected clients
+        await this.syncConfig();
+        
+        // Also emit specific file change event for real-time UI updates
+        this.io.emit('workspace:file:changed', {
+          type: 'config',
+          action,
+          filePath,
+          timestamp: new Date().toISOString()
+        });
       }
+      
+      console.log(`✅ Real-time sync completed for ${type}`);
     } catch (error) {
       console.error('Error handling file change:', error);
+      
+      // Emit error to UI
+      this.io.emit('workspace:error', {
+        message: 'File sync failed',
+        error: error.message,
+        type,
+        action,
+        filePath,
+        timestamp: new Date().toISOString()
+      });
     }
   }
 
@@ -80,10 +110,34 @@ class WorkspaceSync {
   async syncPrompts() {
     try {
       const prompts = await this.loadPrompts();
+      const categories = [...new Set(prompts.map(p => p.category).filter(Boolean))];
+      
       console.log(`🔄 Syncing ${prompts.length} prompts to UI`);
-      this.io.emit('workspace:prompts:sync', { prompts });
+      
+      // Emit comprehensive workspace prompts data to UI
+      this.io.emit('workspace:prompts:sync', { 
+        prompts,
+        categories,
+        version: "1.0.0",
+        lastSync: new Date().toISOString(),
+        source: 'workspace_sync',
+        count: prompts.length
+      });
+      
+      // Also emit to specific workspace room if any clients are there
+      this.io.to('workspace').emit('workspace:prompts:updated', {
+        prompts,
+        categories,
+        timestamp: new Date().toISOString()
+      });
+      
     } catch (error) {
       console.error('Error syncing prompts:', error);
+      this.io.emit('workspace:error', {
+        message: 'Failed to sync prompts',
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
     }
   }
 

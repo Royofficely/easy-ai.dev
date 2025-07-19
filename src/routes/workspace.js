@@ -174,37 +174,24 @@ router.post('/config', (req, res) => {
   }
 });
 
-// Sync workspace (force reload all data)
-router.post('/sync', (req, res) => {
+// Force sync workspace to UI
+router.post('/sync', async (req, res) => {
   try {
-    const workspacePath = path.join(process.cwd(), 'easyai');
+    const workspaceSync = req.app.get('workspaceSync');
     
-    if (!fs.existsSync(workspacePath)) {
-      return res.status(404).json({ 
-        error: 'Workspace not found',
-        message: 'No easyai workspace directory found'
+    if (workspaceSync) {
+      console.log('🔄 Manual sync requested, syncing workspace...');
+      await workspaceSync.syncPrompts();
+      await workspaceSync.syncConfig();
+      
+      return res.json({
+        success: true,
+        message: 'Workspace synced to UI',
+        timestamp: new Date().toISOString()
       });
     }
     
-    // Load all workspace data
-    const promptsIndexPath = path.join(workspacePath, 'prompts', 'index.json');
-    const configPath = path.join(workspacePath, 'config', 'settings.json');
-    
-    const data = {
-      prompts: fs.existsSync(promptsIndexPath) ? 
-        JSON.parse(fs.readFileSync(promptsIndexPath, 'utf8')) : 
-        { prompts: [], categories: [] },
-      config: fs.existsSync(configPath) ? 
-        JSON.parse(fs.readFileSync(configPath, 'utf8')) : 
-        {}
-    };
-    
-    res.json({
-      success: true,
-      message: 'Workspace synced successfully',
-      data,
-      syncTime: new Date().toISOString()
-    });
+    res.status(404).json({ error: 'No workspace sync available' });
   } catch (error) {
     res.status(500).json({ 
       error: 'Failed to sync workspace',

@@ -397,19 +397,70 @@ io.on('connection', (socket) => {
 
   // Workspace sync events
   if (workspaceSync) {
+    console.log('🔗 New client connected, syncing workspace...');
+    
     // Send workspace info to new client
     socket.emit('workspace:info', workspaceSync.getWorkspaceInfo());
     
-    // Send current prompts and config
-    workspaceSync.syncPrompts();
-    workspaceSync.syncConfig();
+    // Immediately load and send current prompts to this specific client
+    setTimeout(async () => {
+      try {
+        const prompts = await workspaceSync.loadPrompts();
+        const categories = [...new Set(prompts.map(p => p.category).filter(Boolean))];
+        
+        // Send workspace data directly to this client
+        socket.emit('workspace:prompts:sync', { 
+          prompts,
+          categories,
+          version: "1.0.0",
+          lastSync: new Date().toISOString(),
+          source: 'workspace_sync',
+          count: prompts.length
+        });
+        
+        // Also sync config
+        const config = await workspaceSync.getConfig();
+        socket.emit('workspace:config:sync', config);
+        
+        console.log(`✅ Workspace synced to new client: ${prompts.length} prompts`);
+      } catch (error) {
+        console.error('Error syncing workspace to new client:', error);
+        socket.emit('workspace:error', {
+          message: 'Failed to sync workspace on connection',
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }, 500);
     
     // Handle workspace sync requests
-    socket.on('workspace:sync:request', () => {
+    socket.on('workspace:sync:request', async () => {
       if (workspaceSync) {
-        workspaceSync.syncPrompts();
-        workspaceSync.syncConfig();
+        try {
+          await workspaceSync.syncPrompts();
+          await workspaceSync.syncConfig();
+          console.log('🔄 Manual workspace sync requested and completed');
+        } catch (error) {
+          console.error('Error in manual workspace sync:', error);
+          socket.emit('workspace:error', {
+            message: 'Manual sync failed',
+            error: error.message,
+            timestamp: new Date().toISOString()
+          });
+        }
       }
+    });
+    
+    // Handle workspace room joining for better targeted updates
+    socket.on('workspace:join', () => {
+      socket.join('workspace');
+      console.log(`👥 Client ${socket.id} joined workspace room`);
+      
+      // Send welcome message to workspace
+      socket.emit('workspace:joined', {
+        message: 'Connected to workspace real-time sync',
+        timestamp: new Date().toISOString()
+      });
     });
     
     // Handle prompt operations from UI
@@ -666,6 +717,18 @@ async function startServer() {
           
           // Make workspaceSync available to routes
           app.set('workspaceSync', workspaceSync);
+          
+          // Initial sync to UI on startup
+          setTimeout(async () => {
+            console.log('🔄 Performing initial workspace sync to UI...');
+            try {
+              await workspaceSync.syncPrompts();
+              await workspaceSync.syncConfig();
+              console.log('✅ Initial workspace sync completed');
+            } catch (error) {
+              console.error('❌ Initial workspace sync failed:', error);
+            }
+          }, 1000);
           
           console.log(`✅ Workspace sync initialized: ${workspacePath}`);
         } catch (error) {
