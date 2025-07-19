@@ -103,19 +103,19 @@ app.use((req, res, next) => {
 // Static files
 app.use('/public', express.static(path.join(__dirname, '../public')));
 
-// Health check endpoint for Railway
+// Health check endpoint for Railway - should respond immediately
 app.get('/health', (req, res) => {
   console.log('🌐 GET /health');
-  console.log('🏥 Headers:', JSON.stringify(req.headers, null, 2));
   
   res.status(200).json({ 
     status: 'healthy', 
     timestamp: new Date().toISOString(),
     service: 'easyai-backend',
-    version: '1.8.1',
+    version: '1.8.3',
     port: PORT,
     environment: process.env.NODE_ENV || 'development',
-    railway: !!process.env.RAILWAY_ENVIRONMENT_NAME
+    railway: !!process.env.RAILWAY_ENVIRONMENT_NAME,
+    uptime: process.uptime()
   });
 });
 
@@ -1053,62 +1053,73 @@ app.use('*', (req, res) => {
 // Initialize database and start server
 async function startServer() {
   try {
+    console.log('🚀 Starting EasyAI server...');
+    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🏭 Railway: ${process.env.RAILWAY_ENVIRONMENT_NAME || 'Not detected'}`);
+    console.log(`💾 Database path: ${process.env.DATABASE_PATH || '/tmp/easyai.sqlite'}`);
+    
     await initializeDatabase();
-    console.log('Database initialized successfully');
+    console.log('✅ Database initialized successfully');
     
-    // Initialize workspace sync - use environment variable or current directory
-    const fs = require('fs');
-    const workspacePath = process.env.EASYAI_WORKSPACE_PATH || process.cwd();
-    
-    console.log(`🏢 Using workspace directory: ${workspacePath}`);
-    console.log(`📍 Current working directory: ${process.cwd()}`);
-    if (process.env.EASYAI_WORKSPACE_PATH) {
-      console.log(`🔧 Using environment workspace path: ${process.env.EASYAI_WORKSPACE_PATH}`);
-    }
-    
-    // Check if workspace has the required structure
-    const hasPrompts = fs.existsSync(path.join(workspacePath, 'prompts'));
-    const hasConfig = fs.existsSync(path.join(workspacePath, 'config'));
-    
-    console.log(`📁 Workspace structure - prompts: ${hasPrompts}, config: ${hasConfig}`);
-    
-    if (hasPrompts && hasConfig) {
-      console.log('🏢 Workspace detected, initializing sync...');
-      console.log(`📁 Workspace path: ${workspacePath}`);
+    // Initialize workspace sync - skip in production/Railway for faster startup
+    if (!isProduction) {
+      const fs = require('fs');
+      const workspacePath = process.env.EASYAI_WORKSPACE_PATH || process.cwd();
       
-      if (WorkspaceSync) {
-        try {
-          workspaceSync = new WorkspaceSync(workspacePath, io);
-          workspaceSync.startWatching();
-          
-          // Make workspaceSync available to routes
-          app.set('workspaceSync', workspaceSync);
-          console.log('✅ workspaceSync set in app context');
-          
-          // Initial sync to UI on startup
-          setTimeout(async () => {
-            console.log('🔄 Performing initial workspace sync to UI...');
-            try {
-              await workspaceSync.syncPrompts();
-              await workspaceSync.syncConfig();
-              console.log('✅ Initial workspace sync completed');
-            } catch (error) {
-              console.error('❌ Initial workspace sync failed:', error);
-            }
-          }, 1000);
-          
-          console.log(`✅ Workspace sync initialized: ${workspacePath}`);
-        } catch (error) {
-          console.log('⚠️  Workspace sync failed to initialize, continuing without file watching');
-          console.log(`   Error: ${error.message}`);
-          workspaceSync = null;
-          app.set('workspaceSync', null);
+      console.log(`🏢 Using workspace directory: ${workspacePath}`);
+      console.log(`📍 Current working directory: ${process.cwd()}`);
+      if (process.env.EASYAI_WORKSPACE_PATH) {
+        console.log(`🔧 Using environment workspace path: ${process.env.EASYAI_WORKSPACE_PATH}`);
+      }
+      
+      // Check if workspace has the required structure
+      const hasPrompts = fs.existsSync(path.join(workspacePath, 'prompts'));
+      const hasConfig = fs.existsSync(path.join(workspacePath, 'config'));
+      
+      console.log(`📁 Workspace structure - prompts: ${hasPrompts}, config: ${hasConfig}`);
+      
+      if (hasPrompts && hasConfig) {
+        console.log('🏢 Workspace detected, initializing sync...');
+        console.log(`📁 Workspace path: ${workspacePath}`);
+        
+        if (WorkspaceSync) {
+          try {
+            workspaceSync = new WorkspaceSync(workspacePath, io);
+            workspaceSync.startWatching();
+            
+            // Make workspaceSync available to routes
+            app.set('workspaceSync', workspaceSync);
+            console.log('✅ workspaceSync set in app context');
+            
+            // Initial sync to UI on startup
+            setTimeout(async () => {
+              console.log('🔄 Performing initial workspace sync to UI...');
+              try {
+                await workspaceSync.syncPrompts();
+                await workspaceSync.syncConfig();
+                console.log('✅ Initial workspace sync completed');
+              } catch (error) {
+                console.error('❌ Initial workspace sync failed:', error);
+              }
+            }, 1000);
+            
+            console.log(`✅ Workspace sync initialized: ${workspacePath}`);
+          } catch (error) {
+            console.log('⚠️  Workspace sync failed to initialize, continuing without file watching');
+            console.log(`   Error: ${error.message}`);
+            workspaceSync = null;
+            app.set('workspaceSync', null);
+          }
+        } else {
+          console.log('💼 Workspace detected but sync dependencies missing, running in basic mode');
         }
       } else {
-        console.log('💼 Workspace detected but sync dependencies missing, running in basic mode');
+        console.log('💼 No workspace detected, running in standard mode');
       }
     } else {
-      console.log('💼 No workspace detected, running in standard mode');
+      console.log('🏭 Production mode: Skipping workspace sync for faster startup');
+      workspaceSync = null;
+      app.set('workspaceSync', null);
     }
     
     const httpServer = server.listen(PORT, '0.0.0.0', () => {
