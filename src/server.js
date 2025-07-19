@@ -7,6 +7,7 @@ const { Server } = require('socket.io');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
+const clerkAuthRoutes = require('./routes/clerk-auth');
 const promptRoutes = require('./routes/prompts');
 const apiRoutes = require('./routes/api');
 const dashboardRoutes = require('./routes/dashboard');
@@ -939,6 +940,7 @@ app.delete('/api/prompts/:prompt_id', async (req, res, next) => {
 
 // Routes - mount non-conflicting routes first
 app.use('/auth', authRoutes);
+app.use('/clerk', clerkAuthRoutes);
 app.use('/api/v1', apiRoutes);
 app.use('/gateway', gatewayRoutes);
 app.use('/api/settings', settingsRoutes);

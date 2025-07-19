@@ -6,6 +6,13 @@
     <title>EasyAI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script
+        async
+        crossorigin="anonymous"
+        data-clerk-publishable-key="pk_test_dG9sZXJhbnQtbGFkeWJ1Zy0xNi5jbGVyay5hY2NvdW50cy5kZXYk"
+        src="https://tolerant-ladybug-16.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+        type="text/javascript"
+    ></script>
     <script>
         tailwind.config = {
             theme: {
@@ -55,7 +62,7 @@
                     </div>
                     <span class="font-medium text-lg">EasyAI</span>
                 </div>
-                <button id="signInBtn" class="bg-gray-50 text-gray-950 px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
+                <button id="signInBtn" onclick="showAuth()" class="bg-gray-50 text-gray-950 px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
                     Sign in
                 </button>
             </div>
@@ -275,14 +282,29 @@
             console.error('Lucide icons not loaded');
         }
 
-        // Update this URL with your Railway deployment URL
-        const API_BASE = 'https://easy-aidev-production.up.railway.app';
+        // Initialize Clerk
+        let clerk;
+        window.addEventListener('load', async () => {
+            clerk = window.Clerk;
+            await clerk.load();
+            
+            console.log('Clerk initialized');
+            
+            // Check if user is already signed in
+            if (clerk.user) {
+                console.log('User already signed in:', clerk.user.emailAddresses[0]?.emailAddress);
+            }
+            
+            // Listen for authentication state changes
+            clerk.addListener((resources) => {
+                if (resources.user && window.location.pathname === '/') {
+                    console.log('User authenticated:', resources.user.emailAddresses[0]?.emailAddress);
+                    showDashboard(resources.user);
+                }
+            });
+        });
         
-        let authToken = localStorage.getItem('auth_token');
-        
-        // Test if JavaScript is working
         console.log('JavaScript loaded successfully');
-        console.log('API_BASE:', API_BASE);
 
         // Add event listeners when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
@@ -332,15 +354,76 @@
             }
         });
 
-        function showAuth() {
+        async function showAuth() {
             console.log('showAuth called');
-            const modal = document.getElementById('authModal');
-            if (modal) {
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                loadAuthForm();
-            } else {
-                console.error('Modal not found');
+            
+            if (!clerk) {
+                console.error('Clerk not initialized yet');
+                return;
+            }
+            
+            // Check if user is already signed in
+            if (clerk.user) {
+                console.log('User already signed in, showing dashboard');
+                showDashboard(clerk.user);
+                return;
+            }
+            
+            try {
+                // Open Clerk sign in
+                await clerk.openSignIn({
+                    afterSignInUrl: window.location.href,
+                    afterSignUpUrl: window.location.href,
+                    appearance: {
+                        baseTheme: undefined,
+                        variables: {
+                            colorPrimary: '#ffffff',
+                            colorBackground: '#0a0a0a',
+                            colorInputBackground: '#171717',
+                            colorInputText: '#fafafa',
+                            colorText: '#fafafa',
+                            colorTextSecondary: '#a3a3a3',
+                            colorShimmer: '#262626',
+                            colorSuccess: '#22c55e',
+                            colorWarning: '#f59e0b',
+                            colorDanger: '#ef4444',
+                            borderRadius: '6px',
+                            fontFamily: '"Inter", sans-serif',
+                        },
+                        elements: {
+                            card: {
+                                backgroundColor: '#0a0a0a',
+                                border: '1px solid #404040',
+                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
+                            },
+                            headerTitle: {
+                                color: '#fafafa',
+                                fontSize: '24px',
+                                fontWeight: '600',
+                            },
+                            headerSubtitle: {
+                                color: '#a3a3a3',
+                            },
+                            formButtonPrimary: {
+                                backgroundColor: '#fafafa',
+                                color: '#0a0a0a',
+                                '&:hover': {
+                                    backgroundColor: '#e5e5e5',
+                                },
+                            },
+                            footerActionLink: {
+                                color: '#fafafa',
+                                '&:hover': {
+                                    color: '#e5e5e5',
+                                },
+                            },
+                        },
+                    },
+                });
+                
+            } catch (error) {
+                console.error('Clerk sign in error:', error);
+                alert('Sign in failed. Please try again.');
             }
         }
 
@@ -348,366 +431,125 @@
             document.getElementById('authModal').classList.add('hidden');
             document.getElementById('authModal').classList.remove('flex');
         }
+        
+        async function showDashboard(user) {
+            try {
+                // Sync user with backend
+                const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+                    ? 'http://localhost:4000' 
+                    : '';
+                    
+                const response = await fetch(`${apiBase}/clerk/sync`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        clerkId: user.id,
+                        email: user.emailAddresses[0]?.emailAddress,
+                        name: user.fullName || user.firstName || user.emailAddresses[0]?.emailAddress.split('@')[0]
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to sync user data');
+                }
+
+                const data = await response.json();
+                const apiKey = data.new_key ? data.api_key : `${data.api_key_prefix}****`;
+                
+                // Show success modal with API key and installation commands
+                const modal = document.getElementById('authModal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                
+                document.getElementById('authContent').innerHTML = `
+                    <div class="space-y-4">
+                        <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+                            <h3 class="font-medium mb-2">Welcome to EasyAI! 🎉</h3>
+                            <p class="text-gray-400 text-sm mb-3">
+                                ${data.new_key ? 'Your account is ready. Here\'s your API key:' : 'Welcome back! Your API key starts with:'}
+                            </p>
+                            <div class="bg-gray-800 border border-gray-700 rounded p-3 mb-3">
+                                <div class="flex items-center justify-between">
+                                    <code class="text-gray-300 text-sm font-mono break-all">${apiKey}</code>
+                                    ${data.new_key ? `<button onclick="copyApiKey('${data.api_key}')" class="ml-2 text-gray-400 hover:text-gray-50">
+                                        <i data-lucide="copy" class="w-4 h-4"></i>
+                                    </button>` : ''}
+                                </div>
+                            </div>
+                            ${data.new_key ? `
+                            <div class="bg-gray-800 border border-gray-700 rounded p-3 mb-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <p class="text-gray-300 text-sm font-medium">Run this command to get started:</p>
+                                    <button onclick="copySetupCommands('${data.api_key}')" class="text-gray-400 hover:text-gray-50">
+                                        <i data-lucide="copy" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                                <div class="bg-gray-900 rounded p-2 font-mono text-xs text-gray-300">
+                                    <div>npm install -g @easyai/cli && easyai setup --api-key ${data.api_key} && easyai ui</div>
+                                </div>
+                            </div>
+                            ` : `
+                            <div class="bg-blue-900/20 border border-blue-800 rounded p-3 mb-3">
+                                <p class="text-blue-300 text-sm font-medium mb-1">ℹ️ Already have EasyAI installed?</p>
+                                <p class="text-blue-200 text-sm">
+                                    Run <code class="bg-gray-800 px-1 rounded">easyai ui</code> to open your dashboard.
+                                </p>
+                            </div>
+                            `}
+                            <div class="bg-blue-900/20 border border-blue-800 rounded p-3 mb-3">
+                                <p class="text-blue-300 text-sm font-medium mb-1">⚡ Quick Start:</p>
+                                <p class="text-blue-200 text-sm">
+                                    ${data.new_key ? 'Copy and run the command above in your terminal.' : 'Run the command to open your dashboard.'} It will open at localhost:4000.
+                                </p>
+                            </div>
+                            <p class="text-gray-400 text-sm">
+                                The dashboard runs locally on your machine. ${data.user.plan === 'free' ? 'Free plan works on localhost only.' : 'Pro plan allows production deployment.'}
+                            </p>
+                        </div>
+                        <div class="space-y-2">
+                            <a href="https://github.com/Royofficely/easy-ai.dev#quick-start" target="_blank"
+                               class="block w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors text-center">
+                                View Documentation
+                            </a>
+                            <button onclick="hideAuth()" class="w-full border border-gray-700 text-gray-50 py-2 text-sm font-medium rounded-md hover:bg-gray-800 transition-colors">
+                                Close
+                            </button>
+                            <button onclick="clerk.signOut()" class="w-full border border-gray-700 text-gray-50 py-2 text-sm font-medium rounded-md hover:bg-gray-800 transition-colors">
+                                Sign Out
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                // Initialize Lucide icons for the copy buttons
+                lucide.createIcons();
+                
+                // Store user data
+                localStorage.setItem('easyai_email', user.emailAddresses[0]?.emailAddress);
+                if (data.new_key) {
+                    localStorage.setItem('easyai_api_key', data.api_key);
+                }
+                localStorage.setItem('clerk_user', JSON.stringify(user));
+                localStorage.setItem('easyai_plan', data.user.plan);
+                
+            } catch (error) {
+                console.error('Failed to sync user data:', error);
+                alert('Failed to sync user data. Please try again.');
+            }
+        }
+        
 
         function scrollToDemo() {
             document.getElementById('demo').scrollIntoView({ behavior: 'smooth' });
         }
 
-        function loadAuthForm() {
-            document.getElementById('authContent').innerHTML = `
-                <div class="space-y-4">
-                    <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-                        <p class="text-gray-400 text-sm">
-                            Enter your email to get started with EasyAI
-                        </p>
-                    </div>
-                    <div class="space-y-3">
-                        <input type="email" id="email" placeholder="Email" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-md text-gray-50 placeholder-gray-400 focus:border-gray-600 focus:outline-none text-sm">
-                    </div>
-                    <button id="registerBtn" class="w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
-                        Send verification code
-                    </button>
-                    <div class="text-center">
-                        <button id="showLoginBtn" class="text-gray-400 hover:text-gray-50 text-sm">
-                            Already have an account? Sign in
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            // Add event listeners
-            setTimeout(() => {
-                const registerBtn = document.getElementById('registerBtn');
-                if (registerBtn) {
-                    registerBtn.addEventListener('click', register);
-                    console.log('Register button event listener added');
-                }
-                
-                const showLoginBtn = document.getElementById('showLoginBtn');
-                if (showLoginBtn) {
-                    showLoginBtn.addEventListener('click', showLogin);
-                    console.log('Show Login button event listener added');
-                }
-            }, 100);
-        }
 
-        function showLogin() {
-            document.getElementById('authContent').innerHTML = `
-                <div class="space-y-4">
-                    <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-                        <p class="text-gray-400 text-sm">
-                            Enter your email to sign in
-                        </p>
-                    </div>
-                    <div class="space-y-3">
-                        <input type="email" id="loginEmail" placeholder="Email" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-md text-gray-50 placeholder-gray-400 focus:border-gray-600 focus:outline-none text-sm">
-                    </div>
-                    <button id="loginBtn" class="w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
-                        Send verification code
-                    </button>
-                </div>
-            `;
-            
-            // Add event listener to the login button
-            setTimeout(() => {
-                const loginBtn = document.getElementById('loginBtn');
-                if (loginBtn) {
-                    loginBtn.addEventListener('click', login);
-                    console.log('Login button event listener added');
-                }
-            }, 100);
-        }
 
-        async function register() {
-            const email = document.getElementById('email').value;
 
-            if (!email) {
-                alert('Please enter your email');
-                return;
-            }
 
-            try {
-                console.log('Registering user with email:', email);
-                
-                // Call backend API to register user
-                const response = await fetch(`${API_BASE}/auth/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email })
-                });
 
-                const data = await response.json();
-                console.log('Registration response:', response.status, data);
-
-                if (response.ok) {
-                    // Show verification code input
-                    document.getElementById('authContent').innerHTML = `
-                        <div class="space-y-4">
-                            <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-                                <h3 class="font-medium mb-2">Check your email</h3>
-                                <p class="text-gray-400 text-sm">
-                                    We sent a 6-digit verification code to ${email}
-                                </p>
-                            </div>
-                            <input type="text" id="verificationCode" placeholder="Enter 6-digit code" 
-                                   maxlength="6" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-md text-gray-50 placeholder-gray-400 focus:border-gray-600 focus:outline-none text-sm">
-                            <button id="verifyBtn" class="w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
-                                Verify and continue
-                            </button>
-                            <div class="text-center">
-                                <button id="resendBtn" class="text-gray-400 hover:text-gray-50 text-sm">
-                                    Didn't receive code? Resend
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    
-                    // Add event listeners for verification buttons
-                    setTimeout(() => {
-                        const verifyBtn = document.getElementById('verifyBtn');
-                        if (verifyBtn) {
-                            verifyBtn.addEventListener('click', () => verifyRegistration(email));
-                            console.log('Verify button event listener added');
-                        }
-                        
-                        const resendBtn = document.getElementById('resendBtn');
-                        if (resendBtn) {
-                            resendBtn.addEventListener('click', () => resendCode(email));
-                            console.log('Resend button event listener added');
-                        }
-                    }, 100);
-                } else {
-                    console.error('Registration failed:', response.status, data);
-                    alert(data.error || `Registration failed: ${response.status} ${response.statusText}`);
-                }
-            } catch (error) {
-                console.error('Registration error:', error);
-                alert('Registration failed. Please try again. Check console for details.');
-            }
-        }
-
-        async function verifyRegistration(email) {
-            const code = document.getElementById('verificationCode').value;
-            
-            if (!code) {
-                alert('Please enter the verification code');
-                return;
-            }
-
-            try {
-                // Call backend API to verify email
-                const response = await fetch(`${API_BASE}/auth/verify`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        email: email,
-                        verification_code: code 
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    // Use API key from backend response
-                    const apiKey = data.api_key;
-                    
-                    // Show success message
-                    document.getElementById('authContent').innerHTML = `
-                        <div class="space-y-4">
-                            <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-                                <h3 class="font-medium mb-2">Welcome to EasyAI! 🎉</h3>
-                                <p class="text-gray-400 text-sm mb-3">
-                                    Your account is ready. Here's your API key:
-                                </p>
-                                <div class="bg-gray-800 border border-gray-700 rounded p-3 mb-3">
-                                    <div class="flex items-center justify-between">
-                                        <code class="text-gray-300 text-sm font-mono break-all">${apiKey}</code>
-                                        <button onclick="copyApiKey('${apiKey}')" class="ml-2 text-gray-400 hover:text-gray-50">
-                                            <i data-lucide="copy" class="w-4 h-4"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="bg-gray-800 border border-gray-700 rounded p-3 mb-3">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <p class="text-gray-300 text-sm font-medium">Run this command to get started:</p>
-                                        <button onclick="copySetupCommands('${apiKey}')" class="text-gray-400 hover:text-gray-50">
-                                            <i data-lucide="copy" class="w-4 h-4"></i>
-                                        </button>
-                                    </div>
-                                    <div class="bg-gray-900 rounded p-2 font-mono text-xs text-gray-300">
-                                        <div>npm install -g @easyai/cli && easyai setup --api-key ${apiKey} && easyai ui</div>
-                                    </div>
-                                </div>
-                                <div class="bg-blue-900/20 border border-blue-800 rounded p-3 mb-3">
-                                    <p class="text-blue-300 text-sm font-medium mb-1">⚠️ Important:</p>
-                                    <p class="text-blue-200 text-sm">
-                                        Copy and run this command in your terminal. Your dashboard will open at localhost:3001 after setup.
-                                    </p>
-                                </div>
-                                <p class="text-gray-400 text-sm">
-                                    The dashboard runs locally on your machine for free. No need to stay on this page.
-                                </p>
-                            </div>
-                            <div class="space-y-2">
-                                <a href="https://github.com/Royofficely/easy-ai.dev#quick-start" target="_blank"
-                                   class="block w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors text-center">
-                                    View Documentation
-                                </a>
-                                <button onclick="hideAuth()" class="w-full border border-gray-700 text-gray-50 py-2 text-sm font-medium rounded-md hover:bg-gray-800 transition-colors">
-                                    Close
-                                </button>
-                            </div>
-                        </div>
-                    `;
-
-                    // Initialize Lucide icons for the copy button
-                    lucide.createIcons();
-
-                    // Store user data
-                    localStorage.setItem('easyai_email', email);
-                    localStorage.setItem('easyai_api_key', apiKey);
-                    localStorage.setItem('auth_token', data.token);
-                } else {
-                    alert(data.error || 'Verification failed');
-                }
-            } catch (error) {
-                alert('Verification failed. Please try again.');
-                console.error('Verification error:', error);
-            }
-        }
-
-        async function verifyLoginCode(email) {
-            const code = document.getElementById('loginCode').value;
-            
-            if (!code) {
-                alert('Please enter the verification code');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE}/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, code })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    authToken = data.token;
-                    localStorage.setItem('auth_token', authToken);
-                    
-                    document.getElementById('authContent').innerHTML = `
-                        <div class="space-y-4">
-                            <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-                                <h3 class="font-medium mb-2">Welcome back! 👋</h3>
-                                <p class="text-gray-400 text-sm mb-3">
-                                    You're signed in. Here's your command to start:
-                                </p>
-                                <div class="bg-gray-800 border border-gray-700 rounded p-3 mb-3">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <p class="text-gray-300 text-sm font-medium">Run this command:</p>
-                                        <button onclick="copySetupCommands('${localStorage.getItem('easyai_api_key') || 'your-api-key'}')" class="text-gray-400 hover:text-gray-50">
-                                            <i data-lucide="copy" class="w-4 h-4"></i>
-                                        </button>
-                                    </div>
-                                    <div class="bg-gray-900 rounded p-2 font-mono text-xs text-gray-300">
-                                        <div>npm install -g @easyai/cli && easyai setup --api-key ${localStorage.getItem('easyai_api_key') || 'your-api-key'} && easyai ui</div>
-                                    </div>
-                                </div>
-                                <p class="text-gray-400 text-sm">
-                                    Your dashboard will open at localhost:3001 after running this command.
-                                </p>
-                            </div>
-                            <button onclick="hideAuth()" class="w-full border border-gray-700 text-gray-50 py-2 text-sm font-medium rounded-md hover:bg-gray-800 transition-colors">
-                                Close
-                            </button>
-                        </div>
-                    `;
-                } else {
-                    const error = await response.json();
-                    alert(error.error || 'Login failed');
-                }
-            } catch (error) {
-                alert('Login failed. Please try again.');
-            }
-        }
-
-        async function login() {
-            const email = document.getElementById('loginEmail').value;
-
-            if (!email) {
-                alert('Please enter your email');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE}/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    if (data.token) {
-                        // User is already verified and logged in
-                        authToken = data.token;
-                        localStorage.setItem('auth_token', authToken);
-                        
-                        document.getElementById('authContent').innerHTML = `
-                            <div class="space-y-4">
-                                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-                                    <h3 class="font-medium mb-2">Welcome back! 👋</h3>
-                                    <p class="text-gray-400 text-sm mb-3">
-                                        You're signed in. Here's your command to start:
-                                    </p>
-                                    <div class="bg-gray-800 border border-gray-700 rounded p-3 mb-3">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <p class="text-gray-300 text-sm font-medium">Run this command:</p>
-                                            <button onclick="copySetupCommands('${localStorage.getItem('easyai_api_key') || 'your-api-key'}')" class="text-gray-400 hover:text-gray-50">
-                                                <i data-lucide="copy" class="w-4 h-4"></i>
-                                            </button>
-                                        </div>
-                                        <div class="bg-gray-900 rounded p-2 font-mono text-xs text-gray-300">
-                                            <div>npm install -g @easyai/cli && easyai setup --api-key ${localStorage.getItem('easyai_api_key') || 'your-api-key'} && easyai ui</div>
-                                        </div>
-                                    </div>
-                                    <p class="text-gray-400 text-sm">
-                                        Your dashboard will open at localhost:3001 after running this command.
-                                    </p>
-                                </div>
-                                <button onclick="hideAuth()" class="w-full border border-gray-700 text-gray-50 py-2 text-sm font-medium rounded-md hover:bg-gray-800 transition-colors">
-                                    Close
-                                </button>
-                            </div>
-                        `;
-                    } else {
-                        // Need to verify code
-                        document.getElementById('authContent').innerHTML = `
-                            <div class="space-y-4">
-                                <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-                                    <h3 class="font-medium mb-2">Check your email</h3>
-                                    <p class="text-gray-400 text-sm">
-                                        We sent a 6-digit verification code to ${email}
-                                    </p>
-                                </div>
-                                <input type="text" id="loginCode" placeholder="Enter 6-digit code" 
-                                       maxlength="6" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-md text-gray-50 placeholder-gray-400 focus:border-gray-600 focus:outline-none text-sm">
-                                <button onclick="verifyLoginCode('${email}')" class="w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
-                                    Sign in
-                                </button>
-                            </div>
-                        `;
-                    }
-                } else {
-                    const error = await response.json();
-                    alert(error.error || 'Login failed');
-                }
-            } catch (error) {
-                alert('Login failed. Please try again.');
-            }
-        }
 
         function contactSales() {
             window.open('mailto:sales@easy-ai.dev?subject=Enterprise%20Inquiry&body=Hi%2C%20I%27m%20interested%20in%20the%20Enterprise%20plan%20for%20EasyAI.%20Please%20contact%20me%20to%20discuss%20pricing%20and%20deployment%20options.', '_blank');
@@ -742,24 +584,6 @@
             });
         }
 
-        function resendCode(email) {
-            // Simply trigger register again
-            document.getElementById('authContent').innerHTML = `
-                <div class="space-y-4">
-                    <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-                        <p class="text-gray-400 text-sm">
-                            Enter your email to get started with EasyAI
-                        </p>
-                    </div>
-                    <div class="space-y-3">
-                        <input type="email" id="email" placeholder="Email" value="${email}" class="w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-md text-gray-50 placeholder-gray-400 focus:border-gray-600 focus:outline-none text-sm">
-                    </div>
-                    <button onclick="register()" class="w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
-                        Resend verification code
-                    </button>
-                </div>
-            `;
-        }
     </script>
 </body>
 </html>

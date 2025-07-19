@@ -8,6 +8,11 @@ const User = sequelize.define('User', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true
   },
+  clerk_id: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    unique: true
+  },
   email: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -27,6 +32,10 @@ const User = sequelize.define('User', {
   role: {
     type: DataTypes.ENUM('admin', 'developer', 'prompt_engineer', 'viewer'),
     defaultValue: 'developer'
+  },
+  plan: {
+    type: DataTypes.ENUM('free', 'pro', 'enterprise'),
+    defaultValue: 'free'
   },
   is_verified: {
     type: DataTypes.BOOLEAN,

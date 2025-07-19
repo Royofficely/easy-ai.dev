@@ -74,4 +74,23 @@ ApiKey.validateKey = function(key) {
   return hash;
 };
 
+ApiKey.findByKey = async function(key) {
+  const hash = this.validateKey(key);
+  const apiKey = await this.findOne({ 
+    where: { 
+      key_hash: hash,
+      is_active: true
+    }
+  });
+  
+  if (apiKey) {
+    // Update last used
+    apiKey.last_used = new Date();
+    apiKey.usage_count += 1;
+    await apiKey.save();
+  }
+  
+  return apiKey;
+};
+
 module.exports = ApiKey;

@@ -44,7 +44,8 @@
     "jsonwebtoken": "^9.0.2",
     "sequelize": "^6.35.1",
     "socket.io": "^4.8.1",
-    "sqlite3": "^5.1.6"
+    "sqlite3": "^5.1.6",
+    "svix": "^1.69.0"
   },
   "engines": {
     "node": ">=16.0.0"
