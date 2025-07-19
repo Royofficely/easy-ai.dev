@@ -31,14 +31,17 @@ try {
 }
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
+const httpServer = http.createServer(app);
+const io = new Server(httpServer, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"]
   }
 });
 const PORT = process.env.PORT || 4000;
+
+// Store server instance for graceful shutdown
+let server = null;
 
 // Production environment handling
 const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT_NAME;
@@ -70,7 +73,6 @@ process.on('SIGINT', () => {
 
 // Global workspace sync instance
 let workspaceSync = null;
-let server;
 
 // Middleware
 app.use(helmet({
@@ -112,7 +114,7 @@ app.get('/health', (req, res) => {
       status: 'healthy', 
       timestamp: new Date().toISOString(),
       service: 'easyai-backend',
-      version: '1.8.7',
+      version: '1.8.8',
       port: PORT,
       environment: process.env.NODE_ENV || 'development',
       railway: !!process.env.RAILWAY_ENVIRONMENT_NAME,
@@ -1066,7 +1068,7 @@ async function startServer() {
     // Also start the server immediately and do workspace sync after
     
     // Start server first for health check
-    const httpServer = server.listen(PORT, '0.0.0.0', () => {
+    server = httpServer.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 EasyAI Platform running on port ${PORT}`);
       console.log(`📊 Dashboard: http://localhost:${PORT}/dashboard`);
       console.log(`🔗 API: http://localhost:${PORT}/api/v1`);
@@ -1075,9 +1077,6 @@ async function startServer() {
         console.log(`🌐 Production mode: ${process.env.RAILWAY_ENVIRONMENT_NAME || 'Unknown'}`);
       }
     });
-    
-    // Store the server instance for graceful shutdown
-    server = httpServer;
     
     if (!isProduction) {
       const fs = require('fs');
