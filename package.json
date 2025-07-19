@@ -1,6 +1,6 @@
 {
   "name": "@easyai/cli",
-  "version": "1.4.8",
+  "version": "1.5.0",
   "description": "EasyAI CLI - Unified AI prompts, real-time costs, model switching, and IDE integration.",
   "main": "bin/cli.js",
   "bin": {
@@ -32,6 +32,7 @@
     "axios": "^1.5.0",
     "bcryptjs": "^2.4.3",
     "chalk": "^4.1.2",
+    "chokidar": "^3.5.3",
     "commander": "^11.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",

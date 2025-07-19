@@ -864,6 +864,16 @@ program
   .action(async (options) => {
     console.log(chalk.blue('🚀 Opening EasyAI web interface...'));
     
+    // Initialize workspace first
+    let workspaceDir;
+    try {
+      workspaceDir = await initializeWorkspace();
+    } catch (workspaceError) {
+      console.log(chalk.red('❌ Failed to initialize workspace'));
+      console.log(chalk.red(`Error: ${workspaceError.message}`));
+      return;
+    }
+    
     try {
       // Check if server is running
       await makeRequest('/api/setup/health', { noAutoExit: true, noAuth: true });
@@ -878,11 +888,11 @@ program
       if (options.autoStart !== false) {
         console.log(chalk.yellow('🔄 Server not running, starting automatically...'));
         try {
-          await startServer(options.port);
+          await startServer(options.port, workspaceDir);
         } catch (serverStartError) {
           console.log(chalk.red('❌ Failed to start server automatically'));
           console.log(chalk.red(`Error: ${serverStartError.message}`));
-          console.log(chalk.yellow('💡 Please run manually: cd easyai-dev && npm start'));
+          console.log(chalk.yellow('💡 Please check the easyai directory and try again'));
           return;
         }
         
@@ -894,11 +904,12 @@ program
           const url = `http://localhost:${options.port}/dashboard`;
           console.log(chalk.green(`✅ Server started successfully`));
           console.log(chalk.yellow(`📱 Dashboard: ${url}`));
+          console.log(chalk.gray(`💼 Workspace: ${workspaceDir}`));
           await openBrowser(url);
         } catch (startError) {
           console.log(chalk.red('❌ Failed to start server automatically'));
           console.log(chalk.red(`Error: ${startError.message}`));
-          console.log(chalk.yellow('💡 Please run manually: cd easyai-dev && npm start'));
+          console.log(chalk.yellow('💡 Please check the easyai directory and try again'));
         }
       } else {
         console.log(chalk.red('❌ Cannot connect to EasyAI server'));
@@ -1545,8 +1556,94 @@ async function killPort(port) {
   });
 }
 
+// Helper function to initialize local easyai workspace
+async function initializeWorkspace() {
+  const fs = require('fs');
+  const workspaceDir = path.join(process.cwd(), 'easyai');
+  
+  console.log(chalk.blue('📁 Initializing EasyAI workspace...'));
+  
+  // Create main easyai directory
+  if (!fs.existsSync(workspaceDir)) {
+    fs.mkdirSync(workspaceDir, { recursive: true });
+    console.log(chalk.green('✅ Created easyai directory'));
+  }
+  
+  // Create subdirectories
+  const subdirs = ['prompts', 'data', 'config', 'logs'];
+  for (const subdir of subdirs) {
+    const dirPath = path.join(workspaceDir, subdir);
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+      console.log(chalk.gray(`   • Created ${subdir}/ directory`));
+    }
+  }
+  
+  // Create .env file with API key
+  const envPath = path.join(workspaceDir, '.env');
+  const apiKey = getApiKey();
+  
+  if (!fs.existsSync(envPath) && apiKey) {
+    const envContent = `# EasyAI Configuration
+EASYAI_API_KEY=${apiKey}
+PORT=4000
+
+# Add your API keys here
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+GOOGLE_API_KEY=
+DEEPSEEK_API_KEY=
+
+# Server Configuration
+NODE_ENV=development
+DB_PATH=./data/easyai.db
+`;
+    
+    fs.writeFileSync(envPath, envContent);
+    console.log(chalk.green('✅ Created .env file with API configuration'));
+  }
+  
+  // Create initial prompts structure
+  const promptsIndexPath = path.join(workspaceDir, 'prompts', 'index.json');
+  if (!fs.existsSync(promptsIndexPath)) {
+    const promptsIndex = {
+      version: "1.0.0",
+      prompts: [],
+      categories: ["general", "coding", "writing", "analysis"],
+      lastSync: new Date().toISOString()
+    };
+    
+    fs.writeFileSync(promptsIndexPath, JSON.stringify(promptsIndex, null, 2));
+    console.log(chalk.gray('   • Created prompts index'));
+  }
+  
+  // Create config file
+  const configPath = path.join(workspaceDir, 'config', 'settings.json');
+  if (!fs.existsSync(configPath)) {
+    const config = {
+      version: "1.4.8",
+      workspace: workspaceDir,
+      server: {
+        port: 4000,
+        autoStart: true
+      },
+      ui: {
+        theme: "light",
+        autoSync: true
+      },
+      lastUpdated: new Date().toISOString()
+    };
+    
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    console.log(chalk.gray('   • Created settings configuration'));
+  }
+  
+  console.log(chalk.green(`✅ Workspace ready at: ${workspaceDir}`));
+  return workspaceDir;
+}
+
 // Helper function to start the server
-async function startServer(port = 4000) {
+async function startServer(port = 4000, workspaceDir = null) {
   const { spawn } = require('child_process');
   const fs = require('fs');
   
@@ -1562,12 +1659,16 @@ async function startServer(port = 4000) {
   
   return new Promise((resolve, reject) => {
     try {
-      // When installed globally, we need to use the package directory
+      // When installed globally, we need to use the package directory for server files
       const packagePath = path.dirname(__dirname);
       const serverPath = path.join(packagePath, 'src', 'server.js');
       
+      // But use workspace directory as working directory for .env and data
+      const cwd = workspaceDir || packagePath;
+      
       console.log(chalk.gray(`📁 Package path: ${packagePath}`));
       console.log(chalk.gray(`🔍 Server path: ${serverPath}`));
+      console.log(chalk.gray(`💼 Working directory: ${cwd}`));
       
       // Check if server file exists
       if (!fs.existsSync(serverPath)) {
@@ -1575,9 +1676,9 @@ async function startServer(port = 4000) {
         return;
       }
       
-      // Start server directly
-      const serverProcess = spawn('node', ['src/server.js'], {
-        cwd: packagePath,
+      // Start server with workspace as working directory
+      const serverProcess = spawn('node', [serverPath], {
+        cwd: cwd,
         detached: true,
         stdio: 'ignore',
         env: { ...process.env, PORT: port }

@@ -16,9 +16,11 @@ const playgroundRoutes = require('./routes/playground');
 const monitoringRoutes = require('./routes/monitoring');
 const setupRoutes = require('./routes/setup');
 const proxyRoutes = require('./routes/proxy');
+const workspaceRoutes = require('./routes/workspace');
 
 // Initialize database
 const { initializeDatabase } = require('./models');
+const WorkspaceSync = require('./utils/workspaceSync');
 
 const app = express();
 const server = http.createServer(app);
@@ -29,6 +31,9 @@ const io = new Server(server, {
   }
 });
 const PORT = process.env.PORT || 4000;
+
+// Global workspace sync instance
+let workspaceSync = null;
 
 // Middleware
 app.use(helmet({
@@ -381,6 +386,67 @@ io.on('connection', (socket) => {
       io.emit('client_count', clientCount);
     }, 100);
   });
+
+  // Workspace sync events
+  if (workspaceSync) {
+    // Send workspace info to new client
+    socket.emit('workspace:info', workspaceSync.getWorkspaceInfo());
+    
+    // Send current prompts and config
+    workspaceSync.syncPrompts();
+    workspaceSync.syncConfig();
+    
+    // Handle workspace sync requests
+    socket.on('workspace:sync:request', () => {
+      if (workspaceSync) {
+        workspaceSync.syncPrompts();
+        workspaceSync.syncConfig();
+      }
+    });
+    
+    // Handle prompt operations from UI
+    socket.on('workspace:prompt:created', async (data) => {
+      try {
+        const prompts = await workspaceSync.loadPrompts();
+        prompts.push(data);
+        await workspaceSync.savePrompts(prompts);
+        
+        // Broadcast to all clients
+        io.emit('workspace:prompts:sync', { prompts });
+      } catch (error) {
+        socket.emit('workspace:error', { message: 'Failed to create prompt', error: error.message });
+      }
+    });
+    
+    socket.on('workspace:prompt:updated', async (data) => {
+      try {
+        const prompts = await workspaceSync.loadPrompts();
+        const index = prompts.findIndex(p => p.prompt_id === data.prompt_id);
+        if (index !== -1) {
+          prompts[index] = data;
+          await workspaceSync.savePrompts(prompts);
+          
+          // Broadcast to all clients
+          io.emit('workspace:prompts:sync', { prompts });
+        }
+      } catch (error) {
+        socket.emit('workspace:error', { message: 'Failed to update prompt', error: error.message });
+      }
+    });
+    
+    socket.on('workspace:prompt:deleted', async (data) => {
+      try {
+        const prompts = await workspaceSync.loadPrompts();
+        const filtered = prompts.filter(p => p.prompt_id !== data.prompt_id);
+        await workspaceSync.savePrompts(filtered);
+        
+        // Broadcast to all clients
+        io.emit('workspace:prompts:sync', { prompts: filtered });
+      } catch (error) {
+        socket.emit('workspace:error', { message: 'Failed to delete prompt', error: error.message });
+      }
+    });
+  }
   
   // Handle connection errors
   socket.on('connect_error', (error) => {
@@ -401,6 +467,7 @@ app.use('/api/playground', playgroundRoutes);
 app.use('/api/monitoring', monitoringRoutes);
 app.use('/api/setup', setupRoutes);
 app.use('/api/proxy', proxyRoutes);
+app.use('/api/workspace', workspaceRoutes);
 
 // Serve dashboard static files
 const dashboardBuildPath = path.join(__dirname, '../dashboard-build');
@@ -508,11 +575,27 @@ async function startServer() {
     await initializeDatabase();
     console.log('Database initialized successfully');
     
+    // Initialize workspace sync if workspace exists
+    const fs = require('fs');
+    const workspacePath = path.join(process.cwd(), 'easyai');
+    
+    if (fs.existsSync(workspacePath)) {
+      console.log('🏢 Workspace detected, initializing sync...');
+      workspaceSync = new WorkspaceSync(workspacePath, io);
+      workspaceSync.startWatching();
+      console.log(`✅ Workspace sync initialized: ${workspacePath}`);
+    } else {
+      console.log('💼 No workspace detected, running in standard mode');
+    }
+    
     server.listen(PORT, '0.0.0.0', () => {
       console.log(`EasyAI Platform running on port ${PORT}`);
       console.log(`Dashboard: http://localhost:${PORT}/dashboard`);
       console.log(`API: http://localhost:${PORT}/api/v1`);
       console.log(`WebSocket: Ready for real-time updates`);
+      if (workspaceSync) {
+        console.log(`Workspace: ${workspacePath}`);
+      }
     });
   } catch (error) {
     console.error('Failed to initialize database:', error);
