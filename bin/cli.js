@@ -54,13 +54,13 @@ function saveApiKey(apiKey) {
 
 async function makeRequest(endpoint, options = {}) {
   const apiKey = getApiKey();
-  if (!apiKey) {
+  if (!apiKey && !options.noAuth) {
     console.log(chalk.red('❌ No API key found. Please run: easyai setup --api-key YOUR_KEY'));
     process.exit(1);
   }
   
   const config = {
-    headers: { 'x-api-key': apiKey },
+    headers: options.noAuth ? {} : { 'x-api-key': apiKey },
     ...options
   };
   
@@ -866,7 +866,7 @@ program
     
     try {
       // Check if server is running
-      await makeRequest('/api/setup/cli-health', { noAutoExit: true });
+      await makeRequest('/api/setup/health', { noAutoExit: true, noAuth: true });
       
       const url = `http://localhost:${options.port}/dashboard`;
       console.log(chalk.green(`✅ Server is running`));
@@ -890,7 +890,7 @@ program
         await new Promise(resolve => setTimeout(resolve, 3000));
         
         try {
-          await makeRequest('/api/setup/cli-health', { noAutoExit: true });
+          await makeRequest('/api/setup/health', { noAutoExit: true, noAuth: true });
           const url = `http://localhost:${options.port}/dashboard`;
           console.log(chalk.green(`✅ Server started successfully`));
           console.log(chalk.yellow(`📱 Dashboard: ${url}`));

@@ -292,4 +292,13 @@ async function createWelcomePrompts(userId) {
   }
 }
 
+// Simple health check for server startup (no authentication required)
+router.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    version: process.env.npm_package_version || '1.0.0'
+  });
+});
+
 module.exports = router;
