@@ -3,6 +3,8 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 
+// Public workspace endpoints (no auth required for local workspace access)
+
 // Get workspace info
 router.get('/info', (req, res) => {
   try {
@@ -206,6 +208,34 @@ router.post('/sync', (req, res) => {
   } catch (error) {
     res.status(500).json({ 
       error: 'Failed to sync workspace',
+      message: error.message 
+    });
+  }
+});
+
+// Public user info endpoint (for workspace users)
+router.get('/user', (req, res) => {
+  try {
+    // For workspace mode, return a basic user object
+    const workspaceSync = req.app.get('workspaceSync');
+    
+    if (workspaceSync) {
+      return res.json({
+        id: 'workspace-user',
+        email: 'workspace@easyai.local',
+        name: 'Workspace User',
+        role: 'user',
+        is_verified: true,
+        workspace_mode: true,
+        setup_completed: true
+      });
+    }
+    
+    // Fallback for non-workspace mode
+    res.status(401).json({ error: 'Authentication required' });
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Failed to get user info',
       message: error.message 
     });
   }

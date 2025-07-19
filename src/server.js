@@ -483,6 +483,51 @@ app.use('/api/setup', setupRoutes);
 app.use('/api/proxy', proxyRoutes);
 app.use('/api/workspace', workspaceRoutes);
 
+// Workspace fallback routes for UI compatibility
+app.get('/api/v1/user', (req, res, next) => {
+  const workspaceSync = req.app.get('workspaceSync');
+  if (workspaceSync) {
+    // Redirect to workspace user endpoint
+    return res.json({
+      id: 'workspace-user',
+      email: 'workspace@easyai.local',
+      name: 'Workspace User',
+      role: 'user',
+      is_verified: true,
+      workspace_mode: true,
+      setup_completed: true
+    });
+  }
+  next(); // Continue to normal auth route
+});
+
+app.get('/api/prompts', async (req, res, next) => {
+  const workspaceSync = req.app.get('workspaceSync');
+  if (workspaceSync) {
+    // Handle workspace prompts directly
+    try {
+      console.log('🔄 Loading prompts via workspace sync for UI');
+      const prompts = await workspaceSync.loadPrompts();
+      const categories = [...new Set(prompts.map(p => p.category).filter(Boolean))];
+      
+      return res.json({ 
+        prompts,
+        categories,
+        version: "1.0.0",
+        lastSync: new Date().toISOString(),
+        source: 'workspace_sync'
+      });
+    } catch (error) {
+      console.error('Error loading workspace prompts for UI:', error);
+      return res.status(500).json({ 
+        error: 'Failed to load workspace prompts',
+        message: error.message 
+      });
+    }
+  }
+  next(); // Continue to normal prompts route
+});
+
 // Dashboard route - serve React app for any dashboard routes (MUST come before static middleware)
 app.get('/dashboard*', (req, res) => {
   try {
@@ -556,8 +601,19 @@ app.get('/dashboard*', (req, res) => {
 
 // Serve dashboard static files AFTER dynamic route
 const dashboardBuildPath = path.join(__dirname, '../dashboard-build');
-app.use('/dashboard/assets', express.static(dashboardBuildPath));
 app.use('/static', express.static(path.join(dashboardBuildPath, 'static')));
+
+// Handle specific static files that the dashboard needs
+app.get('/manifest.json', (req, res) => {
+  res.sendFile(path.join(dashboardBuildPath, 'manifest.json'));
+});
+
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(dashboardBuildPath, 'favicon.ico'));
+});
+
+// Serve dashboard assets
+app.use('/dashboard', express.static(dashboardBuildPath));
 
 // Root route - serve landing page
 app.get('/', (req, res) => {
