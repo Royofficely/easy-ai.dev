@@ -403,32 +403,39 @@ app.use('/api/setup', setupRoutes);
 app.use('/api/proxy', proxyRoutes);
 
 // Serve dashboard static files
-app.use('/dashboard', express.static(path.join(__dirname, '../dashboard/build')));
-app.use('/static', express.static(path.join(__dirname, '../dashboard/build/static')));
+const dashboardBuildPath = path.join(__dirname, '../dashboard-build');
+app.use('/dashboard', express.static(dashboardBuildPath));
+app.use('/static', express.static(path.join(dashboardBuildPath, 'static')));
 
 // Dashboard route - serve React app for any dashboard routes
 app.get('/dashboard*', (req, res) => {
   try {
     console.log('🔍 Dashboard route accessed:', req.path);
-    // Read the .env file to get API key
+    // Try to get API key from environment or .env file
     const fs = require('fs');
-    const envPath = path.join(process.cwd(), '.env');
-    let apiKey = '';
+    let apiKey = process.env.EASYAI_API_KEY || '';
     
-    console.log('📁 .env path:', envPath);
-    console.log('📁 .env exists:', fs.existsSync(envPath));
-    
-    if (fs.existsSync(envPath)) {
-      const envContent = fs.readFileSync(envPath, 'utf8');
-      const match = envContent.match(/EASYAI_API_KEY=(.+)/);
-      if (match) {
-        apiKey = match[1].trim();
-        console.log('🔑 API Key found:', apiKey ? 'Yes' : 'No');
+    if (!apiKey) {
+      const envPath = path.join(process.cwd(), '.env');
+      console.log('📁 .env path:', envPath);
+      console.log('📁 .env exists:', fs.existsSync(envPath));
+      
+      try {
+        if (fs.existsSync(envPath)) {
+          const envContent = fs.readFileSync(envPath, 'utf8');
+          const match = envContent.match(/EASYAI_API_KEY=(.+)/);
+          if (match) {
+            apiKey = match[1].trim();
+            console.log('🔑 API Key found:', apiKey ? 'Yes' : 'No');
+          }
+        }
+      } catch (error) {
+        console.log('No .env file found, dashboard will work without pre-filled API key');
       }
     }
     
     // Read React dashboard index.html
-    const dashboardPath = path.join(__dirname, '../dashboard/build/index.html');
+    const dashboardPath = path.join(__dirname, '../dashboard-build/index.html');
     let dashboardHtml = fs.readFileSync(dashboardPath, 'utf8');
     
     // Inject API key and API base URL into the dashboard
@@ -452,7 +459,15 @@ app.get('/dashboard*', (req, res) => {
     res.send(dashboardHtml);
   } catch (error) {
     console.error('Error serving dashboard:', error);
-    res.sendFile(path.join(__dirname, '../dashboard/build/index.html'));
+    try {
+      res.sendFile(path.join(__dirname, '../dashboard-build/index.html'));
+    } catch (fallbackError) {
+      console.error('Fallback dashboard also failed:', fallbackError);
+      res.status(500).json({ 
+        error: 'Dashboard not available', 
+        message: 'Dashboard build files not found' 
+      });
+    }
   }
 });
 
