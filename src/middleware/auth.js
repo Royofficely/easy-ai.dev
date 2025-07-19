@@ -40,6 +40,7 @@ const authenticateApiKey = async (req, res, next) => {
 
   // Check if we're in workspace mode
   const workspaceSync = req.app.get('workspaceSync');
+  console.log('🔍 Workspace check - workspaceSync:', workspaceSync ? 'AVAILABLE' : 'NULL');
   
   if (workspaceSync) {
     console.log('🏢 Workspace mode detected - using config-based authentication');
@@ -76,13 +77,25 @@ const authenticateApiKey = async (req, res, next) => {
         try {
           const workspacePath = process.env.EASYAI_WORKSPACE_PATH || process.cwd();
           const envPath = path.join(workspacePath, '.env');
+          console.log('🔍 Checking workspace .env at:', envPath);
+          console.log('🔍 .env file exists:', fs.existsSync(envPath));
+          
           if (fs.existsSync(envPath)) {
             const envContent = fs.readFileSync(envPath, 'utf8');
+            console.log('🔍 .env file content:', envContent.substring(0, 100) + '...');
             const match = envContent.match(/EASYAI_API_KEY=(.+)/);
+            console.log('🔍 Regex match:', match);
+            console.log('🔍 Provided API key:', apiKey);
+            console.log('🔍 .env API key:', match ? match[1].trim() : 'NOT_FOUND');
+            
             if (match && match[1].trim() === apiKey) {
               validApiKey = apiKey;
               console.log('✅ API key validated from workspace .env');
+            } else {
+              console.log('❌ API key mismatch or not found in .env');
             }
+          } else {
+            console.log('❌ .env file does not exist at:', envPath);
           }
         } catch (error) {
           console.log('Could not read workspace .env:', error.message);
