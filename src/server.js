@@ -511,6 +511,13 @@ app.get('/dashboard*', (req, res) => {
     
     // Read React dashboard index.html
     const dashboardPath = path.join(__dirname, '../dashboard-build/index.html');
+    console.log('📄 Looking for dashboard at:', dashboardPath);
+    console.log('📄 Dashboard exists:', fs.existsSync(dashboardPath));
+    
+    if (!fs.existsSync(dashboardPath)) {
+      throw new Error(`Dashboard file not found at ${dashboardPath}`);
+    }
+    
     let dashboardHtml = fs.readFileSync(dashboardPath, 'utf8');
     
     // Inject API key and API base URL into the dashboard
