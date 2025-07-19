@@ -574,9 +574,9 @@ const Dashboard: React.FC = () => {
     };
   }, [apiKey]);
   
-  // Fetch prompts when component mounts or when prompts section is active
+  // Fetch prompts when component mounts or when prompts/playground sections are active
   useEffect(() => {
-    if (activeSection === 'prompts') {
+    if (activeSection === 'prompts' || activeSection === 'playground') {
       fetchPrompts();
     }
   }, [activeSection]);

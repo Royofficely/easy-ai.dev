@@ -6,6 +6,10 @@ interface PlaygroundSectionProps {
 
 const PlaygroundSection: React.FC<PlaygroundSectionProps> = ({ prompts }) => {
   const [selectedPrompt, setSelectedPrompt] = useState('');
+  
+  // Debug logging to help troubleshoot
+  console.log('🎮 Playground prompts:', prompts);
+  console.log('🎮 Prompts count:', prompts?.length || 0);
   const [selectedModel, setSelectedModel] = useState('gpt-4');
   const [parameters, setParameters] = useState('{}');
   const [maxTokens, setMaxTokens] = useState(150);
@@ -103,11 +107,15 @@ const PlaygroundSection: React.FC<PlaygroundSectionProps> = ({ prompts }) => {
                 className="notion-prompt-select"
               >
                 <option value="">Choose a prompt to test...</option>
-                {prompts.map((prompt) => (
-                  <option key={prompt.prompt_id} value={prompt.prompt_id}>
-                    {prompt.name} ({prompt.category})
-                  </option>
-                ))}
+                {prompts && prompts.length > 0 ? (
+                  prompts.map((prompt) => (
+                    <option key={prompt.prompt_id} value={prompt.prompt_id}>
+                      {prompt.name} ({prompt.category || 'No category'})
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>No prompts available - Create some in the Prompts section first</option>
+                )}
               </select>
             </div>
 
