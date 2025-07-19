@@ -127,7 +127,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ currentApiKey }) => {
         <div className="setting-group">
           <div className="setting-item">
             <label className="setting-label">Email Address</label>
-            <input className="setting-input" type="email" value={`user_${currentApiKey.slice(-8)}@easyai.local`} disabled />
+            <input className="setting-input" type="email" value={`Connected via API Key ${currentApiKey.slice(-8)}`} disabled />
           </div>
           <div className="setting-item">
             <label className="setting-label">Account Type</label>
@@ -798,7 +798,7 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="user-details">
               <p className="user-name">User {currentApiKey.slice(-8)}</p>
-              <p className="user-email">{user?.email || `user_${currentApiKey.slice(-8)}@easyai.local`}</p>
+              <p className="user-email">{user?.email && !user.email.includes('@easyai.local') ? user.email : `API Key: ${currentApiKey.slice(-8)}`}</p>
             </div>
           </div>
           <div className="connection-status">

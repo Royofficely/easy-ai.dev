@@ -80,10 +80,11 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://unpkg.com"],
-      imgSrc: ["'self'", "data:", "https:"],
-      fontSrc: ["'self'", "https:"],
-      connectSrc: ["'self'", "http://localhost:4001", "https://easy-aidev-production.up.railway.app"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://unpkg.com", "https://*.clerk.accounts.dev", "https://clerk.accounts.dev", "https://tolerant-ladybug-16.clerk.accounts.dev"],
+      imgSrc: ["'self'", "data:", "https:", "https://*.clerk.accounts.dev", "https://clerk.accounts.dev", "https://tolerant-ladybug-16.clerk.accounts.dev"],
+      fontSrc: ["'self'", "https:", "https://*.clerk.accounts.dev", "https://clerk.accounts.dev", "https://tolerant-ladybug-16.clerk.accounts.dev"],
+      connectSrc: ["'self'", "http://localhost:4001", "https://easy-aidev-production.up.railway.app", "https://*.clerk.accounts.dev", "https://clerk.accounts.dev", "https://api.clerk.com", "https://*.clerk.com", "https://tolerant-ladybug-16.clerk.accounts.dev"],
+      frameSrc: ["'self'", "https://*.clerk.accounts.dev", "https://clerk.accounts.dev", "https://tolerant-ladybug-16.clerk.accounts.dev"],
       upgradeInsecureRequests: null
     }
   }
@@ -615,12 +616,16 @@ app.get('/api/v1/user', async (req, res, next) => {
       console.log('Could not read user config, using defaults');
     }
     
-    // If we don't have user info, try to fetch from API key in database
-    if ((userEmail === 'workspace@easyai.local' || userEmail.includes('cli@user.com')) && apiKey) {
+    // Try to get API key from request headers
+    const requestApiKey = req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '');
+    console.log(`🔍 Request API key: ${requestApiKey}`);
+    
+    // If we have an API key from the request, use it to find the real user
+    if (requestApiKey) {
       try {
         const { User, ApiKey } = require('./models');
         const crypto = require('crypto');
-        const hash = crypto.createHash('sha256').update(apiKey).digest('hex');
+        const hash = crypto.createHash('sha256').update(requestApiKey).digest('hex');
         const apiKeyRecord = await ApiKey.findOne({ where: { key_hash: hash } });
         
         if (apiKeyRecord) {
@@ -633,6 +638,27 @@ app.get('/api/v1/user', async (req, res, next) => {
         }
       } catch (error) {
         console.log('Could not fetch user from API key:', error.message);
+      }
+    }
+    
+    // If we still don't have user info, try to fetch from config API key
+    if ((userEmail === 'workspace@easyai.local' || userEmail.includes('cli@user.com')) && apiKey) {
+      try {
+        const { User, ApiKey } = require('./models');
+        const crypto = require('crypto');
+        const hash = crypto.createHash('sha256').update(apiKey).digest('hex');
+        const apiKeyRecord = await ApiKey.findOne({ where: { key_hash: hash } });
+        
+        if (apiKeyRecord) {
+          const user = await User.findByPk(apiKeyRecord.user_id);
+          if (user && !user.email.includes('@easyai.local')) {
+            userEmail = user.email;
+            userName = user.name;
+            console.log(`🔍 Found real user from config API key: ${userEmail}`);
+          }
+        }
+      } catch (error) {
+        console.log('Could not fetch user from config API key:', error.message);
       }
     }
     

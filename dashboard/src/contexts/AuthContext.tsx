@@ -41,30 +41,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      // Check if API key was injected by server (from CLI setup)
+      // Check for API key authentication (CLI mode only)
       const injectedApiKey = (window as any).EASYAI_API_KEY || localStorage.getItem('easyai_api_key');
-      const storedToken = localStorage.getItem('token');
       const storedApiKey = localStorage.getItem('apiKey');
-      
-      // Priority: injected API key > stored API key > stored token
       const apiKeyToUse = injectedApiKey || storedApiKey;
       
-      if (apiKeyToUse || storedToken) {
+      if (apiKeyToUse) {
         try {
-          const headers: any = {};
-          if (apiKeyToUse) {
-            headers['x-api-key'] = apiKeyToUse;
-          } else if (storedToken) {
-            headers['Authorization'] = `Bearer ${storedToken}`;
-          }
-
-          console.log('🔍 Checking authentication with API key:', apiKeyToUse ? 'present' : 'none');
+          console.log('🔍 Checking API key authentication');
           
-          // Try to get user info to validate the API key
-          const response = await axios.get(`${API_BASE_URL}/api/v1/user`, { headers });
+          const response = await axios.get(`${API_BASE_URL}/api/v1/user`, {
+            headers: { 'x-api-key': apiKeyToUse }
+          });
           
-          // If successful, set user as authenticated
-          const userData = response.data.user || {
+          const userData = response.data || {
             id: 'cli-user',
             email: 'cli@user.com',
             role: 'developer',
@@ -72,39 +62,40 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           };
           
           setUser(userData);
-          setToken(storedToken);
+          setToken(null);
           setApiKey(apiKeyToUse);
+          localStorage.setItem('apiKey', apiKeyToUse);
           
-          if (apiKeyToUse) {
-            localStorage.setItem('apiKey', apiKeyToUse);
-          }
-          
-          console.log('✅ Authentication successful with API key');
+          console.log('✅ API key authentication successful');
         } catch (error: any) {
-          console.log('❌ Authentication failed:', error.response?.data || error.message);
+          console.log('❌ API key authentication failed:', error.response?.data || error.message);
           
-          // If API key fails, try to create a simple authenticated session
+          // Fallback for injected API keys
           if (injectedApiKey) {
-            console.log('🔄 Using injected API key for authentication');
             const userData = {
               id: 'cli-user',
               email: 'cli@user.com',
               role: 'developer',
               permissions: ['read', 'write']
             };
-            
             setUser(userData);
             setApiKey(injectedApiKey);
             localStorage.setItem('apiKey', injectedApiKey);
           } else {
-            localStorage.removeItem('token');
-            localStorage.removeItem('apiKey');
             setUser(null);
             setToken(null);
             setApiKey(null);
+            localStorage.removeItem('token');
+            localStorage.removeItem('apiKey');
           }
         }
+      } else {
+        // No API key available
+        setUser(null);
+        setToken(null);
+        setApiKey(null);
       }
+      
       setIsLoading(false);
     };
 
