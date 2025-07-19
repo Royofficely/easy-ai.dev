@@ -68,7 +68,7 @@ async function makeRequest(endpoint, options = {}) {
     const response = await axios(`http://localhost:4000${endpoint}`, config);
     return response.data;
   } catch (error) {
-    if (error.code === 'ECONNREFUSED') {
+    if (error.code === 'ECONNREFUSED' && !options.noAutoExit) {
       console.log(chalk.red('❌ Cannot connect to EasyAI server'));
       console.log(chalk.yellow('💡 Make sure the EasyAI server is running'));
       process.exit(1);
@@ -866,7 +866,7 @@ program
     
     try {
       // Check if server is running
-      await makeRequest('/api/setup/cli-health');
+      await makeRequest('/api/setup/cli-health', { noAutoExit: true });
       
       const url = `http://localhost:${options.port}/dashboard`;
       console.log(chalk.green(`✅ Server is running`));
@@ -883,7 +883,7 @@ program
         await new Promise(resolve => setTimeout(resolve, 3000));
         
         try {
-          await makeRequest('/api/setup/cli-health');
+          await makeRequest('/api/setup/cli-health', { noAutoExit: true });
           const url = `http://localhost:${options.port}/dashboard`;
           console.log(chalk.green(`✅ Server started successfully`));
           console.log(chalk.yellow(`📱 Dashboard: ${url}`));
