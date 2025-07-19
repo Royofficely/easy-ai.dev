@@ -1,6 +1,13 @@
 const fs = require('fs');
 const path = require('path');
-const chokidar = require('chokidar');
+
+// Try to load chokidar, fallback if not available
+let chokidar = null;
+try {
+  chokidar = require('chokidar');
+} catch (error) {
+  console.log('⚠️  chokidar not available, file watching disabled');
+}
 
 class WorkspaceSync {
   constructor(workspacePath, io) {
@@ -13,6 +20,12 @@ class WorkspaceSync {
   // Initialize workspace watching
   startWatching() {
     if (this.isWatching) return;
+    
+    if (!chokidar) {
+      console.log('📁 File watching not available (chokidar missing), using basic sync mode');
+      this.isWatching = false;
+      return;
+    }
     
     console.log('🔍 Starting workspace file watching...');
     

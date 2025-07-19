@@ -20,7 +20,15 @@ const workspaceRoutes = require('./routes/workspace');
 
 // Initialize database
 const { initializeDatabase } = require('./models');
-const WorkspaceSync = require('./utils/workspaceSync');
+
+// Try to load WorkspaceSync, fallback if dependencies missing
+let WorkspaceSync = null;
+try {
+  WorkspaceSync = require('./utils/workspaceSync');
+} catch (error) {
+  console.log('📦 Workspace sync dependencies not available, running without file watching');
+  console.log('   Install chokidar for full workspace sync: npm install chokidar');
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -581,9 +589,20 @@ async function startServer() {
     
     if (fs.existsSync(workspacePath)) {
       console.log('🏢 Workspace detected, initializing sync...');
-      workspaceSync = new WorkspaceSync(workspacePath, io);
-      workspaceSync.startWatching();
-      console.log(`✅ Workspace sync initialized: ${workspacePath}`);
+      
+      if (WorkspaceSync) {
+        try {
+          workspaceSync = new WorkspaceSync(workspacePath, io);
+          workspaceSync.startWatching();
+          console.log(`✅ Workspace sync initialized: ${workspacePath}`);
+        } catch (error) {
+          console.log('⚠️  Workspace sync failed to initialize, continuing without file watching');
+          console.log(`   Error: ${error.message}`);
+          workspaceSync = null;
+        }
+      } else {
+        console.log('💼 Workspace detected but sync dependencies missing, running in basic mode');
+      }
     } else {
       console.log('💼 No workspace detected, running in standard mode');
     }
