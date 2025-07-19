@@ -50,7 +50,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ currentApiKey }) => {
     
     try {
       // Only send keys that have been changed (not empty)
-      const keysToUpdate = {};
+      const keysToUpdate: {[key: string]: string} = {};
       Object.entries(apiKeys).forEach(([provider, key]) => {
         if (key && key.trim()) {
           keysToUpdate[provider] = key.trim();
