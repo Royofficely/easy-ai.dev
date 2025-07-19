@@ -29,6 +29,9 @@ const NotionStylePromptsSection: React.FC<NotionStylePromptsSectionProps> = ({
   const [newPromptMode, setNewPromptMode] = useState(false);
   const [newPromptTitle, setNewPromptTitle] = useState('');
   const [newPromptContent, setNewPromptContent] = useState('');
+  const [newPromptDescription, setNewPromptDescription] = useState('');
+  const [newPromptCategory, setNewPromptCategory] = useState('General');
+  const [newPromptModel, setNewPromptModel] = useState('gpt-4');
 
   const handleCreateNewPrompt = () => {
     if (!newPromptTitle.trim()) return;
@@ -36,8 +39,9 @@ const NotionStylePromptsSection: React.FC<NotionStylePromptsSectionProps> = ({
     const promptData = {
       name: newPromptTitle,
       content: newPromptContent || 'Start writing your prompt here...',
-      category: 'General',
-      description: '',
+      category: newPromptCategory,
+      description: newPromptDescription,
+      model: newPromptModel,
       variables: []
     };
     
@@ -45,6 +49,9 @@ const NotionStylePromptsSection: React.FC<NotionStylePromptsSectionProps> = ({
     setNewPromptMode(false);
     setNewPromptTitle('');
     setNewPromptContent('');
+    setNewPromptDescription('');
+    setNewPromptCategory('General');
+    setNewPromptModel('gpt-4');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -55,6 +62,9 @@ const NotionStylePromptsSection: React.FC<NotionStylePromptsSectionProps> = ({
       setNewPromptMode(false);
       setNewPromptTitle('');
       setNewPromptContent('');
+      setNewPromptDescription('');
+      setNewPromptCategory('General');
+      setNewPromptModel('gpt-4');
     }
   };
 
@@ -105,6 +115,44 @@ const NotionStylePromptsSection: React.FC<NotionStylePromptsSectionProps> = ({
                 autoFocus
               />
             </div>
+            <div className="notion-prompt-form-fields">
+              <input
+                type="text"
+                value={newPromptDescription}
+                onChange={(e) => setNewPromptDescription(e.target.value)}
+                placeholder="Brief description (optional)"
+                className="notion-prompt-description-input"
+              />
+              
+              <div className="notion-prompt-form-row">
+                <select
+                  value={newPromptCategory}
+                  onChange={(e) => setNewPromptCategory(e.target.value)}
+                  className="notion-prompt-select"
+                >
+                  <option value="General">General</option>
+                  <option value="Development">Development</option>
+                  <option value="Creative">Creative</option>
+                  <option value="Business">Business</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="Research">Research</option>
+                  <option value="Education">Education</option>
+                </select>
+                
+                <select
+                  value={newPromptModel}
+                  onChange={(e) => setNewPromptModel(e.target.value)}
+                  className="notion-prompt-select"
+                >
+                  <option value="gpt-4">GPT-4</option>
+                  <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                  <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                  <option value="claude-3-haiku">Claude 3 Haiku</option>
+                  <option value="gemini-pro">Gemini Pro</option>
+                </select>
+              </div>
+            </div>
+            
             <div className="notion-prompt-content">
               <textarea
                 value={newPromptContent}
@@ -122,6 +170,9 @@ const NotionStylePromptsSection: React.FC<NotionStylePromptsSectionProps> = ({
                   setNewPromptMode(false);
                   setNewPromptTitle('');
                   setNewPromptContent('');
+                  setNewPromptDescription('');
+                  setNewPromptCategory('General');
+                  setNewPromptModel('gpt-4');
                 }}
               >
                 Cancel
