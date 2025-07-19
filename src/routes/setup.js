@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const axios = require('axios');
 const { User, ApiKey } = require('../models');
 
-// Setup wizard - step 1: API key validation
+// Setup wizard - step 1: API key validation and user info retrieval
 router.post('/validate-key', async (req, res) => {
   try {
     const { apiKey } = req.body;
@@ -35,6 +35,42 @@ router.post('/validate-key', async (req, res) => {
   } catch (error) {
     console.error('API key validation error:', error);
     res.status(500).json({ error: 'Failed to validate API key' });
+  }
+});
+
+// Get user info by API key (for CLI setup)
+router.post('/user-info', async (req, res) => {
+  try {
+    const { apiKey } = req.body;
+    
+    if (!apiKey || !apiKey.startsWith('easyai_')) {
+      return res.status(400).json({ 
+        error: 'Invalid API key format' 
+      });
+    }
+    
+    const hash = crypto.createHash('sha256').update(apiKey).digest('hex');
+    const existingKey = await ApiKey.findOne({ where: { key_hash: hash } });
+    
+    if (existingKey) {
+      const user = await User.findByPk(existingKey.user_id);
+      console.log(`🔍 Found user for API key: ${user.email} (${user.name})`);
+      
+      return res.json({
+        found: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          setup_completed: user.settings?.setup_completed || false
+        }
+      });
+    }
+    
+    res.json({ found: false });
+  } catch (error) {
+    console.error('User info retrieval error:', error);
+    res.status(500).json({ error: 'Failed to retrieve user info' });
   }
 });
 
@@ -125,6 +161,16 @@ router.post('/complete', async (req, res) => {
     if (existingKey) {
       user = await User.findByPk(existingKey.user_id);
       apiKeyRecord = existingKey;
+      
+      // Update user info if provided and different
+      if (userEmail && user.email !== userEmail) {
+        await user.update({ email: userEmail });
+        console.log(`📧 Updated user email to: ${userEmail}`);
+      }
+      if (userName && user.name !== userName) {
+        await user.update({ name: userName });
+        console.log(`👤 Updated user name to: ${userName}`);
+      }
     } else {
       // Create new user - use provided email/name or fallback to generated ones
       const finalUserEmail = userEmail || `user_${apiKey.slice(-8)}@easyai.local`;

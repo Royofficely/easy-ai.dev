@@ -293,33 +293,27 @@ program
       apiKey = answers.apiKey;
     }
     
-    // If no email provided, ask for it to personalize the dashboard
-    if (!userEmail) {
-      console.log(chalk.yellow('\n💡 To personalize your dashboard, provide your email from easy-ai.dev:'));
-      const emailAnswers = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'email',
-          message: 'Your email (optional, press Enter to skip):',
-          validate: (input) => {
-            if (!input) return true; // Allow empty
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return emailRegex.test(input) || 'Please enter a valid email address';
-          }
+    // Auto-fetch user info from backend using API key
+    if (!userEmail || !userName) {
+      try {
+        console.log(chalk.blue('🔍 Retrieving your account information...'));
+        
+        const userInfo = await makeRequest('/api/setup/user-info', {
+          method: 'POST',
+          body: { apiKey },
+          noAuth: true
+        });
+        
+        if (userInfo.found && userInfo.user) {
+          userEmail = userInfo.user.email;
+          userName = userInfo.user.name;
+          console.log(chalk.green(`✅ Found account: ${userEmail}`));
+        } else {
+          console.log(chalk.yellow('⚠️  API key not found in database, using generic user info'));
         }
-      ]);
-      userEmail = emailAnswers.email;
-      
-      // If email provided, ask for name too
-      if (userEmail) {
-        const nameAnswers = await inquirer.prompt([
-          {
-            type: 'input',
-            name: 'name',
-            message: 'Your full name (optional):',
-          }
-        ]);
-        userName = nameAnswers.name;
+      } catch (error) {
+        console.log(chalk.yellow(`⚠️  Could not retrieve account info: ${error.message}`));
+        console.log(chalk.gray('   Continuing with setup using generic user info...'));
       }
     }
     
