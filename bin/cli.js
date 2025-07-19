@@ -293,23 +293,34 @@ program
       apiKey = answers.apiKey;
     }
     
-    // Auto-fetch user info from backend using API key
+    // Auto-fetch user info from backend using API key (try after server starts)
     if (!userEmail || !userName) {
       try {
         console.log(chalk.blue('🔍 Retrieving your account information...'));
         
-        const userInfo = await makeRequest('/api/setup/user-info', {
-          method: 'POST',
-          body: { apiKey },
-          noAuth: true
-        });
+        // First check if server is running
+        let serverRunning = false;
+        try {
+          await makeRequest('/health', { noAuth: true, noAutoExit: true });
+          serverRunning = true;
+        } catch (healthError) {
+          console.log(chalk.yellow('⚠️  Server not running, will fetch user info later'));
+        }
         
-        if (userInfo.found && userInfo.user) {
-          userEmail = userInfo.user.email;
-          userName = userInfo.user.name;
-          console.log(chalk.green(`✅ Found account: ${userEmail}`));
-        } else {
-          console.log(chalk.yellow('⚠️  API key not found in database, using generic user info'));
+        if (serverRunning) {
+          const userInfo = await makeRequest('/api/setup/user-info', {
+            method: 'POST',
+            body: { apiKey },
+            noAuth: true
+          });
+          
+          if (userInfo.found && userInfo.user) {
+            userEmail = userInfo.user.email;
+            userName = userInfo.user.name;
+            console.log(chalk.green(`✅ Found account: ${userEmail}`));
+          } else {
+            console.log(chalk.yellow('⚠️  API key not found in database, using generic user info'));
+          }
         }
       } catch (error) {
         console.log(chalk.yellow(`⚠️  Could not retrieve account info: ${error.message}`));
