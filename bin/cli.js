@@ -1459,71 +1459,88 @@ async function killPort(port) {
   const { spawn } = require('child_process');
   
   return new Promise((resolve) => {
-    if (process.platform === 'win32') {
-      // Windows
-      const netstat = spawn('netstat', ['-ano']);
-      const findstr = spawn('findstr', [`:${port}`]);
-      
-      netstat.stdout.pipe(findstr.stdin);
-      
-      let output = '';
-      findstr.stdout.on('data', (data) => {
-        output += data.toString();
-      });
-      
-      findstr.on('close', () => {
-        const lines = output.split('\n');
-        const pids = [];
+    try {
+      if (process.platform === 'win32') {
+        // Windows
+        const netstat = spawn('netstat', ['-ano']);
+        const findstr = spawn('findstr', [`:${port}`]);
         
-        lines.forEach(line => {
-          const parts = line.trim().split(/\s+/);
-          if (parts.length > 4) {
-            const pid = parts[parts.length - 1];
-            if (pid && !isNaN(pid)) {
-              pids.push(pid);
-            }
-          }
+        netstat.stdout.pipe(findstr.stdin);
+        
+        let output = '';
+        findstr.stdout.on('data', (data) => {
+          output += data.toString();
         });
         
-        // Kill all PIDs
-        pids.forEach(pid => {
+        findstr.on('close', () => {
           try {
-            spawn('taskkill', ['/PID', pid, '/F']);
-          } catch (error) {
-            // Ignore errors
-          }
-        });
-        
-        resolve();
-      });
-    } else {
-      // macOS/Linux
-      const lsof = spawn('lsof', ['-ti', `:${port}`]);
-      
-      let pids = '';
-      lsof.stdout.on('data', (data) => {
-        pids += data.toString();
-      });
-      
-      lsof.on('close', () => {
-        if (pids.trim()) {
-          const pidArray = pids.trim().split('\n');
-          pidArray.forEach(pid => {
-            if (pid.trim()) {
+            const lines = output.split('\n');
+            const pids = [];
+            
+            lines.forEach(line => {
+              const parts = line.trim().split(/\s+/);
+              if (parts.length > 4) {
+                const pid = parts[parts.length - 1];
+                if (pid && !isNaN(pid) && pid !== process.pid.toString()) {
+                  pids.push(pid);
+                }
+              }
+            });
+            
+            // Kill all PIDs except current process
+            pids.forEach(pid => {
               try {
-                spawn('kill', ['-9', pid.trim()]);
+                spawn('taskkill', ['/PID', pid, '/F'], { detached: true });
               } catch (error) {
                 // Ignore errors
               }
+            });
+          } catch (error) {
+            // Ignore errors
+          }
+          
+          resolve();
+        });
+        
+        findstr.on('error', () => resolve());
+        netstat.on('error', () => resolve());
+      } else {
+        // macOS/Linux
+        const lsof = spawn('lsof', ['-ti', `:${port}`]);
+        
+        let pids = '';
+        lsof.stdout.on('data', (data) => {
+          pids += data.toString();
+        });
+        
+        lsof.on('close', () => {
+          try {
+            if (pids.trim()) {
+              const pidArray = pids.trim().split('\n');
+              pidArray.forEach(pid => {
+                if (pid.trim() && pid.trim() !== process.pid.toString()) {
+                  try {
+                    spawn('kill', ['-9', pid.trim()], { detached: true });
+                  } catch (error) {
+                    // Ignore errors
+                  }
+                }
+              });
             }
-          });
-        }
-        resolve();
-      });
-      
-      lsof.on('error', () => {
-        resolve(); // Port might not be in use
-      });
+          } catch (error) {
+            // Ignore errors
+          }
+          
+          resolve();
+        });
+        
+        lsof.on('error', () => {
+          resolve(); // Port might not be in use
+        });
+      }
+    } catch (error) {
+      // If anything fails, just resolve
+      resolve();
     }
   });
 }
@@ -1534,77 +1551,51 @@ async function startServer(port = 4000) {
   const fs = require('fs');
   
   console.log(chalk.blue(`🧹 Cleaning port ${port}...`));
-  await killPort(port);
+  
+  // Safer port cleanup - don't await to avoid killing ourselves
+  killPort(port).catch(() => {}); // Ignore errors
   
   // Wait a moment for cleanup
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await new Promise(resolve => setTimeout(resolve, 2000));
   
   console.log(chalk.blue('🚀 Starting EasyAI server...'));
   
   return new Promise((resolve, reject) => {
-    // When installed globally, we need to use the package directory
-    const packagePath = path.dirname(__dirname);
-    const serverPath = path.join(packagePath, 'src', 'server.js');
-    
-    // Check if server file exists
-    if (!fs.existsSync(serverPath)) {
-      reject(new Error(`Server file not found at ${serverPath}`));
-      return;
-    }
-    
-    // Check if node_modules exists
-    const nodeModulesPath = path.join(packagePath, 'node_modules');
-    if (!fs.existsSync(nodeModulesPath)) {
-      // Try to install dependencies first
-      console.log(chalk.blue('📦 Installing dependencies...'));
-      const installProcess = spawn('npm', ['install'], {
-        cwd: packagePath,
-        stdio: 'pipe'
-      });
+    try {
+      // When installed globally, we need to use the package directory
+      const packagePath = path.dirname(__dirname);
+      const serverPath = path.join(packagePath, 'src', 'server.js');
       
-      installProcess.on('close', (code) => {
-        if (code === 0) {
-          // Dependencies installed, now start server
-          startServerProcess();
-        } else {
-          reject(new Error('Failed to install dependencies'));
-        }
-      });
-    } else {
-      startServerProcess();
-    }
-    
-    function startServerProcess() {
+      console.log(chalk.gray(`📁 Package path: ${packagePath}`));
+      console.log(chalk.gray(`🔍 Server path: ${serverPath}`));
+      
+      // Check if server file exists
+      if (!fs.existsSync(serverPath)) {
+        reject(new Error(`Server file not found at ${serverPath}`));
+        return;
+      }
+      
+      // Start server directly
       const serverProcess = spawn('node', ['src/server.js'], {
         cwd: packagePath,
         detached: true,
-        stdio: ['ignore', 'pipe', 'pipe'],
+        stdio: 'ignore',
         env: { ...process.env, PORT: port }
-      });
-      
-      let serverOutput = '';
-      serverProcess.stdout.on('data', (data) => {
-        serverOutput += data.toString();
-      });
-      
-      serverProcess.stderr.on('data', (data) => {
-        serverOutput += data.toString();
       });
       
       serverProcess.unref();
       
       // Give the server time to start
       setTimeout(() => {
-        if (serverOutput.includes('Error') || serverOutput.includes('error')) {
-          reject(new Error(`Server startup failed: ${serverOutput}`));
-        } else {
-          resolve(serverProcess);
-        }
-      }, 5000);
+        resolve(serverProcess);
+      }, 3000);
       
       serverProcess.on('error', (error) => {
         reject(error);
       });
+      
+    } catch (error) {
+      reject(error);
     }
   });
 }
