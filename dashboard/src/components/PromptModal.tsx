@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './PromptModal.css';
+import RichTextEditor from './RichTextEditor';
 
 interface PromptModalProps {
   isOpen: boolean;
@@ -19,7 +20,6 @@ const PromptModal: React.FC<PromptModalProps> = ({ isOpen, onClose, onSave, edit
   });
 
   const [saving, setSaving] = useState(false);
-  const [contentFocused, setContentFocused] = useState(false);
 
   // Update form data when editingPrompt changes
   useEffect(() => {
@@ -75,6 +75,13 @@ const PromptModal: React.FC<PromptModalProps> = ({ isOpen, onClose, onSave, edit
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
+    });
+  };
+
+  const handleContentChange = (content: string) => {
+    setFormData({
+      ...formData,
+      content: content
     });
   };
 
@@ -166,17 +173,11 @@ const PromptModal: React.FC<PromptModalProps> = ({ isOpen, onClose, onSave, edit
           </div>
 
           <div className="notion-prompt-content">
-            <textarea
-              name="content"
+            <RichTextEditor
               value={formData.content}
-              onChange={handleChange}
-              onKeyDown={handleContentKeyDown}
-              onFocus={() => setContentFocused(true)}
-              onBlur={() => setContentFocused(false)}
-              required
-              rows={12}
-              className="notion-prompt-content-textarea"
+              onChange={handleContentChange}
               placeholder="Start writing your prompt here..."
+              rows={12}
             />
           </div>
 

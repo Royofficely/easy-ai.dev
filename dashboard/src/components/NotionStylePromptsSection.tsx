@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import RichTextEditor from './RichTextEditor';
 
 interface Prompt {
   prompt_id: string;
@@ -154,13 +155,11 @@ const NotionStylePromptsSection: React.FC<NotionStylePromptsSectionProps> = ({
             </div>
             
             <div className="notion-prompt-content">
-              <textarea
+              <RichTextEditor
                 value={newPromptContent}
-                onChange={(e) => setNewPromptContent(e.target.value)}
-                onKeyDown={handleKeyDown}
+                onChange={setNewPromptContent}
                 placeholder="Start writing your prompt here..."
-                className="notion-prompt-content-textarea"
-                rows={4}
+                rows={6}
               />
             </div>
             <div className="notion-prompt-actions">
