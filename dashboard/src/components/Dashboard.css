@@ -274,7 +274,7 @@ body {
   gap: var(--space-2);
   padding: var(--space-3) var(--space-5);
   background-color: var(--color-accent);
-  color: white;
+  color: var(--color-surface);
   border: none;
   border-radius: var(--radius-lg);
   font-size: 14px;
@@ -286,6 +286,7 @@ body {
 
 .btn-primary:hover {
   background-color: #333333;
+  color: white;
   box-shadow: var(--shadow-md);
   transform: translateY(-1px);
 }
@@ -1291,15 +1292,23 @@ body {
 
 .notion-prompt-select {
   padding: var(--space-2) var(--space-3);
+  padding-right: var(--space-8);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   font-size: 14px;
   font-family: inherit;
   color: var(--color-text-primary);
   background-color: var(--color-surface);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right var(--space-2) center;
+  background-repeat: no-repeat;
+  background-size: 16px 16px;
   outline: none;
   cursor: pointer;
-  transition: border-color var(--transition-fast);
+  transition: all var(--transition-fast);
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
 
 .notion-prompt-select:focus {
@@ -1308,7 +1317,8 @@ body {
 }
 
 .notion-prompt-select:hover {
-  border-color: var(--color-text-secondary);
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Dark mode adjustments for form fields */
@@ -1316,6 +1326,18 @@ body {
   .notion-prompt-description-input:focus,
   .notion-prompt-select:focus {
     box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+  }
+  
+  .notion-prompt-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23a3a3a3' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  }
+  
+  .btn-primary {
+    color: var(--color-bg);
+  }
+  
+  .btn-primary:hover {
+    color: white;
   }
 }
 
