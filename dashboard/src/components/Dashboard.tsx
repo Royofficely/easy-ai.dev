@@ -6,6 +6,216 @@ import PlaygroundSection from './PlaygroundSection';
 import { io, Socket } from 'socket.io-client';
 import './Dashboard.css';
 
+// Settings Component
+interface SettingsSectionProps {
+  currentApiKey: string;
+}
+
+const SettingsSection: React.FC<SettingsSectionProps> = ({ currentApiKey }) => {
+  const [apiKeys, setApiKeys] = useState({
+    openai: '',
+    anthropic: '',
+    google: ''
+  });
+  const [maskedKeys, setMaskedKeys] = useState({
+    openai: '',
+    anthropic: '',
+    google: ''
+  });
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    fetchApiKeys();
+  }, [currentApiKey]);
+
+  const fetchApiKeys = async () => {
+    try {
+      const response = await fetch(`http://localhost:4000/api/settings/api-keys`, {
+        headers: { 'x-api-key': currentApiKey }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setMaskedKeys(data.apiKeys || {});
+      }
+    } catch (error) {
+      console.error('Failed to fetch API keys:', error);
+    }
+  };
+
+  const handleSaveApiKeys = async () => {
+    setSaving(true);
+    setMessage('');
+    
+    try {
+      // Only send keys that have been changed (not empty)
+      const keysToUpdate = {};
+      Object.entries(apiKeys).forEach(([provider, key]) => {
+        if (key && key.trim()) {
+          keysToUpdate[provider] = key.trim();
+        }
+      });
+
+      if (Object.keys(keysToUpdate).length === 0) {
+        setMessage('No API keys to update');
+        setSaving(false);
+        return;
+      }
+
+      const response = await fetch(`http://localhost:4000/api/settings/api-keys`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': currentApiKey
+        },
+        body: JSON.stringify({ apiKeys: keysToUpdate })
+      });
+      
+      if (response.ok) {
+        setMessage('API keys saved successfully!');
+        setApiKeys({ openai: '', anthropic: '', google: '' }); // Clear form
+        await fetchApiKeys(); // Refresh masked keys
+      } else {
+        const error = await response.json();
+        setMessage(`Error: ${error.error || 'Failed to save API keys'}`);
+      }
+    } catch (error) {
+      console.error('Failed to save API keys:', error);
+      setMessage('Failed to save API keys. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="section-content">
+      <div className="section-header">
+        <div className="section-title">
+          <h2>Settings</h2>
+          <p className="section-subtitle">Manage your account and AI provider settings</p>
+        </div>
+      </div>
+      
+      <div className="settings-card">
+        <h3 className="settings-title">Account Information</h3>
+        <div className="setting-group">
+          <div className="setting-item">
+            <label className="setting-label">Email Address</label>
+            <input className="setting-input" type="email" value={`user_${currentApiKey.slice(-8)}@easyai.local`} disabled />
+          </div>
+          <div className="setting-item">
+            <label className="setting-label">Account Type</label>
+            <input className="setting-input" type="text" value="Developer" disabled />
+          </div>
+          <div className="setting-item">
+            <label className="setting-label">User ID</label>
+            <input className="setting-input" type="text" value={currentApiKey.slice(-8)} disabled />
+          </div>
+        </div>
+      </div>
+
+      <div className="settings-card">
+        <h3 className="settings-title">AI Provider API Keys</h3>
+        <div className="setting-group">
+          <div className="setting-item">
+            <label className="setting-label">OpenAI API Key</label>
+            <input 
+              className="setting-input" 
+              type="password" 
+              placeholder={maskedKeys.openai || "sk-..."}
+              value={apiKeys.openai}
+              onChange={(e) => setApiKeys({...apiKeys, openai: e.target.value})}
+            />
+            <small className="setting-hint">Used for GPT-4, GPT-3.5, and other OpenAI models</small>
+            {maskedKeys.openai && <small className="setting-current">Current: {maskedKeys.openai}</small>}
+          </div>
+          <div className="setting-item">
+            <label className="setting-label">Anthropic API Key</label>
+            <input 
+              className="setting-input" 
+              type="password" 
+              placeholder={maskedKeys.anthropic || "sk-ant-..."}
+              value={apiKeys.anthropic}
+              onChange={(e) => setApiKeys({...apiKeys, anthropic: e.target.value})}
+            />
+            <small className="setting-hint">Used for Claude models (Claude-3 Sonnet, Claude-3 Haiku, etc.)</small>
+            {maskedKeys.anthropic && <small className="setting-current">Current: {maskedKeys.anthropic}</small>}
+          </div>
+          <div className="setting-item">
+            <label className="setting-label">Google AI API Key</label>
+            <input 
+              className="setting-input" 
+              type="password" 
+              placeholder={maskedKeys.google || "AI..."}
+              value={apiKeys.google}
+              onChange={(e) => setApiKeys({...apiKeys, google: e.target.value})}
+            />
+            <small className="setting-hint">Used for Gemini models (Gemini Pro, etc.)</small>
+            {maskedKeys.google && <small className="setting-current">Current: {maskedKeys.google}</small>}
+          </div>
+        </div>
+        
+        {message && (
+          <div className={`settings-message ${message.includes('Error') ? 'error' : 'success'}`}>
+            {message}
+          </div>
+        )}
+        
+        <div className="setting-actions">
+          <button 
+            className="btn-primary" 
+            onClick={handleSaveApiKeys}
+            disabled={saving}
+          >
+            {saving ? 'Saving...' : 'Save API Keys'}
+          </button>
+        </div>
+      </div>
+
+      <div className="settings-card">
+        <h3 className="settings-title">Default Model Settings</h3>
+        <div className="setting-group">
+          <div className="setting-item">
+            <label className="setting-label">Default Model</label>
+            <select className="setting-input">
+              <option value="gpt-4">GPT-4 (OpenAI)</option>
+              <option value="gpt-3.5-turbo">GPT-3.5 Turbo (OpenAI)</option>
+              <option value="claude-3-sonnet">Claude-3 Sonnet (Anthropic)</option>
+              <option value="claude-3-haiku">Claude-3 Haiku (Anthropic)</option>
+              <option value="gemini-pro">Gemini Pro (Google)</option>
+            </select>
+          </div>
+          <div className="setting-item">
+            <label className="setting-label">Temperature</label>
+            <input 
+              className="setting-input" 
+              type="number" 
+              min="0" 
+              max="2" 
+              step="0.1" 
+              defaultValue="0.7"
+            />
+            <small className="setting-hint">Controls randomness (0.0 = deterministic, 2.0 = very random)</small>
+          </div>
+          <div className="setting-item">
+            <label className="setting-label">Max Tokens</label>
+            <input 
+              className="setting-input" 
+              type="number" 
+              min="1" 
+              max="4096" 
+              step="1" 
+              defaultValue="1000"
+            />
+            <small className="setting-hint">Maximum number of tokens in the response</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Analytics Component
 interface AnalyticsSectionProps {
   currentApiKey: string;
@@ -514,114 +724,7 @@ const Dashboard: React.FC = () => {
       case 'analytics':
         return <AnalyticsSection currentApiKey={currentApiKey} />;
       case 'settings':
-        return (
-          <div className="section-content">
-            <div className="section-header">
-              <div className="section-title">
-                <h2>Settings</h2>
-                <p className="section-subtitle">Manage your account and AI provider settings</p>
-              </div>
-            </div>
-            
-            <div className="settings-card">
-              <h3 className="settings-title">Account Information</h3>
-              <div className="setting-group">
-                <div className="setting-item">
-                  <label className="setting-label">Email Address</label>
-                  <input className="setting-input" type="email" value={user?.email || `user_${currentApiKey.slice(-8)}@easyai.local`} disabled />
-                </div>
-                <div className="setting-item">
-                  <label className="setting-label">Account Type</label>
-                  <input className="setting-input" type="text" value={user?.role || 'Developer'} disabled />
-                </div>
-                <div className="setting-item">
-                  <label className="setting-label">User ID</label>
-                  <input className="setting-input" type="text" value={currentApiKey.slice(-8)} disabled />
-                </div>
-              </div>
-            </div>
-
-            <div className="settings-card">
-              <h3 className="settings-title">AI Provider API Keys</h3>
-              <div className="setting-group">
-                <div className="setting-item">
-                  <label className="setting-label">OpenAI API Key</label>
-                  <input 
-                    className="setting-input" 
-                    type="password" 
-                    placeholder="sk-..." 
-                    value=""
-                  />
-                  <small className="setting-hint">Used for GPT-4, GPT-3.5, and other OpenAI models</small>
-                </div>
-                <div className="setting-item">
-                  <label className="setting-label">Anthropic API Key</label>
-                  <input 
-                    className="setting-input" 
-                    type="password" 
-                    placeholder="sk-ant-..." 
-                    value=""
-                  />
-                  <small className="setting-hint">Used for Claude models (Claude-3 Sonnet, Claude-3 Opus, etc.)</small>
-                </div>
-                <div className="setting-item">
-                  <label className="setting-label">Google AI API Key</label>
-                  <input 
-                    className="setting-input" 
-                    type="password" 
-                    placeholder="AI..." 
-                    value=""
-                  />
-                  <small className="setting-hint">Used for Gemini models (Gemini Pro, Gemini Pro Vision, etc.)</small>
-                </div>
-              </div>
-            </div>
-
-            <div className="settings-card">
-              <h3 className="settings-title">Default Model Settings</h3>
-              <div className="setting-group">
-                <div className="setting-item">
-                  <label className="setting-label">Default Model</label>
-                  <select className="setting-input">
-                    <option value="gpt-4">GPT-4 (OpenAI)</option>
-                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo (OpenAI)</option>
-                    <option value="claude-3-sonnet">Claude-3 Sonnet (Anthropic)</option>
-                    <option value="claude-3-opus">Claude-3 Opus (Anthropic)</option>
-                    <option value="gemini-pro">Gemini Pro (Google)</option>
-                    <option value="gemini-pro-vision">Gemini Pro Vision (Google)</option>
-                  </select>
-                </div>
-                <div className="setting-item">
-                  <label className="setting-label">Temperature</label>
-                  <input 
-                    className="setting-input" 
-                    type="number" 
-                    min="0" 
-                    max="2" 
-                    step="0.1" 
-                    defaultValue="0.7"
-                  />
-                  <small className="setting-hint">Controls randomness (0.0 = deterministic, 2.0 = very random)</small>
-                </div>
-                <div className="setting-item">
-                  <label className="setting-label">Max Tokens</label>
-                  <input 
-                    className="setting-input" 
-                    type="number" 
-                    min="1" 
-                    max="4096" 
-                    step="1" 
-                    defaultValue="1000"
-                  />
-                  <small className="setting-hint">Maximum number of tokens in the response</small>
-                </div>
-              </div>
-              <div className="setting-actions">
-                <button className="btn-primary">Save Settings</button>
-              </div>
-            </div>
-          </div>
-        );
+        return <SettingsSection currentApiKey={currentApiKey} />;
       default:
         return (
           <div className="section-content">

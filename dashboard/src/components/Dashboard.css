@@ -1470,6 +1470,35 @@ body {
   }
 }
 
+/* Settings Section Styles */
+.settings-message {
+  margin: var(--space-4) 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.settings-message.success {
+  background-color: #f0fdf4;
+  border: 1px solid #d1fae5;
+  color: #059669;
+}
+
+.settings-message.error {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+}
+
+.setting-current {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  margin-top: var(--space-1);
+  font-style: italic;
+}
+
 /* New prompt form fields */
 .notion-prompt-form-fields {
   margin-bottom: var(--space-4);
