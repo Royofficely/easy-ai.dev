@@ -525,6 +525,8 @@ app.set('workspaceSync', null);
 // Workspace fallback routes for UI compatibility (MUST be before regular routes)
 app.get('/api/v1/user', (req, res, next) => {
   const workspaceSync = req.app.get('workspaceSync');
+  console.log(`🔍 /api/v1/user request - workspaceSync: ${workspaceSync ? 'AVAILABLE' : 'NULL'}`);
+  
   if (workspaceSync) {
     console.log('🔄 Serving workspace user info');
     
@@ -566,6 +568,8 @@ app.get('/api/v1/user', (req, res, next) => {
 
 app.get('/api/prompts', async (req, res, next) => {
   const workspaceSync = req.app.get('workspaceSync');
+  console.log(`🔍 /api/prompts request - workspaceSync: ${workspaceSync ? 'AVAILABLE' : 'NULL'}`);
+  
   if (workspaceSync) {
     // Handle workspace prompts directly
     try {
@@ -733,6 +737,7 @@ async function startServer() {
     
     if (fs.existsSync(workspacePath)) {
       console.log('🏢 Workspace detected, initializing sync...');
+      console.log(`📁 Workspace path: ${workspacePath}`);
       
       if (WorkspaceSync) {
         try {
@@ -741,6 +746,7 @@ async function startServer() {
           
           // Make workspaceSync available to routes
           app.set('workspaceSync', workspaceSync);
+          console.log('✅ workspaceSync set in app context');
           
           // Initial sync to UI on startup
           setTimeout(async () => {
