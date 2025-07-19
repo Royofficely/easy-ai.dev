@@ -15,11 +15,82 @@ router.get('/user', authenticateApiKey, async (req, res) => {
       email: req.user.email,
       name: req.user.name,
       role: req.user.role,
-      is_verified: req.user.is_verified
+      plan: req.user.plan,
+      is_verified: req.user.is_verified,
+      workspace_path: req.user.workspace_path
     });
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({ error: 'Failed to get user info' });
+  }
+});
+
+// Get user workspace data
+router.get('/workspace', authenticateApiKey, async (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    
+    const workspacePath = req.user.workspace_path;
+    
+    if (!workspacePath || !fs.existsSync(workspacePath)) {
+      return res.json({
+        hasWorkspace: false,
+        message: 'No workspace found. Run "easyai ui" from your project directory.'
+      });
+    }
+    
+    // Read workspace structure
+    const promptsDir = path.join(workspacePath, 'prompts');
+    const configFile = path.join(workspacePath, 'easyai.config.json');
+    
+    let prompts = [];
+    let config = {};
+    
+    // Load prompts
+    if (fs.existsSync(promptsDir)) {
+      const promptFiles = fs.readdirSync(promptsDir).filter(f => f.endsWith('.json'));
+      prompts = promptFiles.map(file => {
+        try {
+          const promptPath = path.join(promptsDir, file);
+          const promptData = JSON.parse(fs.readFileSync(promptPath, 'utf8'));
+          return {
+            id: file.replace('.json', ''),
+            name: promptData.name || file.replace('.json', ''),
+            description: promptData.description || '',
+            file: file,
+            ...promptData
+          };
+        } catch (error) {
+          console.error('Error reading prompt file:', file, error);
+          return null;
+        }
+      }).filter(Boolean);
+    }
+    
+    // Load config
+    if (fs.existsSync(configFile)) {
+      try {
+        config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+      } catch (error) {
+        console.error('Error reading config file:', error);
+      }
+    }
+    
+    res.json({
+      hasWorkspace: true,
+      workspacePath,
+      prompts,
+      config,
+      stats: {
+        promptCount: prompts.length,
+        hasConfig: Object.keys(config).length > 0
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error fetching workspace:', error);
+    res.status(500).json({ error: 'Failed to fetch workspace information' });
   }
 });
 

@@ -1006,6 +1006,24 @@ program
           console.log(chalk.green(`✅ Server started successfully`));
           console.log(chalk.yellow(`📱 Dashboard: ${url}`));
           console.log(chalk.gray(`💼 Workspace: ${workspaceDir}`));
+          
+          // Update user's workspace path in database
+          try {
+            const apiKey = getApiKey();
+            if (apiKey && workspaceDir) {
+              console.log(chalk.blue('🔄 Updating workspace path in database...'));
+              await makeRequest('/clerk/update-workspace', {
+                method: 'POST',
+                body: { apiKey, workspacePath: workspaceDir },
+                noAuth: true
+              });
+              console.log(chalk.green('✅ Workspace path updated'));
+            }
+          } catch (updateError) {
+            console.log(chalk.yellow('⚠️ Could not update workspace path in database'));
+            console.log(chalk.gray(`   ${updateError.message}`));
+          }
+          
           await openBrowser(url);
         } else {
           console.log(chalk.red('❌ Server failed to start within timeout'));

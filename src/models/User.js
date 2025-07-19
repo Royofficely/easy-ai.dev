@@ -36,6 +36,10 @@ const User = sequelize.define('User', {
     type: DataTypes.ENUM('free', 'pro', 'enterprise'),
     defaultValue: 'free'
   },
+  workspace_path: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   is_verified: {
     type: DataTypes.BOOLEAN,
     defaultValue: false

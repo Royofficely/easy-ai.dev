@@ -137,6 +137,42 @@ async function handleUserDeleted(event) {
   }
 }
 
+// Update user workspace path (called from CLI setup)
+router.post('/update-workspace', async (req, res) => {
+  try {
+    const { apiKey, workspacePath } = req.body;
+    
+    if (!apiKey || !workspacePath) {
+      return res.status(400).json({ error: 'API key and workspace path required' });
+    }
+    
+    // Find user by API key
+    const apiKeyRecord = await ApiKey.findByKey(apiKey);
+    if (!apiKeyRecord) {
+      return res.status(401).json({ error: 'Invalid API key' });
+    }
+    
+    const user = await User.findByPk(apiKeyRecord.user_id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Update workspace path
+    user.workspace_path = workspacePath;
+    await user.save();
+    
+    res.json({ 
+      success: true,
+      message: 'Workspace path updated',
+      workspacePath 
+    });
+    
+  } catch (error) {
+    console.error('Update workspace error:', error);
+    res.status(500).json({ error: 'Failed to update workspace path' });
+  }
+});
+
 // Sync user data from Clerk (called from frontend after sign in)
 router.post('/sync', async (req, res) => {
   try {

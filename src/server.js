@@ -985,21 +985,48 @@ app.get('/dashboard*', (req, res) => {
     let apiKey = process.env.EASYAI_API_KEY || '';
     
     if (!apiKey) {
-      const envPath = path.join(process.cwd(), '.env');
-      console.log('📁 .env path:', envPath);
-      console.log('📁 .env exists:', fs.existsSync(envPath));
+      // Try multiple locations for API key, prioritizing workspace
+      const workspacePath = process.env.EASYAI_WORKSPACE_PATH || workspaceDirectory;
+      const envPaths = [
+        // First try workspace directory (highest priority)
+        ...(workspacePath ? [
+          path.join(workspacePath, 'easyai.env'),
+          path.join(workspacePath, '.env')
+        ] : []),
+        // Then try current working directory
+        path.join(process.cwd(), 'easyai.env'),
+        path.join(process.cwd(), '.env'),
+        // Finally try package directory
+        path.join(__dirname, '../easyai.env'),
+        path.join(__dirname, '../.env')
+      ];
       
-      try {
-        if (fs.existsSync(envPath)) {
-          const envContent = fs.readFileSync(envPath, 'utf8');
-          const match = envContent.match(/EASYAI_API_KEY=(.+)/);
-          if (match) {
-            apiKey = match[1].trim();
-            console.log('🔑 API Key found:', apiKey ? 'Yes' : 'No');
+      console.log('🔍 Workspace path from env:', process.env.EASYAI_WORKSPACE_PATH);
+      console.log('🔍 Workspace directory variable:', workspaceDirectory);
+      console.log('📁 Searching for API key in:', envPaths);
+      
+      for (const envPath of envPaths) {
+        try {
+          if (fs.existsSync(envPath)) {
+            console.log('📁 Found config file:', envPath);
+            const envContent = fs.readFileSync(envPath, 'utf8');
+            const match = envContent.match(/EASYAI_API_KEY=(.+)/);
+            if (match) {
+              apiKey = match[1].trim();
+              console.log('🔑 API Key found in:', envPath);
+              console.log('🔑 API Key value:', apiKey);
+              break;
+            }
           }
+        } catch (error) {
+          console.log('Error reading:', envPath, error.message);
         }
-      } catch (error) {
-        console.log('No .env file found, dashboard will work without pre-filled API key');
+      }
+      
+      if (!apiKey) {
+        console.log('💡 No API key found - dashboard will use authentication from API requests');
+        // Don't inject any API key, let the dashboard handle authentication
+        apiKey = '';
       }
     }
     
