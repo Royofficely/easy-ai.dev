@@ -468,6 +468,9 @@ io.on('connection', (socket) => {
 // Make io available to routes
 app.set('io', io);
 
+// Make workspaceSync available to routes (will be set after initialization)
+app.set('workspaceSync', null);
+
 // Routes
 app.use('/auth', authRoutes);
 app.use('/api/prompts', promptRoutes);
@@ -604,11 +607,16 @@ async function startServer() {
         try {
           workspaceSync = new WorkspaceSync(workspacePath, io);
           workspaceSync.startWatching();
+          
+          // Make workspaceSync available to routes
+          app.set('workspaceSync', workspaceSync);
+          
           console.log(`✅ Workspace sync initialized: ${workspacePath}`);
         } catch (error) {
           console.log('⚠️  Workspace sync failed to initialize, continuing without file watching');
           console.log(`   Error: ${error.message}`);
           workspaceSync = null;
+          app.set('workspaceSync', null);
         }
       } else {
         console.log('💼 Workspace detected but sync dependencies missing, running in basic mode');

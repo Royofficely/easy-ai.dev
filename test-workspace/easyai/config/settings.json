@@ -1,0 +1,13 @@
+{
+  "version": "1.4.8",
+  "workspace": "/Users/agentim.ai/Desktop/easyai-dev/test-workspace/easyai",
+  "server": {
+    "port": 4000,
+    "autoStart": true
+  },
+  "ui": {
+    "theme": "light",
+    "autoSync": true
+  },
+  "lastUpdated": "2025-07-19T05:43:19.385Z"
+}

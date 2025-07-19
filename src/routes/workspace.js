@@ -39,18 +39,37 @@ router.get('/info', (req, res) => {
 });
 
 // Get prompts from workspace
-router.get('/prompts', (req, res) => {
+router.get('/prompts', async (req, res) => {
   try {
+    // Try to get prompts from workspace sync first
+    const workspaceSync = req.app.get('workspaceSync');
+    
+    if (workspaceSync) {
+      console.log('🔄 Loading prompts via workspace sync');
+      const prompts = await workspaceSync.loadPrompts();
+      const categories = [...new Set(prompts.map(p => p.category).filter(Boolean))];
+      
+      return res.json({ 
+        prompts,
+        categories,
+        version: "1.0.0",
+        lastSync: new Date().toISOString(),
+        source: 'workspace_sync'
+      });
+    }
+    
+    // Fallback to direct file system access
     const workspacePath = path.join(process.cwd(), 'easyai');
     const promptsIndexPath = path.join(workspacePath, 'prompts', 'index.json');
     
     if (!fs.existsSync(promptsIndexPath)) {
-      return res.json({ prompts: [], categories: [] });
+      return res.json({ prompts: [], categories: [], source: 'filesystem_fallback' });
     }
     
     const promptsIndex = JSON.parse(fs.readFileSync(promptsIndexPath, 'utf8'));
-    res.json(promptsIndex);
+    res.json({ ...promptsIndex, source: 'filesystem_fallback' });
   } catch (error) {
+    console.error('Error loading workspace prompts:', error);
     res.status(500).json({ 
       error: 'Failed to load workspace prompts',
       message: error.message 

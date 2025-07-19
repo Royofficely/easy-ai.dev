@@ -1,0 +1,11 @@
+{
+  "prompt_id": "test-prompt-123",
+  "name": "Test Prompt",
+  "category": "testing",
+  "description": "A test prompt for workspace sync",
+  "content": "This is a test prompt with variable {name}. Please respond to {question}.",
+  "variables": ["name", "question"],
+  "tags": ["test", "sync"],
+  "created_at": "2025-07-19T02:20:00.000Z",
+  "updated_at": "2025-07-19T02:20:00.000Z"
+}

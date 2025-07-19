@@ -1,0 +1,11 @@
+{
+  "prompt_id": "code-reviewer-456",
+  "name": "Code Reviewer",
+  "category": "development",
+  "description": "Reviews code for best practices, bugs, and improvements",
+  "content": "Please review the following {language} code:\n\n```{language}\n{code}\n```\n\nProvide feedback on:\n1. Code quality and best practices\n2. Potential bugs or security issues\n3. Performance improvements\n4. Readability and maintainability",
+  "variables": ["language", "code"],
+  "tags": ["code-review", "development", "quality"],
+  "created_at": "2025-07-19T02:25:00.000Z",
+  "updated_at": "2025-07-19T02:25:00.000Z"
+}
