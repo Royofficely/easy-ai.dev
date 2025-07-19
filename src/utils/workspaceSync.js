@@ -73,20 +73,53 @@ class WorkspaceSync {
         return;
       }
       
+      // Only process .json files for prompts
+      if (type === 'prompts' && !filePath.endsWith('.json')) {
+        console.log(`🔄 Ignoring non-JSON file: ${filePath}`);
+        return;
+      }
+      
       if (type === 'prompts') {
         // Set sync flag to prevent infinite loop
         this.isSyncing = true;
         
         try {
-          // Immediately sync prompts to all connected clients
-          await this.syncPrompts();
+          console.log(`🔄 Processing ${action} for prompt file: ${path.basename(filePath)}`);
+          
+          // Load all prompts from files (this will pick up new/changed files)
+          const prompts = await this.loadPrompts();
+          
+          // Update the index with current prompts without triggering watchers
+          await this.updatePromptsIndex(prompts);
+          
+          // Emit comprehensive workspace prompts data to UI
+          this.io.emit('workspace:prompts:sync', { 
+            prompts,
+            categories: [...new Set(prompts.map(p => p.category).filter(Boolean))],
+            version: "1.0.0",
+            lastSync: new Date().toISOString(),
+            source: 'file_change',
+            action: action,
+            count: prompts.length
+          });
           
           // Also emit specific file change event for real-time UI updates
           this.io.emit('workspace:file:changed', {
             type: 'prompts',
             action,
             filePath,
+            promptCount: prompts.length,
             timestamp: new Date().toISOString()
+          });
+          
+          console.log(`✅ Synced ${prompts.length} prompts after ${action} of ${path.basename(filePath)}`);
+          
+          // Also emit to specific workspace room if any clients are there
+          this.io.to('workspace').emit('workspace:prompts:updated', {
+            prompts,
+            categories: [...new Set(prompts.map(p => p.category).filter(Boolean))],
+            timestamp: new Date().toISOString(),
+            source: 'file_change'
           });
         } finally {
           this.isSyncing = false;

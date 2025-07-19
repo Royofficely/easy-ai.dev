@@ -11,7 +11,7 @@ const os = require('os');
 program
   .name('easyai')
   .description('EasyAI CLI tool for managing AI prompts and projects')
-  .version('1.6.8');
+  .version('1.6.9');
 
 // Helper functions
 function getApiKey() {

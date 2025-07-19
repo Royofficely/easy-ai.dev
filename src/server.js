@@ -523,7 +523,7 @@ app.set('io', io);
 app.set('workspaceSync', null);
 
 // Workspace fallback routes for UI compatibility (MUST be before regular routes)
-app.get('/api/v1/user', (req, res, next) => {
+app.get('/api/v1/user', async (req, res, next) => {
   const workspaceSync = req.app.get('workspaceSync');
   console.log(`🔍 /api/v1/user request - workspaceSync: ${workspaceSync ? 'AVAILABLE' : 'NULL'}`);
   
@@ -537,7 +537,9 @@ app.get('/api/v1/user', (req, res, next) => {
     
     let userEmail = 'workspace@easyai.local';
     let userName = 'Workspace User';
+    let apiKey = null;
     
+    // First try to get from CLI config
     try {
       const configPath = path.join(os.homedir(), '.easyai', 'config.json');
       if (fs.existsSync(configPath)) {
@@ -548,9 +550,33 @@ app.get('/api/v1/user', (req, res, next) => {
         if (config.userName) {
           userName = config.userName;
         }
+        if (config.apiKey) {
+          apiKey = config.apiKey;
+        }
       }
     } catch (error) {
       console.log('Could not read user config, using defaults');
+    }
+    
+    // If we don't have user info, try to fetch from API key in database
+    if ((userEmail === 'workspace@easyai.local' || userEmail.includes('cli@user.com')) && apiKey) {
+      try {
+        const { User, ApiKey } = require('./models');
+        const crypto = require('crypto');
+        const hash = crypto.createHash('sha256').update(apiKey).digest('hex');
+        const apiKeyRecord = await ApiKey.findOne({ where: { key_hash: hash } });
+        
+        if (apiKeyRecord) {
+          const user = await User.findByPk(apiKeyRecord.user_id);
+          if (user && !user.email.includes('@easyai.local')) {
+            userEmail = user.email;
+            userName = user.name;
+            console.log(`🔍 Found real user from API key: ${userEmail}`);
+          }
+        }
+      } catch (error) {
+        console.log('Could not fetch user from API key:', error.message);
+      }
     }
     
     return res.json({
@@ -566,6 +592,7 @@ app.get('/api/v1/user', (req, res, next) => {
   next(); // Continue to normal auth route
 });
 
+// Workspace prompts routes (GET, POST, PUT, DELETE)
 app.get('/api/prompts', async (req, res, next) => {
   const workspaceSync = req.app.get('workspaceSync');
   console.log(`🔍 /api/prompts request - workspaceSync: ${workspaceSync ? 'AVAILABLE' : 'NULL'}`);
@@ -588,6 +615,172 @@ app.get('/api/prompts', async (req, res, next) => {
       console.error('Error loading workspace prompts for UI:', error);
       return res.status(500).json({ 
         error: 'Failed to load workspace prompts',
+        message: error.message 
+      });
+    }
+  }
+  next(); // Continue to normal prompts route
+});
+
+// Handle POST /api/prompts for workspace mode
+app.post('/api/prompts', async (req, res, next) => {
+  const workspaceSync = req.app.get('workspaceSync');
+  console.log(`🔍 POST /api/prompts request - workspaceSync: ${workspaceSync ? 'AVAILABLE' : 'NULL'}`);
+  
+  if (workspaceSync) {
+    try {
+      console.log('📝 Creating prompt via workspace sync');
+      
+      // Generate a unique prompt_id if not provided
+      const promptId = req.body.prompt_id || `prompt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      const promptData = {
+        name: req.body.name,
+        prompt_id: promptId,
+        description: req.body.description || '',
+        category: req.body.category || 'general',
+        content: req.body.content,
+        template: req.body.content,
+        variables: req.body.variables || [],
+        tags: req.body.tags || [],
+        parameters: req.body.parameters || {},
+        model_config: req.body.model_config || {},
+        options: req.body.options || {},
+        environments: req.body.environments || {},
+        user_id: 'workspace-user',
+        is_active: true,
+        version: 1,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // Save to workspace
+      const success = await workspaceSync.savePrompt(promptData);
+      
+      if (success) {
+        // Trigger sync to UI
+        await workspaceSync.syncPrompts();
+        
+        // Emit WebSocket event for real-time updates
+        const io = req.app.get('io');
+        if (io) {
+          io.emit('prompt_created', {
+            prompt: promptData,
+            user_id: 'workspace-user',
+            timestamp: new Date().toISOString()
+          });
+          console.log('📡 WebSocket: Prompt created event emitted');
+        }
+        
+        return res.status(201).json(promptData);
+      } else {
+        return res.status(500).json({ error: 'Failed to save prompt to workspace' });
+      }
+    } catch (error) {
+      console.error('Error creating workspace prompt:', error);
+      return res.status(500).json({ 
+        error: 'Failed to create workspace prompt',
+        message: error.message 
+      });
+    }
+  }
+  next(); // Continue to normal prompts route
+});
+
+// Handle PUT /api/prompts/:id for workspace mode
+app.put('/api/prompts/:prompt_id', async (req, res, next) => {
+  const workspaceSync = req.app.get('workspaceSync');
+  console.log(`🔍 PUT /api/prompts/${req.params.prompt_id} request - workspaceSync: ${workspaceSync ? 'AVAILABLE' : 'NULL'}`);
+  
+  if (workspaceSync) {
+    try {
+      console.log('📝 Updating prompt via workspace sync');
+      
+      // Load existing prompts to find the one to update
+      const prompts = await workspaceSync.loadPrompts();
+      const existingPrompt = prompts.find(p => p.prompt_id === req.params.prompt_id);
+      
+      if (!existingPrompt) {
+        return res.status(404).json({ error: 'Prompt not found' });
+      }
+      
+      // Merge updates with existing prompt
+      const updatedPrompt = {
+        ...existingPrompt,
+        ...req.body,
+        prompt_id: req.params.prompt_id, // Ensure ID doesn't change
+        updated_at: new Date().toISOString(),
+        version: (existingPrompt.version || 1) + 1
+      };
+
+      // Save to workspace
+      const success = await workspaceSync.savePrompt(updatedPrompt);
+      
+      if (success) {
+        // Trigger sync to UI
+        await workspaceSync.syncPrompts();
+        
+        // Emit WebSocket event for real-time updates
+        const io = req.app.get('io');
+        if (io) {
+          io.emit('prompt_updated', {
+            prompt: updatedPrompt,
+            user_id: 'workspace-user',
+            timestamp: new Date().toISOString()
+          });
+          console.log('📡 WebSocket: Prompt updated event emitted');
+        }
+        
+        return res.json(updatedPrompt);
+      } else {
+        return res.status(500).json({ error: 'Failed to update prompt in workspace' });
+      }
+    } catch (error) {
+      console.error('Error updating workspace prompt:', error);
+      return res.status(500).json({ 
+        error: 'Failed to update workspace prompt',
+        message: error.message 
+      });
+    }
+  }
+  next(); // Continue to normal prompts route
+});
+
+// Handle DELETE /api/prompts/:id for workspace mode
+app.delete('/api/prompts/:prompt_id', async (req, res, next) => {
+  const workspaceSync = req.app.get('workspaceSync');
+  console.log(`🔍 DELETE /api/prompts/${req.params.prompt_id} request - workspaceSync: ${workspaceSync ? 'AVAILABLE' : 'NULL'}`);
+  
+  if (workspaceSync) {
+    try {
+      console.log('🗑️ Deleting prompt via workspace sync');
+      
+      // Delete from workspace
+      const success = await workspaceSync.deletePrompt(req.params.prompt_id);
+      
+      if (success) {
+        // Trigger sync to UI
+        await workspaceSync.syncPrompts();
+        
+        // Emit WebSocket event for real-time updates
+        const io = req.app.get('io');
+        if (io) {
+          io.emit('prompt_deleted', {
+            prompt_id: req.params.prompt_id,
+            user_id: 'workspace-user',
+            timestamp: new Date().toISOString()
+          });
+          console.log('📡 WebSocket: Prompt deleted event emitted');
+        }
+        
+        return res.json({ message: 'Prompt deleted successfully' });
+      } else {
+        return res.status(404).json({ error: 'Prompt not found' });
+      }
+    } catch (error) {
+      console.error('Error deleting workspace prompt:', error);
+      return res.status(500).json({ 
+        error: 'Failed to delete workspace prompt',
         message: error.message 
       });
     }
