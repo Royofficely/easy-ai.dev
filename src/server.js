@@ -471,23 +471,11 @@ app.set('io', io);
 // Make workspaceSync available to routes (will be set after initialization)
 app.set('workspaceSync', null);
 
-// Routes
-app.use('/auth', authRoutes);
-app.use('/api/prompts', promptRoutes);
-app.use('/api/v1', apiRoutes);
-app.use('/gateway', gatewayRoutes);
-app.use('/api/settings', settingsRoutes);
-app.use('/api/playground', playgroundRoutes);
-app.use('/api/monitoring', monitoringRoutes);
-app.use('/api/setup', setupRoutes);
-app.use('/api/proxy', proxyRoutes);
-app.use('/api/workspace', workspaceRoutes);
-
-// Workspace fallback routes for UI compatibility
+// Workspace fallback routes for UI compatibility (MUST be before regular routes)
 app.get('/api/v1/user', (req, res, next) => {
   const workspaceSync = req.app.get('workspaceSync');
   if (workspaceSync) {
-    // Redirect to workspace user endpoint
+    console.log('🔄 Serving workspace user info');
     return res.json({
       id: 'workspace-user',
       email: 'workspace@easyai.local',
@@ -527,6 +515,18 @@ app.get('/api/prompts', async (req, res, next) => {
   }
   next(); // Continue to normal prompts route
 });
+
+// Routes
+app.use('/auth', authRoutes);
+app.use('/api/prompts', promptRoutes);
+app.use('/api/v1', apiRoutes);
+app.use('/gateway', gatewayRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/playground', playgroundRoutes);
+app.use('/api/monitoring', monitoringRoutes);
+app.use('/api/setup', setupRoutes);
+app.use('/api/proxy', proxyRoutes);
+app.use('/api/workspace', workspaceRoutes);
 
 // Dashboard route - serve React app for any dashboard routes (MUST come before static middleware)
 app.get('/dashboard*', (req, res) => {
