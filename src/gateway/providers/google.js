@@ -1,8 +1,9 @@
 const axios = require('axios');
+const { API_ENDPOINTS } = require('../../../config/constants');
 
 class GoogleProvider {
   constructor() {
-    this.baseURL = 'https://generativelanguage.googleapis.com/v1beta';
+    this.baseURL = API_ENDPOINTS.GOOGLE;
     this.apiKey = process.env.GOOGLE_API_KEY;
   }
 

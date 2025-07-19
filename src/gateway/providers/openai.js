@@ -1,8 +1,9 @@
 const axios = require('axios');
+const { API_ENDPOINTS } = require('../../../config/constants');
 
 class OpenAIProvider {
   constructor() {
-    this.baseURL = 'https://api.openai.com/v1';
+    this.baseURL = API_ENDPOINTS.OPENAI;
     this.apiKey = process.env.OPENAI_API_KEY;
   }
 

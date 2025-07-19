@@ -1,8 +1,9 @@
 const axios = require('axios');
+const { API_ENDPOINTS } = require('../../../config/constants');
 
 class AnthropicProvider {
   constructor() {
-    this.baseURL = 'https://api.anthropic.com/v1';
+    this.baseURL = API_ENDPOINTS.ANTHROPIC;
     this.apiKey = process.env.ANTHROPIC_API_KEY;
   }
 

@@ -1,8 +1,9 @@
 const axios = require('axios');
+const { API_ENDPOINTS } = require('../../../config/constants');
 
 class DeepSeekProvider {
   constructor() {
-    this.baseURL = 'https://api.deepseek.com/v1';
+    this.baseURL = API_ENDPOINTS.DEEPSEEK;
     this.apiKey = process.env.DEEPSEEK_API_KEY;
   }
 
