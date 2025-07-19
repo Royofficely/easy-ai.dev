@@ -79,8 +79,9 @@ class WorkspaceSync {
   // Sync prompts with frontend
   async syncPrompts() {
     try {
-      const promptsIndex = await this.getPromptsIndex();
-      this.io.emit('workspace:prompts:sync', promptsIndex);
+      const prompts = await this.loadPrompts();
+      console.log(`🔄 Syncing ${prompts.length} prompts to UI`);
+      this.io.emit('workspace:prompts:sync', { prompts });
     } catch (error) {
       console.error('Error syncing prompts:', error);
     }
@@ -117,6 +118,122 @@ class WorkspaceSync {
   // Save prompts to workspace
   async savePrompts(prompts) {
     try {
+      // Save individual prompt files
+      for (const prompt of prompts) {
+        await this.savePrompt(prompt);
+      }
+
+      // Update index
+      await this.updatePromptsIndex(prompts);
+
+      console.log(`✅ Saved ${prompts.length} prompts to workspace`);
+      return true;
+    } catch (error) {
+      console.error('Error saving prompts to workspace:', error);
+      return false;
+    }
+  }
+
+  // Save a single prompt to workspace
+  async savePrompt(prompt) {
+    try {
+      const promptsDir = path.join(this.workspacePath, 'prompts');
+      
+      // Ensure prompts directory exists
+      if (!fs.existsSync(promptsDir)) {
+        fs.mkdirSync(promptsDir, { recursive: true });
+      }
+      
+      // Generate filename from prompt_id or name
+      const filename = prompt.prompt_id || prompt.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const promptFile = path.join(promptsDir, `${filename}.json`);
+      
+      // Add timestamp if not present
+      const promptWithTimestamp = {
+        ...prompt,
+        updated_at: prompt.updated_at || new Date().toISOString()
+      };
+      
+      fs.writeFileSync(promptFile, JSON.stringify(promptWithTimestamp, null, 2));
+      console.log(`💾 Saved prompt: ${filename}.json`);
+      return true;
+    } catch (error) {
+      console.error('Error saving prompt to workspace:', error);
+      return false;
+    }
+  }
+
+  // Delete a prompt from workspace
+  async deletePrompt(promptId) {
+    try {
+      const promptsDir = path.join(this.workspacePath, 'prompts');
+      const files = fs.readdirSync(promptsDir);
+      
+      // Find and delete the prompt file
+      for (const file of files) {
+        if (file.endsWith('.json') && file !== 'index.json') {
+          const filePath = path.join(promptsDir, file);
+          const content = fs.readFileSync(filePath, 'utf8');
+          const prompt = JSON.parse(content);
+          
+          if (prompt.prompt_id === promptId) {
+            fs.unlinkSync(filePath);
+            console.log(`🗑️ Deleted prompt file: ${file}`);
+            return true;
+          }
+        }
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error deleting prompt from workspace:', error);
+      return false;
+    }
+  }
+
+  // Load prompts from workspace (load from individual files AND index)
+  async loadPrompts() {
+    try {
+      const promptsDir = path.join(this.workspacePath, 'prompts');
+      const prompts = [];
+      
+      if (!fs.existsSync(promptsDir)) {
+        return [];
+      }
+      
+      // Read all .json files in prompts directory (except index.json)
+      const files = fs.readdirSync(promptsDir);
+      const promptFiles = files.filter(file => file.endsWith('.json') && file !== 'index.json');
+      
+      for (const file of promptFiles) {
+        try {
+          const filePath = path.join(promptsDir, file);
+          const content = fs.readFileSync(filePath, 'utf8');
+          const prompt = JSON.parse(content);
+          
+          // Ensure prompt has required fields
+          if (prompt.prompt_id && prompt.name) {
+            prompts.push(prompt);
+          }
+        } catch (error) {
+          console.error(`Error loading prompt file ${file}:`, error);
+        }
+      }
+      
+      // Update index with loaded prompts
+      await this.updatePromptsIndex(prompts);
+      
+      console.log(`📋 Loaded ${prompts.length} prompts from workspace`);
+      return prompts;
+    } catch (error) {
+      console.error('Error loading prompts from workspace:', error);
+      return [];
+    }
+  }
+
+  // Update prompts index
+  async updatePromptsIndex(prompts) {
+    try {
       const indexPath = path.join(this.workspacePath, 'prompts', 'index.json');
       const promptsIndex = {
         version: "1.0.0",
@@ -126,29 +243,10 @@ class WorkspaceSync {
       };
 
       fs.writeFileSync(indexPath, JSON.stringify(promptsIndex, null, 2));
-
-      // Save individual prompt files
-      for (const prompt of prompts) {
-        const promptFile = path.join(this.workspacePath, 'prompts', `${prompt.prompt_id}.json`);
-        fs.writeFileSync(promptFile, JSON.stringify(prompt, null, 2));
-      }
-
-      console.log('✅ Prompts saved to workspace');
       return true;
     } catch (error) {
-      console.error('Error saving prompts to workspace:', error);
+      console.error('Error updating prompts index:', error);
       return false;
-    }
-  }
-
-  // Load prompts from workspace
-  async loadPrompts() {
-    try {
-      const promptsIndex = await this.getPromptsIndex();
-      return promptsIndex.prompts || [];
-    } catch (error) {
-      console.error('Error loading prompts from workspace:', error);
-      return [];
     }
   }
 

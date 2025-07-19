@@ -887,6 +887,16 @@ program
     } catch (error) {
       if (options.autoStart !== false) {
         console.log(chalk.yellow('🔄 Server not running, starting automatically...'));
+        
+        // Clean port before starting to handle any stale processes
+        console.log(chalk.blue(`🧹 Cleaning port ${options.port} before startup...`));
+        try {
+          await killPort(options.port);
+          console.log(chalk.green(`✅ Port ${options.port} cleaned`));
+        } catch (killError) {
+          console.log(chalk.yellow(`⚠️  Warning: Could not clean port ${options.port}: ${killError.message}`));
+        }
+        
         try {
           await startServer(options.port, workspaceDir);
         } catch (serverStartError) {
@@ -1603,18 +1613,82 @@ DB_PATH=./data/easyai.db
     console.log(chalk.green('✅ Created .env file with API configuration'));
   }
   
-  // Create initial prompts structure
+  // Create initial prompts structure and copy template prompts
   const promptsIndexPath = path.join(workspaceDir, 'prompts', 'index.json');
-  if (!fs.existsSync(promptsIndexPath)) {
-    const promptsIndex = {
-      version: "1.0.0",
-      prompts: [],
-      categories: ["general", "coding", "writing", "analysis"],
-      lastSync: new Date().toISOString()
-    };
-    
-    fs.writeFileSync(promptsIndexPath, JSON.stringify(promptsIndex, null, 2));
-    console.log(chalk.gray('   • Created prompts index'));
+  const shouldCreateTemplates = !fs.existsSync(promptsIndexPath);
+  
+  if (shouldCreateTemplates) {
+    // Copy template prompts from the CLI package
+    try {
+      const packagePath = path.dirname(__dirname);
+      const templatesPath = path.join(packagePath, 'templates', 'prompts');
+      const promptsDir = path.join(workspaceDir, 'prompts');
+      
+      console.log(chalk.blue('📋 Installing template prompts...'));
+      
+      if (fs.existsSync(templatesPath)) {
+        const templateFiles = fs.readdirSync(templatesPath);
+        const templatePrompts = [];
+        
+        for (const file of templateFiles) {
+          if (file.endsWith('.json')) {
+            try {
+              const templatePath = path.join(templatesPath, file);
+              const destinationPath = path.join(promptsDir, file);
+              
+              // Read and copy template
+              const templateContent = fs.readFileSync(templatePath, 'utf8');
+              fs.writeFileSync(destinationPath, templateContent);
+              
+              // Add to prompts array for index
+              const promptData = JSON.parse(templateContent);
+              templatePrompts.push(promptData);
+              
+              console.log(chalk.gray(`   • Added template: ${promptData.name}`));
+            } catch (error) {
+              console.log(chalk.yellow(`   ⚠️  Warning: Could not copy template ${file}`));
+            }
+          }
+        }
+        
+        // Create index with template prompts
+        const promptsIndex = {
+          version: "1.0.0",
+          prompts: templatePrompts,
+          categories: [...new Set(templatePrompts.map(p => p.category).filter(Boolean))],
+          lastSync: new Date().toISOString()
+        };
+        
+        fs.writeFileSync(promptsIndexPath, JSON.stringify(promptsIndex, null, 2));
+        console.log(chalk.green(`✅ Created prompts index with ${templatePrompts.length} templates`));
+        
+      } else {
+        // Fallback: create basic index if templates not found
+        const promptsIndex = {
+          version: "1.0.0",
+          prompts: [],
+          categories: ["general", "development", "communication", "analysis", "creativity"],
+          lastSync: new Date().toISOString()
+        };
+        
+        fs.writeFileSync(promptsIndexPath, JSON.stringify(promptsIndex, null, 2));
+        console.log(chalk.gray('   • Created basic prompts index (templates not found)'));
+      }
+      
+    } catch (error) {
+      console.log(chalk.yellow('   ⚠️  Warning: Could not install template prompts, creating basic index'));
+      
+      // Fallback: create basic index
+      const promptsIndex = {
+        version: "1.0.0",
+        prompts: [],
+        categories: ["general", "development", "communication", "analysis", "creativity"],
+        lastSync: new Date().toISOString()
+      };
+      
+      fs.writeFileSync(promptsIndexPath, JSON.stringify(promptsIndex, null, 2));
+      console.log(chalk.gray('   • Created basic prompts index'));
+    }
   }
   
   // Create config file
@@ -1649,10 +1723,15 @@ async function startServer(port = 4000, workspaceDir = null) {
   
   console.log(chalk.blue(`🧹 Cleaning port ${port}...`));
   
-  // Safer port cleanup - don't await to avoid killing ourselves
-  killPort(port).catch(() => {}); // Ignore errors
+  // Kill any existing processes on the port before starting
+  try {
+    await killPort(port);
+    console.log(chalk.green(`✅ Port ${port} cleaned`));
+  } catch (error) {
+    console.log(chalk.yellow(`⚠️  Warning: Could not clean port ${port}: ${error.message}`));
+  }
   
-  // Wait a moment for cleanup
+  // Wait a moment for cleanup to complete
   await new Promise(resolve => setTimeout(resolve, 2000));
   
   console.log(chalk.blue('🚀 Starting EasyAI server...'));

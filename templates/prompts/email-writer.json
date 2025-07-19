@@ -1,0 +1,11 @@
+{
+  "prompt_id": "professional-email-writer",
+  "name": "Professional Email Writer",
+  "category": "communication",
+  "description": "Crafts professional emails for various business scenarios",
+  "content": "Write a {tone} professional email for the following scenario:\n\n**Email Details:**\n- To: {recipient}\n- Subject: {subject}\n- Purpose: {purpose}\n\n**Context:**\n{context}\n\n**Key Points to Include:**\n{key_points}\n\n**Tone Guidelines:**\n- {tone} and appropriate\n- Professional but {tone === 'friendly' ? 'warm' : tone === 'formal' ? 'respectful' : 'balanced'}\n- Clear and concise\n- Action-oriented when needed\n\nPlease structure the email with:\n1. Appropriate greeting\n2. Clear opening statement\n3. Main content with key points\n4. Call to action (if applicable)\n5. Professional closing",
+  "variables": ["tone", "recipient", "subject", "purpose", "context", "key_points"],
+  "tags": ["email", "communication", "business", "professional"],
+  "created_at": "2025-07-19T02:30:00.000Z",
+  "updated_at": "2025-07-19T02:30:00.000Z"
+}

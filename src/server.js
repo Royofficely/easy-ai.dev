@@ -415,42 +415,45 @@ io.on('connection', (socket) => {
     // Handle prompt operations from UI
     socket.on('workspace:prompt:created', async (data) => {
       try {
-        const prompts = await workspaceSync.loadPrompts();
-        prompts.push(data);
-        await workspaceSync.savePrompts(prompts);
+        // Save the new prompt to workspace
+        await workspaceSync.savePrompt(data);
         
-        // Broadcast to all clients
-        io.emit('workspace:prompts:sync', { prompts });
+        // Sync all prompts back to UI
+        await workspaceSync.syncPrompts();
+        
+        console.log(`📝 Created prompt: ${data.name}`);
       } catch (error) {
+        console.error('Failed to create prompt:', error);
         socket.emit('workspace:error', { message: 'Failed to create prompt', error: error.message });
       }
     });
     
     socket.on('workspace:prompt:updated', async (data) => {
       try {
-        const prompts = await workspaceSync.loadPrompts();
-        const index = prompts.findIndex(p => p.prompt_id === data.prompt_id);
-        if (index !== -1) {
-          prompts[index] = data;
-          await workspaceSync.savePrompts(prompts);
-          
-          // Broadcast to all clients
-          io.emit('workspace:prompts:sync', { prompts });
-        }
+        // Save the updated prompt to workspace
+        await workspaceSync.savePrompt(data);
+        
+        // Sync all prompts back to UI
+        await workspaceSync.syncPrompts();
+        
+        console.log(`📝 Updated prompt: ${data.name}`);
       } catch (error) {
+        console.error('Failed to update prompt:', error);
         socket.emit('workspace:error', { message: 'Failed to update prompt', error: error.message });
       }
     });
     
     socket.on('workspace:prompt:deleted', async (data) => {
       try {
-        const prompts = await workspaceSync.loadPrompts();
-        const filtered = prompts.filter(p => p.prompt_id !== data.prompt_id);
-        await workspaceSync.savePrompts(filtered);
+        // Delete the prompt from workspace
+        await workspaceSync.deletePrompt(data.prompt_id);
         
-        // Broadcast to all clients
-        io.emit('workspace:prompts:sync', { prompts: filtered });
+        // Sync all prompts back to UI
+        await workspaceSync.syncPrompts();
+        
+        console.log(`🗑️ Deleted prompt: ${data.prompt_id}`);
       } catch (error) {
+        console.error('Failed to delete prompt:', error);
         socket.emit('workspace:error', { message: 'Failed to delete prompt', error: error.message });
       }
     });
@@ -477,12 +480,7 @@ app.use('/api/setup', setupRoutes);
 app.use('/api/proxy', proxyRoutes);
 app.use('/api/workspace', workspaceRoutes);
 
-// Serve dashboard static files
-const dashboardBuildPath = path.join(__dirname, '../dashboard-build');
-app.use('/dashboard', express.static(dashboardBuildPath));
-app.use('/static', express.static(path.join(dashboardBuildPath, 'static')));
-
-// Dashboard route - serve React app for any dashboard routes
+// Dashboard route - serve React app for any dashboard routes (MUST come before static middleware)
 app.get('/dashboard*', (req, res) => {
   try {
     console.log('🔍 Dashboard route accessed:', req.path);
@@ -552,6 +550,11 @@ app.get('/dashboard*', (req, res) => {
     }
   }
 });
+
+// Serve dashboard static files AFTER dynamic route
+const dashboardBuildPath = path.join(__dirname, '../dashboard-build');
+app.use('/dashboard/assets', express.static(dashboardBuildPath));
+app.use('/static', express.static(path.join(dashboardBuildPath, 'static')));
 
 // Root route - serve landing page
 app.get('/', (req, res) => {

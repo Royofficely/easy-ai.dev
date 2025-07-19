@@ -1,0 +1,11 @@
+{
+  "prompt_id": "welcome-getting-started",
+  "name": "Welcome to EasyAI",
+  "category": "getting-started",
+  "description": "A friendly welcome prompt to help you get started with EasyAI",
+  "content": "Welcome to EasyAI! 🎉\n\nI'm your AI assistant, ready to help you with:\n- Code reviews and debugging\n- Writing and communication\n- Data analysis and insights\n- Creative projects and brainstorming\n- Learning and research\n\nWhat would you like to work on today? Just describe your task and I'll help you get started!\n\nTip: You can create custom prompts by editing files in the prompts/ folder or using the UI dashboard.",
+  "variables": [],
+  "tags": ["welcome", "getting-started", "help"],
+  "created_at": "2025-07-19T02:30:00.000Z",
+  "updated_at": "2025-07-19T02:30:00.000Z"
+}

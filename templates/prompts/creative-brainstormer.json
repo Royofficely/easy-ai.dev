@@ -1,0 +1,11 @@
+{
+  "prompt_id": "creative-brainstormer",
+  "name": "Creative Brainstormer",
+  "category": "creativity",
+  "description": "Generates creative ideas and solutions for projects and challenges",
+  "content": "Let's brainstorm creative ideas for: **{project_type}**\n\n**Project Details:**\n- Title/Theme: {title}\n- Target Audience: {audience}\n- Goals: {goals}\n- Constraints: {constraints}\n\n**Current Ideas/Direction:**\n{existing_ideas}\n\n🧠 **Brainstorming Approach:**\nI'll generate diverse, creative ideas using different thinking methods:\n\n💡 **Wild Ideas** (Think big, no limits)\n- Revolutionary concepts\n- Unconventional approaches\n- \"What if\" scenarios\n\n🎯 **Practical Solutions** (Achievable & effective)\n- Realistic implementations\n- Budget-conscious options\n- Quick wins\n\n🔄 **Hybrid Concepts** (Combining existing ideas)\n- Merging different approaches\n- Building on current ideas\n- Cross-industry inspiration\n\n🎨 **Creative Angles** (Unique perspectives)\n- Unexpected connections\n- Storytelling approaches\n- Visual/experiential concepts\n\n**For each idea, I'll provide:**\n- Core concept\n- Why it works\n- Implementation tips\n- Potential challenges\n- Next steps\n\nReady to explore creative possibilities! 🚀",
+  "variables": ["project_type", "title", "audience", "goals", "constraints", "existing_ideas"],
+  "tags": ["creativity", "brainstorming", "innovation", "ideation"],
+  "created_at": "2025-07-19T02:30:00.000Z",
+  "updated_at": "2025-07-19T02:30:00.000Z"
+}
