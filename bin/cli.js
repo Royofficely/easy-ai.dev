@@ -11,7 +11,7 @@ const os = require('os');
 program
   .name('easyai')
   .description('EasyAI CLI tool for managing AI prompts and projects')
-  .version('1.4.1');
+  .version('1.6.8');
 
 // Helper functions
 function getApiKey() {
@@ -352,6 +352,16 @@ program
         console.log(chalk.yellow(`⚠️ Warning: Could not register user with backend: ${error.message}`));
         console.log(chalk.gray('   Your setup is still valid, but your email may not appear in the dashboard.'));
       }
+    }
+    
+    // Initialize workspace structure for better compatibility with UI command
+    try {
+      console.log(chalk.blue('📁 Initializing workspace structure...'));
+      await initializeWorkspace();
+      console.log(chalk.green('✅ Workspace structure ready'));
+    } catch (workspaceError) {
+      console.log(chalk.yellow('⚠️  Warning: Could not initialize workspace structure'));
+      console.log(chalk.gray(`   This won't affect basic functionality: ${workspaceError.message}`));
     }
     
     console.log(chalk.green('✅ EasyAI setup completed successfully!'));
@@ -972,20 +982,34 @@ program
           return;
         }
         
-        // Wait a moment for server to start
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // Wait for server to start with progressive checking
+        console.log(chalk.blue('⏳ Waiting for server to start...'));
+        let serverReady = false;
+        let attempts = 0;
+        const maxAttempts = 10; // 10 attempts with 1s intervals = 10s total
         
-        try {
-          await makeRequest('/api/setup/health', { noAutoExit: true, noAuth: true });
+        while (!serverReady && attempts < maxAttempts) {
+          attempts++;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          try {
+            await makeRequest('/api/setup/health', { noAutoExit: true, noAuth: true });
+            serverReady = true;
+            break;
+          } catch (healthCheckError) {
+            console.log(chalk.gray(`   • Attempt ${attempts}/${maxAttempts}...`));
+          }
+        }
+        
+        if (serverReady) {
           const url = `http://localhost:${options.port}/dashboard`;
           console.log(chalk.green(`✅ Server started successfully`));
           console.log(chalk.yellow(`📱 Dashboard: ${url}`));
           console.log(chalk.gray(`💼 Workspace: ${workspaceDir}`));
           await openBrowser(url);
-        } catch (startError) {
-          console.log(chalk.red('❌ Failed to start server automatically'));
-          console.log(chalk.red(`Error: ${startError.message}`));
-          console.log(chalk.yellow('💡 Please check the easyai directory and try again'));
+        } else {
+          console.log(chalk.red('❌ Server failed to start within timeout'));
+          console.log(chalk.yellow('💡 Try running the command again or check logs'));
         }
       } else {
         console.log(chalk.red('❌ Cannot connect to EasyAI server'));
