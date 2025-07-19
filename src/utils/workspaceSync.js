@@ -261,8 +261,9 @@ class WorkspaceSync {
         fs.mkdirSync(promptsDir, { recursive: true });
       }
       
-      // Generate filename from prompt_id or name
-      const filename = prompt.prompt_id || prompt.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      // Generate filename from name, fallback to prompt_id
+      const safeName = prompt.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled';
+      const filename = safeName || prompt.prompt_id;
       const promptFile = path.join(promptsDir, `${filename}.json`);
       
       // Add timestamp if not present

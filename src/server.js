@@ -708,7 +708,9 @@ app.post('/api/prompts', async (req, res, next) => {
             fs.mkdirSync(promptsDir, { recursive: true });
           }
           
-          const filename = promptData.prompt_id || promptData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+          // Use prompt name for filename, fallback to prompt_id
+          const safeName = promptData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled';
+          const filename = safeName || promptData.prompt_id;
           const promptFile = path.join(promptsDir, `${filename}.json`);
           
           fs.writeFileSync(promptFile, JSON.stringify(promptData, null, 2));
