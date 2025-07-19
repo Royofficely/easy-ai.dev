@@ -1,22 +1,94 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Editor from '@monaco-editor/react';
 
 interface PlaygroundSectionProps {
   prompts: any[];
 }
 
+interface PromptVariable {
+  name: string;
+  value: string;
+}
+
 const PlaygroundSection: React.FC<PlaygroundSectionProps> = ({ prompts }) => {
   const [selectedPrompt, setSelectedPrompt] = useState('');
-  
-  // Debug logging to help troubleshoot
-  console.log('🎮 Playground prompts:', prompts);
-  console.log('🎮 Prompts count:', prompts?.length || 0);
   const [selectedModel, setSelectedModel] = useState('gpt-4');
-  const [parameters, setParameters] = useState('{}');
   const [maxTokens, setMaxTokens] = useState(150);
   const [temperature, setTemperature] = useState(0.7);
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState('');
   const [error, setError] = useState('');
+  const [variables, setVariables] = useState<PromptVariable[]>([]);
+
+  const selectedPromptData = prompts.find(p => p.prompt_id === selectedPrompt);
+
+  // Extract variables from prompt template when prompt changes
+  useEffect(() => {
+    if (selectedPromptData?.template) {
+      const templateVariables = extractVariables(selectedPromptData.template);
+      const newVariables: PromptVariable[] = templateVariables.map(name => ({
+        name,
+        value: variables.find(v => v.name === name)?.value || ''
+      }));
+      setVariables(newVariables);
+    } else {
+      setVariables([]);
+    }
+  }, [selectedPrompt, selectedPromptData]);
+
+  const extractVariables = (template: string): string[] => {
+    const matches = template.match(/{(\w+)}/g);
+    if (!matches) return [];
+    return Array.from(new Set(matches.map(match => match.slice(1, -1))));
+  };
+
+  const handleVariableChange = (name: string, value: string) => {
+    setVariables(prev => prev.map(v => 
+      v.name === name ? { ...v, value } : v
+    ));
+  };
+
+  const renderVariableInputs = () => {
+    if (variables.length === 0) return null;
+
+    return (
+      <div className="form-section">
+        <h3>Template Variables</h3>
+        <div className="variables-grid">
+          {variables.map(variable => (
+            <div key={variable.name} className="form-group">
+              <label htmlFor={`var-${variable.name}`}>
+                {variable.name}
+              </label>
+              <input
+                id={`var-${variable.name}`}
+                type="text"
+                value={variable.value}
+                onChange={(e) => handleVariableChange(variable.name, e.target.value)}
+                placeholder={`Enter value for {${variable.name}}`}
+                className="notion-prompt-description-input"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const getPreviewWithVariables = () => {
+    if (!selectedPromptData?.template) return '';
+    
+    let preview = selectedPromptData.template;
+    variables.forEach(variable => {
+      if (variable.value.trim()) {
+        preview = preview.replace(
+          new RegExp(`{${variable.name}}`, 'g'), 
+          variable.value
+        );
+      }
+    });
+    return preview;
+  };
 
   const handleTest = async () => {
     if (!selectedPrompt) {
@@ -29,14 +101,13 @@ const PlaygroundSection: React.FC<PlaygroundSectionProps> = ({ prompts }) => {
     setResponse('');
 
     try {
-      let parsedParameters = {};
-      if (parameters.trim()) {
-        try {
-          parsedParameters = JSON.parse(parameters);
-        } catch (e) {
-          throw new Error('Invalid JSON in parameters field');
+      // Convert variables to parameters object
+      const parameters: {[key: string]: string} = {};
+      variables.forEach(variable => {
+        if (variable.value.trim()) {
+          parameters[variable.name] = variable.value;
         }
-      }
+      });
 
       const apiKey = localStorage.getItem('easyai_api_key');
       if (!apiKey) {
@@ -46,7 +117,7 @@ const PlaygroundSection: React.FC<PlaygroundSectionProps> = ({ prompts }) => {
       const requestData = {
         prompt_id: selectedPrompt,
         model: selectedModel,
-        parameters: parsedParameters,
+        parameters: parameters,
         options: {
           max_tokens: maxTokens,
           temperature: temperature
@@ -82,7 +153,14 @@ const PlaygroundSection: React.FC<PlaygroundSectionProps> = ({ prompts }) => {
     }
   };
 
-  const selectedPromptData = prompts.find(p => p.prompt_id === selectedPrompt);
+  const formatJsonResponse = (jsonString: string) => {
+    try {
+      const parsed = JSON.parse(jsonString);
+      return JSON.stringify(parsed, null, 2);
+    } catch {
+      return jsonString;
+    }
+  };
 
   return (
     <div className="section-content">
@@ -93,8 +171,9 @@ const PlaygroundSection: React.FC<PlaygroundSectionProps> = ({ prompts }) => {
         </div>
       </div>
 
-      <div className="playground-container">
-        <div className="playground-form">
+      <div className="playground-layout">
+        {/* Left Column - Configuration & Preview */}
+        <div className="playground-left">
           <div className="form-section">
             <h3>Test Configuration</h3>
             
@@ -163,25 +242,10 @@ const PlaygroundSection: React.FC<PlaygroundSectionProps> = ({ prompts }) => {
               </div>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="parameters">Parameters (JSON)</label>
-              <textarea
-                id="parameters"
-                value={parameters}
-                onChange={(e) => setParameters(e.target.value)}
-                placeholder='{"name": "John", "language": "JavaScript"}'
-                className="notion-prompt-content-textarea"
-                rows={3}
-              />
-              <small className="form-hint">
-                Variables to replace in the prompt template (JSON format)
-              </small>
-            </div>
-
             <button
               onClick={handleTest}
               disabled={isLoading || !selectedPrompt}
-              className="btn-primary"
+              className="btn-primary test-button"
             >
               {isLoading ? (
                 <>
@@ -198,6 +262,8 @@ const PlaygroundSection: React.FC<PlaygroundSectionProps> = ({ prompts }) => {
             </button>
           </div>
 
+          {renderVariableInputs()}
+
           {selectedPromptData && (
             <div className="form-section">
               <h3>Prompt Preview</h3>
@@ -207,16 +273,18 @@ const PlaygroundSection: React.FC<PlaygroundSectionProps> = ({ prompts }) => {
                   <span className="prompt-category">{selectedPromptData.category}</span>
                 </div>
                 <div className="prompt-content">
-                  {selectedPromptData.content}
+                  {getPreviewWithVariables()}
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        <div className="playground-results">
+        {/* Right Column - Response */}
+        <div className="playground-right">
           <div className="results-section">
             <h3>Response</h3>
+            
             {error && (
               <div className="error-message">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -236,7 +304,23 @@ const PlaygroundSection: React.FC<PlaygroundSectionProps> = ({ prompts }) => {
                   </svg>
                   API Response
                 </div>
-                <pre className="response-content">{response}</pre>
+                <div className="monaco-container">
+                  <Editor
+                    height="400px"
+                    defaultLanguage="json"
+                    value={formatJsonResponse(response)}
+                    options={{
+                      readOnly: true,
+                      minimap: { enabled: false },
+                      scrollBeyondLastLine: false,
+                      wordWrap: 'on',
+                      theme: 'vs-light',
+                      fontSize: 14,
+                      lineNumbers: 'on',
+                      automaticLayout: true
+                    }}
+                  />
+                </div>
               </div>
             )}
 
@@ -254,7 +338,7 @@ const PlaygroundSection: React.FC<PlaygroundSectionProps> = ({ prompts }) => {
             <h4>💡 Tips</h4>
             <ul>
               <li>Test API calls will show up in your analytics dashboard</li>
-              <li>Use the parameters field to test dynamic prompts</li>
+              <li>Use the variables section to test dynamic prompts</li>
               <li>Try different models to compare responses</li>
               <li>Adjust temperature for more/less creative responses</li>
             </ul>

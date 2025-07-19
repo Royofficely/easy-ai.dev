@@ -98,6 +98,31 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ currentApiKey }) => {
       </div>
       
       <div className="settings-card">
+        <h3 className="settings-title">API Key Authentication</h3>
+        <div className="setting-group">
+          <div className="setting-item">
+            <label className="setting-label">Current API Key</label>
+            <div className="api-key-display-settings">
+              <code className="api-key-value">{currentApiKey}</code>
+              <span className="status-badge status-active">Active</span>
+            </div>
+          </div>
+          <div className="setting-item">
+            <label className="setting-label">User ID</label>
+            <input className="setting-input" type="text" value={currentApiKey.slice(-8)} disabled />
+          </div>
+          <div className="setting-item">
+            <label className="setting-label">Permissions</label>
+            <input className="setting-input" type="text" value="Read, Write" disabled />
+          </div>
+          <div className="setting-item">
+            <label className="setting-label">Created</label>
+            <input className="setting-input" type="text" value="Today" disabled />
+          </div>
+        </div>
+      </div>
+
+      <div className="settings-card">
         <h3 className="settings-title">Account Information</h3>
         <div className="setting-group">
           <div className="setting-item">
@@ -108,10 +133,6 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ currentApiKey }) => {
             <label className="setting-label">Account Type</label>
             <input className="setting-input" type="text" value="Developer" disabled />
           </div>
-          <div className="setting-item">
-            <label className="setting-label">User ID</label>
-            <input className="setting-input" type="text" value={currentApiKey.slice(-8)} disabled />
-          </div>
         </div>
       </div>
 
@@ -119,7 +140,13 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ currentApiKey }) => {
         <h3 className="settings-title">AI Provider API Keys</h3>
         <div className="setting-group">
           <div className="setting-item">
-            <label className="setting-label">OpenAI API Key</label>
+            <div className="setting-label-row">
+              <label className="setting-label">OpenAI API Key</label>
+              <span className={`api-key-status ${maskedKeys.openai ? 'active' : 'inactive'}`}>
+                <div className={`status-dot ${maskedKeys.openai ? 'active' : 'inactive'}`}></div>
+                {maskedKeys.openai ? 'Active' : 'Not Set'}
+              </span>
+            </div>
             <input 
               className="setting-input" 
               type="password" 
@@ -131,7 +158,13 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ currentApiKey }) => {
             {maskedKeys.openai && <small className="setting-current">Current: {maskedKeys.openai}</small>}
           </div>
           <div className="setting-item">
-            <label className="setting-label">Anthropic API Key</label>
+            <div className="setting-label-row">
+              <label className="setting-label">Anthropic API Key</label>
+              <span className={`api-key-status ${maskedKeys.anthropic ? 'active' : 'inactive'}`}>
+                <div className={`status-dot ${maskedKeys.anthropic ? 'active' : 'inactive'}`}></div>
+                {maskedKeys.anthropic ? 'Active' : 'Not Set'}
+              </span>
+            </div>
             <input 
               className="setting-input" 
               type="password" 
@@ -143,7 +176,13 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ currentApiKey }) => {
             {maskedKeys.anthropic && <small className="setting-current">Current: {maskedKeys.anthropic}</small>}
           </div>
           <div className="setting-item">
-            <label className="setting-label">Google AI API Key</label>
+            <div className="setting-label-row">
+              <label className="setting-label">Google AI API Key</label>
+              <span className={`api-key-status ${maskedKeys.google ? 'active' : 'inactive'}`}>
+                <div className={`status-dot ${maskedKeys.google ? 'active' : 'inactive'}`}></div>
+                {maskedKeys.google ? 'Active' : 'Not Set'}
+              </span>
+            </div>
             <input 
               className="setting-input" 
               type="password" 
@@ -467,7 +506,7 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ currentApiKey }) =>
   );
 };
 
-type DashboardSection = 'overview' | 'prompts' | 'playground' | 'apikeys' | 'analytics' | 'settings';
+type DashboardSection = 'overview' | 'prompts' | 'playground' | 'settings';
 
 const Dashboard: React.FC = () => {
   const { user, logout, apiKey } = useAuth();
@@ -685,186 +724,10 @@ const Dashboard: React.FC = () => {
         />;
       case 'playground':
         return <PlaygroundSection prompts={prompts} />;
-      case 'apikeys':
-        return (
-          <div className="section-content">
-            <div className="section-header">
-              <div className="section-title">
-                <h2>API Keys</h2>
-                <p className="section-subtitle">Manage your API keys and authentication</p>
-              </div>
-            </div>
-            <div className="api-key-card">
-              <div className="api-key-header">
-                <div className="api-key-info">
-                  <h3>Current API Key</h3>
-                  <div className="api-key-display">
-                    <code className="api-key-value">{currentApiKey}</code>
-                    <span className="status-badge status-active">Active</span>
-                  </div>
-                </div>
-              </div>
-              <div className="api-key-details">
-                <div className="detail-item">
-                  <span className="detail-label">User ID</span>
-                  <span className="detail-value">{currentApiKey.slice(-8)}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Permissions</span>
-                  <span className="detail-value">Read, Write</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Created</span>
-                  <span className="detail-value">Today</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      case 'analytics':
-        return <AnalyticsSection currentApiKey={currentApiKey} />;
       case 'settings':
         return <SettingsSection currentApiKey={currentApiKey} />;
       default:
-        return (
-          <div className="section-content">
-            <div className="section-header">
-              <div className="section-title">
-                <h2>Overview</h2>
-                <p className="section-subtitle">Welcome back to your EasyAI dashboard</p>
-              </div>
-            </div>
-            
-            <div className="overview-grid">
-              <div className="metric-card overview-metric">
-                <div className="metric-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
-                  </svg>
-                </div>
-                <div className="metric-content">
-                  <h3 className="metric-title">API Calls</h3>
-                  <p className="metric-value">0</p>
-                </div>
-              </div>
-              <div className="metric-card overview-metric">
-                <div className="metric-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 12l2 2 4-4"/>
-                    <circle cx="12" cy="12" r="10"/>
-                  </svg>
-                </div>
-                <div className="metric-content">
-                  <h3 className="metric-title">Active Keys</h3>
-                  <p className="metric-value">1</p>
-                </div>
-              </div>
-              <div className="metric-card overview-metric">
-                <div className="metric-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-                    <polyline points="14,2 14,8 20,8"/>
-                  </svg>
-                </div>
-                <div className="metric-content">
-                  <h3 className="metric-title">Prompts</h3>
-                  <p className="metric-value">{prompts.length}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="features-section">
-              <h3 className="features-title">Quick Actions</h3>
-              <div className="features-grid">
-                <div className="feature-card" onClick={() => setActiveSection('prompts')}>
-                  <div className="feature-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-                      <polyline points="14,2 14,8 20,8"/>
-                    </svg>
-                  </div>
-                  <div className="feature-content">
-                    <h4>Prompts</h4>
-                    <p>Manage your AI prompt templates</p>
-                  </div>
-                  <div className="feature-arrow">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="m9 18 6-6-6-6"/>
-                    </svg>
-                  </div>
-                </div>
-                <div className="feature-card" onClick={() => setActiveSection('playground')}>
-                  <div className="feature-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                    </svg>
-                  </div>
-                  <div className="feature-content">
-                    <h4>Playground</h4>
-                    <p>Test prompts and see analytics</p>
-                  </div>
-                  <div className="feature-arrow">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="m9 18 6-6-6-6"/>
-                    </svg>
-                  </div>
-                </div>
-                <div className="feature-card" onClick={() => setActiveSection('apikeys')}>
-                  <div className="feature-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                      <circle cx="12" cy="16" r="1"/>
-                      <path d="m7 11V7a5 5 0 0 1 10 0v4"/>
-                    </svg>
-                  </div>
-                  <div className="feature-content">
-                    <h4>API Keys</h4>
-                    <p>Manage your authentication keys</p>
-                  </div>
-                  <div className="feature-arrow">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="m9 18 6-6-6-6"/>
-                    </svg>
-                  </div>
-                </div>
-                <div className="feature-card" onClick={() => setActiveSection('analytics')}>
-                  <div className="feature-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M3 3v18h18"/>
-                      <path d="m19 9-5 5-4-4-3 3"/>
-                    </svg>
-                  </div>
-                  <div className="feature-content">
-                    <h4>Analytics</h4>
-                    <p>Track usage and performance</p>
-                  </div>
-                  <div className="feature-arrow">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="m9 18 6-6-6-6"/>
-                    </svg>
-                  </div>
-                </div>
-                <div className="feature-card" onClick={() => setActiveSection('settings')}>
-                  <div className="feature-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="3"/>
-                      <path d="M12 1v6m0 6v6m11-5h-6m-6 0H1"/>
-                    </svg>
-                  </div>
-                  <div className="feature-content">
-                    <h4>Settings</h4>
-                    <p>Configure your account</p>
-                  </div>
-                  <div className="feature-arrow">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="m9 18 6-6-6-6"/>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+        return <AnalyticsSection currentApiKey={currentApiKey} />;
     }
   };
 
@@ -912,27 +775,6 @@ const Dashboard: React.FC = () => {
               <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
             </svg>
             Playground
-          </button>
-          <button 
-            className={activeSection === 'apikeys' ? 'nav-item active' : 'nav-item'}
-            onClick={() => setActiveSection('apikeys')}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <circle cx="12" cy="16" r="1"/>
-              <path d="m7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-            API Keys
-          </button>
-          <button 
-            className={activeSection === 'analytics' ? 'nav-item active' : 'nav-item'}
-            onClick={() => setActiveSection('analytics')}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 3v18h18"/>
-              <path d="m19 9-5 5-4-4-3 3"/>
-            </svg>
-            Analytics
           </button>
           <button 
             className={activeSection === 'settings' ? 'nav-item active' : 'nav-item'}
