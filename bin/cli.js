@@ -954,7 +954,8 @@ program
       // Check if server is running
       await makeRequest('/api/setup/health', { noAutoExit: true, noAuth: true });
       
-      const url = `http://localhost:${options.port}/dashboard`;
+      const apiKey = getApiKey();
+      const url = `http://localhost:${options.port}/dashboard${apiKey ? `?api_key=${apiKey}` : ''}`;
       console.log(chalk.green(`✅ Server is running`));
       console.log(chalk.yellow(`📱 Dashboard: ${url}`));
       
@@ -1002,14 +1003,14 @@ program
         }
         
         if (serverReady) {
-          const url = `http://localhost:${options.port}/dashboard`;
+          const apiKey = getApiKey();
+          const url = `http://localhost:${options.port}/dashboard${apiKey ? `?api_key=${apiKey}` : ''}`;
           console.log(chalk.green(`✅ Server started successfully`));
           console.log(chalk.yellow(`📱 Dashboard: ${url}`));
           console.log(chalk.gray(`💼 Workspace: ${workspaceDir}`));
           
           // Update user's workspace path in database
           try {
-            const apiKey = getApiKey();
             if (apiKey && workspaceDir) {
               console.log(chalk.blue('🔄 Updating workspace path in database...'));
               await makeRequest('/clerk/update-workspace', {

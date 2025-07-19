@@ -4,15 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EasyAI</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <script
-        async
-        crossorigin="anonymous"
-        data-clerk-publishable-key="pk_test_dG9sZXJhbnQtbGFkeWJ1Zy0xNi5jbGVyay5hY2NvdW50cy5kZXYk"
-        src="https://tolerant-ladybug-16.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
-        type="text/javascript"
-    ></script>
+    <script src="https://cdn.tailwindcss.com?v=3.4.0"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -32,8 +24,16 @@
                     }
                 }
             }
-        }
+        };
     </script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script
+        async
+        crossorigin="anonymous"
+        data-clerk-publishable-key="pk_test_dG9sZXJhbnQtbGFkeWJ1Zy0xNi5jbGVyay5hY2NvdW50cy5kZXYk"
+        src="https://tolerant-ladybug-16.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+        type="text/javascript"
+    ></script>
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -454,7 +454,7 @@
             }
         }
 
-        function hideAuth() {
+        window.hideAuth = function() {
             document.getElementById('authModal').classList.add('hidden');
             document.getElementById('authModal').classList.remove('flex');
         }
@@ -465,17 +465,26 @@
                 const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
                     ? 'http://localhost:4000' 
                     : '';
+                
+                const syncData = {
+                    clerkId: user.id,
+                    email: user.emailAddresses[0]?.emailAddress,
+                    name: user.fullName || user.firstName || user.emailAddresses[0]?.emailAddress.split('@')[0]
+                };
+                
+                // Get stored API key for existing users
+                const storedApiKey = localStorage.getItem('easyai_api_key');
+                
+                console.log('Syncing user data:', syncData);
+                console.log('Stored API key:', storedApiKey);
+                console.log('API URL:', `${apiBase}/clerk/sync`);
                     
                 const response = await fetch(`${apiBase}/clerk/sync`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        clerkId: user.id,
-                        email: user.emailAddresses[0]?.emailAddress,
-                        name: user.fullName || user.firstName || user.emailAddresses[0]?.emailAddress.split('@')[0]
-                    })
+                    body: JSON.stringify(syncData)
                 });
 
                 if (!response.ok) {
@@ -500,31 +509,30 @@
                             <div class="bg-gray-800 border border-gray-700 rounded p-3 mb-3">
                                 <div class="flex items-center justify-between">
                                     <code class="text-gray-300 text-sm font-mono break-all">${apiKey}</code>
-                                    ${data.new_key ? `<button onclick="copyApiKey('${data.api_key}')" class="ml-2 text-gray-400 hover:text-gray-50">
+                                    ${data.new_key ? `<button id="copyApiKeyBtn" data-api-key="${data.api_key}" class="ml-2 text-gray-400 hover:text-gray-50">
                                         <i data-lucide="copy" class="w-4 h-4"></i>
                                     </button>` : ''}
                                 </div>
                             </div>
-                            ${data.new_key ? `
                             <div class="bg-gray-800 border border-gray-700 rounded p-3 mb-3">
                                 <div class="flex items-center justify-between mb-2">
-                                    <p class="text-gray-300 text-sm font-medium">Run this command to get started:</p>
-                                    <button onclick="copySetupCommands('${data.api_key}')" class="text-gray-400 hover:text-gray-50">
+                                    <p class="text-gray-300 text-sm font-medium">${data.new_key ? 'Run this command to get started:' : 'One-command installation:'}</p>
+                                    <button id="copySetupBtn" data-api-key="${data.new_key ? data.api_key : (data.api_key_for_setup || storedApiKey || 'YOUR_API_KEY')}" class="text-gray-400 hover:text-gray-50">
                                         <i data-lucide="copy" class="w-4 h-4"></i>
                                     </button>
                                 </div>
                                 <div class="bg-gray-900 rounded p-2 font-mono text-xs text-gray-300">
-                                    <div>npm install -g @easyai/cli && easyai setup --api-key ${data.api_key} && easyai ui</div>
+                                    <div>npm install -g @easyai/cli && easyai setup --api-key ${data.new_key ? data.api_key : (data.api_key_for_setup || storedApiKey || 'YOUR_API_KEY')} && easyai ui</div>
                                 </div>
                             </div>
-                            ` : `
+                            ${!data.new_key ? `
                             <div class="bg-blue-900/20 border border-blue-800 rounded p-3 mb-3">
                                 <p class="text-blue-300 text-sm font-medium mb-1">ℹ️ Already have EasyAI installed?</p>
                                 <p class="text-blue-200 text-sm">
-                                    Run <code class="bg-gray-800 px-1 rounded">easyai ui</code> to open your dashboard.
+                                    Just run <code class="bg-gray-800 px-1 rounded">easyai ui</code> to open your dashboard.
                                 </p>
                             </div>
-                            `}
+                            ` : ''}
                             <div class="bg-blue-900/20 border border-blue-800 rounded p-3 mb-3">
                                 <p class="text-blue-300 text-sm font-medium mb-1">⚡ Quick Start:</p>
                                 <p class="text-blue-200 text-sm">
@@ -540,10 +548,10 @@
                                class="block w-full bg-gray-50 text-gray-950 py-2 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors text-center">
                                 View Documentation
                             </a>
-                            <button onclick="hideAuth()" class="w-full border border-gray-700 text-gray-50 py-2 text-sm font-medium rounded-md hover:bg-gray-800 transition-colors">
+                            <button id="closeBtn" class="w-full border border-gray-700 text-gray-50 py-2 text-sm font-medium rounded-md hover:bg-gray-800 transition-colors">
                                 Close
                             </button>
-                            <button onclick="clerk.signOut()" class="w-full border border-gray-700 text-gray-50 py-2 text-sm font-medium rounded-md hover:bg-gray-800 transition-colors">
+                            <button id="signOutBtn" class="w-full border border-gray-700 text-gray-50 py-2 text-sm font-medium rounded-md hover:bg-gray-800 transition-colors">
                                 Sign Out
                             </button>
                         </div>
@@ -552,6 +560,34 @@
 
                 // Initialize Lucide icons for the copy buttons
                 lucide.createIcons();
+                
+                // Add event listeners for buttons in modal
+                const signOutBtn = document.getElementById('signOutBtn');
+                if (signOutBtn) {
+                    signOutBtn.addEventListener('click', window.signOut);
+                }
+                
+                const closeBtn = document.getElementById('closeBtn');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', window.hideAuth);
+                }
+                
+                // Add event listeners for copy buttons if they exist
+                const copyApiKeyBtn = document.getElementById('copyApiKeyBtn');
+                if (copyApiKeyBtn) {
+                    copyApiKeyBtn.addEventListener('click', () => {
+                        const apiKey = copyApiKeyBtn.getAttribute('data-api-key');
+                        window.copyApiKey(apiKey);
+                    });
+                }
+                
+                const copySetupBtn = document.getElementById('copySetupBtn');
+                if (copySetupBtn) {
+                    copySetupBtn.addEventListener('click', () => {
+                        const apiKey = copySetupBtn.getAttribute('data-api-key');
+                        window.copySetupCommands(apiKey);
+                    });
+                }
                 
                 // Store user data
                 localStorage.setItem('easyai_email', user.emailAddresses[0]?.emailAddress);
@@ -563,7 +599,17 @@
                 
             } catch (error) {
                 console.error('Failed to sync user data:', error);
-                alert('Failed to sync user data. Please try again.');
+                console.error('Error details:', {
+                    message: error.message,
+                    stack: error.stack,
+                    apiBase: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+                        ? 'http://localhost:4000' 
+                        : '',
+                    url: `${window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+                        ? 'http://localhost:4000' 
+                        : ''}/clerk/sync`
+                });
+                alert(`Failed to sync user data: ${error.message}. Check console for details.`);
             }
         }
         
@@ -578,11 +624,41 @@
 
 
 
+        window.signOut = async function() {
+            try {
+                console.log('🚪 Sign out button clicked');
+                
+                // Sign out from Clerk
+                console.log('🔒 Calling clerk.signOut()...');
+                await clerk.signOut();
+                
+                // Clear local storage
+                console.log('🧹 Clearing local storage...');
+                localStorage.removeItem('easyai_email');
+                localStorage.removeItem('easyai_api_key');
+                localStorage.removeItem('clerk_user');
+                localStorage.removeItem('easyai_plan');
+                
+                // Hide modal
+                console.log('❌ Hiding modal...');
+                hideAuth();
+                
+                // Reload page to reset state
+                console.log('🔄 Reloading page...');
+                window.location.reload();
+                
+                console.log('✅ Signed out successfully');
+            } catch (error) {
+                console.error('❌ Sign out error:', error);
+                alert(`Sign out failed: ${error.message}. Please refresh the page.`);
+            }
+        }
+
         function contactSales() {
             window.open('mailto:sales@easy-ai.dev?subject=Enterprise%20Inquiry&body=Hi%2C%20I%27m%20interested%20in%20the%20Enterprise%20plan%20for%20EasyAI.%20Please%20contact%20me%20to%20discuss%20pricing%20and%20deployment%20options.', '_blank');
         }
 
-        function copyApiKey(apiKey) {
+        window.copyApiKey = function(apiKey) {
             navigator.clipboard.writeText(apiKey).then(() => {
                 // Show copied feedback
                 const button = event.target.closest('button');
@@ -596,7 +672,7 @@
             });
         }
 
-        function copySetupCommands(apiKey) {
+        window.copySetupCommands = function(apiKey) {
             const commands = `npm install -g @easyai/cli && easyai setup --api-key ${apiKey} && easyai ui`;
             navigator.clipboard.writeText(commands).then(() => {
                 // Show copied feedback

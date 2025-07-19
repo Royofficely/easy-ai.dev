@@ -980,9 +980,13 @@ app.use('/api/prompts', (req, res, next) => {
 app.get('/dashboard*', (req, res) => {
   try {
     console.log('🔍 Dashboard route accessed:', req.path);
-    // Try to get API key from environment or .env file
+    console.log('🔍 Query parameters:', req.query);
+    
+    // Try to get API key from URL parameter first, then environment
     const fs = require('fs');
-    let apiKey = process.env.EASYAI_API_KEY || '';
+    let apiKey = req.query.api_key || process.env.EASYAI_API_KEY || '';
+    
+    console.log('🔑 API key source:', req.query.api_key ? 'URL parameter' : 'Environment');
     
     if (!apiKey) {
       // Try multiple locations for API key, prioritizing workspace

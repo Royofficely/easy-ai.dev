@@ -270,7 +270,42 @@ router.post('/sync', async (req, res) => {
       return res.json(response);
     }
 
-    // For existing keys, only return the prefix
+    // For existing keys, generate a new API key if user doesn't have one yet
+    let actualApiKey = await ApiKey.findOne({ 
+      where: { user_id: user.id },
+      order: [['created_at', 'DESC']]
+    });
+    
+    let fullApiKey = null;
+    
+    // Check if this user has a valid modern API key
+    if (actualApiKey && actualApiKey.key_hash) {
+      // If they have the old migrated key, create a new one
+      const knownKeyHash = require('crypto').createHash('sha256').update('easyai_112deb01f582f9bd').digest('hex');
+      if (actualApiKey.key_hash === knownKeyHash) {
+        console.log('User has old migrated key, creating new Clerk API key');
+        
+        // Generate new API key
+        const newKeyData = ApiKey.generateKey();
+        const newApiKey = await ApiKey.create({
+          user_id: user.id,
+          name: 'Clerk Generated Key',
+          key_hash: newKeyData.hash,
+          key_prefix: newKeyData.prefix,
+          permissions: ['read', 'write'],
+          expires_at: null
+        });
+        
+        fullApiKey = newKeyData.key;
+        actualApiKey = newApiKey;
+        
+        console.log('New API key created:', newKeyData.prefix);
+      } else {
+        // They have a modern key, but we can't retrieve the original
+        fullApiKey = null; // For security, don't expose existing keys
+      }
+    }
+    
     const response = {
       user: {
         id: user.id,
@@ -279,8 +314,10 @@ router.post('/sync', async (req, res) => {
         role: user.role,
         plan: user.plan
       },
-      api_key_prefix: apiKey.key_prefix,
-      new_key: false
+      api_key_prefix: actualApiKey.key_prefix,
+      api_key_for_setup: fullApiKey, // Full key for setup commands
+      new_key: fullApiKey !== null, // True if we generated a new key
+      api_key: fullApiKey // Include full key if new
     };
     
     console.log('Returning response for existing user:', response);
