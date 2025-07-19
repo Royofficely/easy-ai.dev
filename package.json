@@ -1,6 +1,6 @@
 {
   "name": "@easyai/cli",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "EasyAI CLI - Unified AI prompts, real-time costs, model switching, and IDE integration.",
   "main": "bin/cli.js",
   "bin": {
@@ -50,6 +50,7 @@
   },
   "files": [
     "bin/",
+    "src/",
     "dashboard-build/",
     "README.md"
   ]

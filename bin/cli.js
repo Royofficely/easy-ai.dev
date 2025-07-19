@@ -1533,10 +1533,14 @@ async function startServer(port = 4000) {
   console.log(chalk.blue('🚀 Starting EasyAI server...'));
   
   return new Promise((resolve, reject) => {
-    const serverProcess = spawn('npm', ['start'], {
-      cwd: __dirname + '/..',
+    // When installed globally, we need to use the package directory
+    const packagePath = path.dirname(__dirname);
+    
+    const serverProcess = spawn('node', ['src/server.js'], {
+      cwd: packagePath,
       detached: true,
-      stdio: 'ignore'
+      stdio: 'ignore',
+      env: { ...process.env, PORT: port }
     });
     
     serverProcess.unref();
@@ -1544,7 +1548,7 @@ async function startServer(port = 4000) {
     // Give the server time to start
     setTimeout(() => {
       resolve(serverProcess);
-    }, 2000);
+    }, 3000);
     
     serverProcess.on('error', (error) => {
       reject(error);
