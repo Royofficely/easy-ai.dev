@@ -599,6 +599,8 @@ app.get('/api/v1/user', async (req, res, next) => {
       setup_completed: true
     });
   }
+  
+  console.log('🔄 No workspace sync available, continuing to authenticated route');
   next(); // Continue to normal auth route
 });
 
@@ -629,6 +631,8 @@ app.get('/api/prompts', async (req, res, next) => {
       });
     }
   }
+  
+  console.log('🔄 No workspace sync available, continuing to authenticated route');
   next(); // Continue to normal prompts route
 });
 
@@ -639,8 +643,17 @@ app.post('/api/prompts', async (req, res, next) => {
   console.log(`🔍 POST /api/prompts request - workspaceSync: ${workspaceSync ? 'AVAILABLE' : 'NULL'}`);
   console.log(`🔑 Authorization header: ${req.headers.authorization ? 'PRESENT' : 'MISSING'}`);
   console.log(`🏠 User-Agent: ${req.headers['user-agent']}`);
+  console.log(`📁 Workspace path env: ${process.env.EASYAI_WORKSPACE_PATH || 'NOT SET'}`);
+  console.log(`📁 Current working directory: ${process.cwd()}`);
   
-  if (workspaceSync) {
+  // Check if workspace structure exists even if workspaceSync is null
+  const fs = require('fs');
+  const workspacePath = process.env.EASYAI_WORKSPACE_PATH || process.cwd();
+  const hasPrompts = fs.existsSync(path.join(workspacePath, 'prompts'));
+  const hasConfig = fs.existsSync(path.join(workspacePath, 'config'));
+  console.log(`📁 Workspace structure check - prompts: ${hasPrompts}, config: ${hasConfig}`);
+  
+  if (workspaceSync || (hasPrompts && hasConfig)) {
     try {
       console.log('📝 Creating prompt via workspace sync');
       console.log('📋 Request body:', JSON.stringify(req.body, null, 2));
@@ -680,12 +693,38 @@ app.post('/api/prompts', async (req, res, next) => {
       
       console.log('💾 Saving prompt data:', JSON.stringify(promptData, null, 2));
 
-      // Save to workspace
-      const success = await workspaceSync.savePrompt(promptData);
+      // Save to workspace - try workspaceSync first, fallback to manual save
+      let success = false;
+      
+      if (workspaceSync) {
+        console.log('📝 Using workspaceSync to save prompt');
+        success = await workspaceSync.savePrompt(promptData);
+      } else {
+        console.log('📝 Using manual file save (no workspaceSync)');
+        // Manual save if workspaceSync is not available
+        try {
+          const promptsDir = path.join(workspacePath, 'prompts');
+          if (!fs.existsSync(promptsDir)) {
+            fs.mkdirSync(promptsDir, { recursive: true });
+          }
+          
+          const filename = promptData.prompt_id || promptData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+          const promptFile = path.join(promptsDir, `${filename}.json`);
+          
+          fs.writeFileSync(promptFile, JSON.stringify(promptData, null, 2));
+          console.log(`💾 Manually saved prompt: ${filename}.json`);
+          success = true;
+        } catch (manualError) {
+          console.error('❌ Manual save failed:', manualError);
+          success = false;
+        }
+      }
       
       if (success) {
-        // Trigger sync to UI
-        await workspaceSync.syncPrompts();
+        // Trigger sync to UI if workspaceSync is available
+        if (workspaceSync) {
+          await workspaceSync.syncPrompts();
+        }
         
         // Emit WebSocket event for real-time updates
         const io = req.app.get('io');
@@ -713,6 +752,8 @@ app.post('/api/prompts', async (req, res, next) => {
       });
     }
   }
+  
+  console.log('🔄 No workspace sync available, continuing to authenticated route');
   next(); // Continue to normal prompts route
 });
 
@@ -772,6 +813,8 @@ app.put('/api/prompts/:prompt_id', async (req, res, next) => {
       });
     }
   }
+  
+  console.log('🔄 No workspace sync available, continuing to authenticated route');
   next(); // Continue to normal prompts route
 });
 
@@ -814,10 +857,12 @@ app.delete('/api/prompts/:prompt_id', async (req, res, next) => {
       });
     }
   }
+  
+  console.log('🔄 No workspace sync available, continuing to authenticated route');
   next(); // Continue to normal prompts route
 });
 
-// Routes
+// Routes - mount non-conflicting routes first
 app.use('/auth', authRoutes);
 app.use('/api/v1', apiRoutes);
 app.use('/gateway', gatewayRoutes);
@@ -828,8 +873,26 @@ app.use('/api/setup', setupRoutes);
 app.use('/api/proxy', proxyRoutes);
 app.use('/api/workspace', workspaceRoutes);
 
-// Mount prompts router AFTER workspace fallback routes
-app.use('/api/prompts', promptRoutes);
+// CRITICAL: Mount prompts router ONLY when NOT in workspace mode
+// This ensures workspace fallback routes are processed first
+app.use('/api/prompts', (req, res, next) => {
+  const workspaceSync = req.app.get('workspaceSync');
+  console.log(`🔀 Router decision - workspaceSync: ${workspaceSync ? 'AVAILABLE (skipping auth router)' : 'NULL (using auth router)'}`);
+  
+  if (workspaceSync) {
+    // Workspace mode is active, skip the authenticated router
+    // The workspace fallback routes above will handle the request
+    console.log('⚠️ Workspace mode active - request should have been handled by fallback routes above');
+    return res.status(500).json({ 
+      error: 'Route conflict - workspace routes should have handled this request',
+      debug: 'This indicates a routing configuration issue'
+    });
+  }
+  
+  // No workspace mode, use authenticated router
+  console.log('✅ Using authenticated prompts router');
+  next();
+}, promptRoutes);
 
 // Dashboard route - serve React app for any dashboard routes (MUST come before static middleware)
 app.get('/dashboard*', (req, res) => {
