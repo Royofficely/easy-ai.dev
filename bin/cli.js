@@ -1811,6 +1811,7 @@ async function startServer(port = 4000, workspaceDir = null) {
       console.log(chalk.gray(`📁 Package path: ${packagePath}`));
       console.log(chalk.gray(`🔍 Server path: ${serverPath}`));
       console.log(chalk.gray(`💼 Working directory: ${cwd}`));
+      console.log(chalk.blue('🎬 Starting server process with workspace path...' ));
       
       // Check if server file exists
       if (!fs.existsSync(serverPath)) {
@@ -1821,7 +1822,7 @@ async function startServer(port = 4000, workspaceDir = null) {
       // Start server with workspace as working directory
       const serverProcess = spawn('node', [serverPath], {
         cwd: cwd,
-        detached: true,
+        detached: false, // Keep attached for debugging
         stdio: 'inherit', // Show server output for debugging
         env: { 
           ...process.env, 
@@ -1830,7 +1831,8 @@ async function startServer(port = 4000, workspaceDir = null) {
         }
       });
       
-      serverProcess.unref();
+      // Don't unref in debug mode so we can see output
+      // serverProcess.unref();
       
       // Give the server time to start
       setTimeout(() => {
