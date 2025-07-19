@@ -860,6 +860,7 @@ program
   .command('ui')
   .description('Open EasyAI web interface')
   .option('--port <port>', 'Port number', '4000')
+  .option('--no-auto-start', 'Disable automatic server startup')
   .action(async (options) => {
     console.log(chalk.blue('🚀 Opening EasyAI web interface...'));
     
@@ -871,30 +872,30 @@ program
       console.log(chalk.green(`✅ Server is running`));
       console.log(chalk.yellow(`📱 Dashboard: ${url}`));
       
-      // Try to open browser
-      const { exec } = require('child_process');
-      const platform = process.platform;
-      
-      let command;
-      if (platform === 'darwin') {
-        command = `open "${url}"`;
-      } else if (platform === 'win32') {
-        command = `start "${url}"`;
-      } else {
-        command = `xdg-open "${url}"`;
-      }
-      
-      exec(command, (error) => {
-        if (error) {
-          console.log(chalk.gray('💡 Please manually open the URL above'));
-        } else {
-          console.log(chalk.green('🌐 Browser opened'));
-        }
-      });
+      await openBrowser(url);
       
     } catch (error) {
-      console.log(chalk.red('❌ Cannot connect to EasyAI server'));
-      console.log(chalk.yellow('💡 Make sure the server is running with: npm start'));
+      if (options.autoStart !== false) {
+        console.log(chalk.yellow('🔄 Server not running, starting automatically...'));
+        await startServer(options.port);
+        
+        // Wait a moment for server to start
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        try {
+          await makeRequest('/api/setup/cli-health');
+          const url = `http://localhost:${options.port}/dashboard`;
+          console.log(chalk.green(`✅ Server started successfully`));
+          console.log(chalk.yellow(`📱 Dashboard: ${url}`));
+          await openBrowser(url);
+        } catch (startError) {
+          console.log(chalk.red('❌ Failed to start server automatically'));
+          console.log(chalk.yellow('💡 Please run manually: cd easyai-dev && npm start'));
+        }
+      } else {
+        console.log(chalk.red('❌ Cannot connect to EasyAI server'));
+        console.log(chalk.yellow('💡 Make sure the server is running with: npm start'));
+      }
     }
   });
 
@@ -987,6 +988,21 @@ program
       if (error.code === 'ECONNREFUSED') {
         console.log(chalk.yellow('💡 Make sure the EasyAI server is running'));
       }
+    }
+  });
+
+// Kill port command
+program
+  .command('kill-port <port>')
+  .description('Kill any process running on the specified port')
+  .action(async (port) => {
+    console.log(chalk.blue(`🧹 Killing processes on port ${port}...`));
+    
+    try {
+      await killPort(port);
+      console.log(chalk.green(`✅ Port ${port} cleared`));
+    } catch (error) {
+      console.log(chalk.red(`❌ Error clearing port ${port}: ${error.message}`));
     }
   });
 
@@ -1428,4 +1444,143 @@ async function removeIntegrations() {
   console.log(chalk.green('\n✅ Integration removal complete'));
   console.log(chalk.gray('   • Restart your IDEs to apply changes'));
   console.log(chalk.gray('   • Re-integrate with: easyai integrate auto'));
+}
+
+// Helper function to kill processes on a specific port
+async function killPort(port) {
+  const { spawn } = require('child_process');
+  
+  return new Promise((resolve) => {
+    if (process.platform === 'win32') {
+      // Windows
+      const netstat = spawn('netstat', ['-ano']);
+      const findstr = spawn('findstr', [`:${port}`]);
+      
+      netstat.stdout.pipe(findstr.stdin);
+      
+      let output = '';
+      findstr.stdout.on('data', (data) => {
+        output += data.toString();
+      });
+      
+      findstr.on('close', () => {
+        const lines = output.split('\n');
+        const pids = [];
+        
+        lines.forEach(line => {
+          const parts = line.trim().split(/\s+/);
+          if (parts.length > 4) {
+            const pid = parts[parts.length - 1];
+            if (pid && !isNaN(pid)) {
+              pids.push(pid);
+            }
+          }
+        });
+        
+        // Kill all PIDs
+        pids.forEach(pid => {
+          try {
+            spawn('taskkill', ['/PID', pid, '/F']);
+          } catch (error) {
+            // Ignore errors
+          }
+        });
+        
+        resolve();
+      });
+    } else {
+      // macOS/Linux
+      const lsof = spawn('lsof', ['-ti', `:${port}`]);
+      
+      let pids = '';
+      lsof.stdout.on('data', (data) => {
+        pids += data.toString();
+      });
+      
+      lsof.on('close', () => {
+        if (pids.trim()) {
+          const pidArray = pids.trim().split('\n');
+          pidArray.forEach(pid => {
+            if (pid.trim()) {
+              try {
+                spawn('kill', ['-9', pid.trim()]);
+              } catch (error) {
+                // Ignore errors
+              }
+            }
+          });
+        }
+        resolve();
+      });
+      
+      lsof.on('error', () => {
+        resolve(); // Port might not be in use
+      });
+    }
+  });
+}
+
+// Helper function to start the server
+async function startServer(port = 4000) {
+  const { spawn } = require('child_process');
+  
+  console.log(chalk.blue(`🧹 Cleaning port ${port}...`));
+  await killPort(port);
+  
+  // Wait a moment for cleanup
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  console.log(chalk.blue('🚀 Starting EasyAI server...'));
+  
+  return new Promise((resolve, reject) => {
+    const serverProcess = spawn('npm', ['start'], {
+      cwd: __dirname + '/..',
+      detached: true,
+      stdio: 'ignore'
+    });
+    
+    serverProcess.unref();
+    
+    // Give the server time to start
+    setTimeout(() => {
+      resolve(serverProcess);
+    }, 2000);
+    
+    serverProcess.on('error', (error) => {
+      reject(error);
+    });
+  });
+}
+
+// Helper function to open browser
+async function openBrowser(url) {
+  const { spawn } = require('child_process');
+  
+  try {
+    let command;
+    let args;
+    
+    if (process.platform === 'darwin') {
+      command = 'open';
+      args = [url];
+    } else if (process.platform === 'win32') {
+      command = 'start';
+      args = ['', url];
+    } else {
+      command = 'xdg-open';
+      args = [url];
+    }
+    
+    const browserProcess = spawn(command, args, {
+      detached: true,
+      stdio: 'ignore'
+    });
+    
+    browserProcess.unref();
+    console.log(chalk.green('🌐 Browser opened'));
+    
+  } catch (error) {
+    console.log(chalk.yellow(`⚠️  Could not open browser automatically`));
+    console.log(chalk.yellow(`   Please open: ${url}`));
+  }
 }
