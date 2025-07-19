@@ -624,12 +624,25 @@ app.get('/api/prompts', async (req, res, next) => {
 
 // Handle POST /api/prompts for workspace mode
 app.post('/api/prompts', async (req, res, next) => {
+  console.log('🚨 WORKSPACE ROUTE HIT - POST /api/prompts');
   const workspaceSync = req.app.get('workspaceSync');
   console.log(`🔍 POST /api/prompts request - workspaceSync: ${workspaceSync ? 'AVAILABLE' : 'NULL'}`);
+  console.log(`📝 Request headers:`, JSON.stringify(req.headers, null, 2));
+  console.log(`🔑 Authorization header present: ${req.headers.authorization ? 'YES' : 'NO'}`);
   
   if (workspaceSync) {
     try {
       console.log('📝 Creating prompt via workspace sync');
+      console.log('📋 Request body:', JSON.stringify(req.body, null, 2));
+      
+      // Validate required fields
+      if (!req.body.name || !req.body.content) {
+        console.error('❌ Missing required fields: name or content');
+        return res.status(400).json({ 
+          error: 'Missing required fields: name and content are required',
+          received: Object.keys(req.body)
+        });
+      }
       
       // Generate a unique prompt_id if not provided
       const promptId = req.body.prompt_id || `prompt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -641,6 +654,7 @@ app.post('/api/prompts', async (req, res, next) => {
         category: req.body.category || 'general',
         content: req.body.content,
         template: req.body.content,
+        model: req.body.model || 'gpt-4', // Add model field with default
         variables: req.body.variables || [],
         tags: req.body.tags || [],
         parameters: req.body.parameters || {},
@@ -653,6 +667,8 @@ app.post('/api/prompts', async (req, res, next) => {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
+      
+      console.log('💾 Saving prompt data:', JSON.stringify(promptData, null, 2));
 
       // Save to workspace
       const success = await workspaceSync.savePrompt(promptData);
@@ -672,15 +688,18 @@ app.post('/api/prompts', async (req, res, next) => {
           console.log('📡 WebSocket: Prompt created event emitted');
         }
         
+        console.log('✅ Prompt created successfully:', promptData.name);
         return res.status(201).json(promptData);
       } else {
+        console.error('❌ Failed to save prompt to workspace');
         return res.status(500).json({ error: 'Failed to save prompt to workspace' });
       }
     } catch (error) {
-      console.error('Error creating workspace prompt:', error);
+      console.error('❌ Error creating workspace prompt:', error);
       return res.status(500).json({ 
         error: 'Failed to create workspace prompt',
-        message: error.message 
+        message: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   }
@@ -790,7 +809,6 @@ app.delete('/api/prompts/:prompt_id', async (req, res, next) => {
 
 // Routes
 app.use('/auth', authRoutes);
-app.use('/api/prompts', promptRoutes);
 app.use('/api/v1', apiRoutes);
 app.use('/gateway', gatewayRoutes);
 app.use('/api/settings', settingsRoutes);
@@ -799,6 +817,9 @@ app.use('/api/monitoring', monitoringRoutes);
 app.use('/api/setup', setupRoutes);
 app.use('/api/proxy', proxyRoutes);
 app.use('/api/workspace', workspaceRoutes);
+
+// Mount prompts router AFTER workspace fallback routes
+app.use('/api/prompts', promptRoutes);
 
 // Dashboard route - serve React app for any dashboard routes (MUST come before static middleware)
 app.get('/dashboard*', (req, res) => {

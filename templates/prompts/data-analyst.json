@@ -4,6 +4,7 @@
   "category": "analysis",
   "description": "Analyzes data and provides insights, trends, and recommendations",
   "content": "Analyze the following data and provide comprehensive insights:\n\n**Dataset:** {dataset_name}\n**Data:** \n{data}\n\n**Analysis Objectives:**\n{objectives}\n\n**Please provide:**\n\n📊 **Key Metrics & Summary**\n- Important numbers and statistics\n- Data quality assessment\n- Sample size and scope\n\n📈 **Trends & Patterns**\n- Notable trends over time\n- Interesting patterns or correlations\n- Outliers or anomalies\n\n💡 **Insights & Findings**\n- What the data tells us\n- Significant relationships\n- Potential causes or explanations\n\n🎯 **Recommendations**\n- Actionable next steps\n- Areas for deeper investigation\n- Strategic implications\n\n⚠️ **Limitations & Considerations**\n- Data limitations or gaps\n- Assumptions made\n- Confidence levels\n\nPresent findings in a clear, business-friendly format with specific examples and supporting evidence.",
+  "model": "gpt-4",
   "variables": ["dataset_name", "data", "objectives"],
   "tags": ["data-analysis", "insights", "business-intelligence", "statistics"],
   "created_at": "2025-07-19T02:30:00.000Z",
