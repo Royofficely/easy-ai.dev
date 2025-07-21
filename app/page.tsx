@@ -328,7 +328,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto"
+            className="grid md:grid-cols-2 gap-4 md:gap-6 max-w-5xl mx-auto"
           >
             {/* CLI Side */}
             <div className="bg-black rounded-lg border border-gray-200 overflow-hidden">
@@ -365,32 +365,34 @@ export default function Home() {
 
             {/* Dashboard Side */}
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <div className="flex space-x-1.5">
-                    <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                    <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              <div className="bg-gray-50 px-3 sm:px-4 py-3 border-b border-gray-200">
+                <div className="flex items-center justify-between mb-2 sm:mb-0">
+                  <div className="flex items-center space-x-2">
+                    <div className="flex space-x-1.5">
+                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                      <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    </div>
+                    <span className="text-xs text-gray-500 hidden sm:inline">localhost:3000/dashboard</span>
                   </div>
-                  <span className="text-xs text-gray-500">localhost:3000/dashboard</span>
                 </div>
                 
-                <div className="flex space-x-4 text-xs">
+                <div className="flex space-x-1 sm:space-x-4 text-xs justify-center sm:justify-end">
                   <button 
                     onClick={() => setActiveTab('analytics')}
-                    className={`py-1 px-2 transition-colors ${activeTab === 'analytics' ? 'text-[#5b61eb] border-b border-[#5b61eb]' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`py-1 px-2 sm:px-3 transition-colors whitespace-nowrap text-xs sm:text-xs ${activeTab === 'analytics' ? 'text-[#5b61eb] border-b border-[#5b61eb]' : 'text-gray-500 hover:text-gray-700'}`}
                   >
                     Analytics
                   </button>
                   <button 
                     onClick={() => setActiveTab('prompts')}
-                    className={`py-1 px-2 transition-colors ${activeTab === 'prompts' ? 'text-[#5b61eb] border-b border-[#5b61eb]' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`py-1 px-2 sm:px-3 transition-colors whitespace-nowrap text-xs sm:text-xs ${activeTab === 'prompts' ? 'text-[#5b61eb] border-b border-[#5b61eb]' : 'text-gray-500 hover:text-gray-700'}`}
                   >
                     Prompts
                   </button>
                   <button 
                     onClick={() => setActiveTab('playground')}
-                    className={`py-1 px-2 transition-colors ${activeTab === 'playground' ? 'text-[#5b61eb] border-b border-[#5b61eb]' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`py-1 px-2 sm:px-3 transition-colors whitespace-nowrap text-xs sm:text-xs ${activeTab === 'playground' ? 'text-[#5b61eb] border-b border-[#5b61eb]' : 'text-gray-500 hover:text-gray-700'}`}
                   >
                     Playground
                   </button>
@@ -484,61 +486,6 @@ export default function Home() {
             </div>
           </motion.div>
 
-          {/* Simple workflow illustration */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="mt-16 text-center"
-          >
-            {/* Desktop Version */}
-            <div className="hidden md:block">
-              <div className="inline-flex items-center space-x-8 bg-white border border-gray-200 rounded-lg px-8 py-4">
-                <div className="flex items-center space-x-2">
-                  <Terminal className="w-5 h-5 text-gray-700" />
-                  <span className="text-sm font-medium text-gray-900">CLI Commands</span>
-                </div>
-                <ArrowRight className="w-4 h-4 text-[#5b61eb]" />
-                <div className="flex items-center space-x-2">
-                  <Zap className="w-5 h-5 text-[#5b61eb]" />
-                  <span className="text-sm font-medium text-gray-900">Real-time Sync</span>
-                </div>
-                <ArrowRight className="w-4 h-4 text-[#5b61eb]" />
-                <div className="flex items-center space-x-2">
-                  <BarChart3 className="w-5 h-5 text-gray-700" />
-                  <span className="text-sm font-medium text-gray-900">Dashboard Analytics</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Mobile Version */}
-            <div className="md:hidden max-w-sm mx-auto">
-              <div className="bg-white border border-gray-200 rounded-lg px-6 py-6 space-y-4">
-                <div className="flex items-center justify-center space-x-3">
-                  <Terminal className="w-5 h-5 text-gray-700 flex-shrink-0" />
-                  <span className="text-sm font-medium text-gray-900 text-center">CLI Commands</span>
-                </div>
-                
-                <div className="flex justify-center">
-                  <div className="w-px h-6 bg-[#5b61eb]"></div>
-                </div>
-                
-                <div className="flex items-center justify-center space-x-3">
-                  <Zap className="w-5 h-5 text-[#5b61eb] flex-shrink-0" />
-                  <span className="text-sm font-medium text-gray-900 text-center">Real-time Sync</span>
-                </div>
-                
-                <div className="flex justify-center">
-                  <div className="w-px h-6 bg-[#5b61eb]"></div>
-                </div>
-                
-                <div className="flex items-center justify-center space-x-3">
-                  <BarChart3 className="w-5 h-5 text-gray-700 flex-shrink-0" />
-                  <span className="text-sm font-medium text-gray-900 text-center">Dashboard Analytics</span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
         </div>
       </section>
 
