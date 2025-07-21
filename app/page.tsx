@@ -512,29 +512,29 @@ export default function Home() {
             </div>
 
             {/* Mobile Version */}
-            <div className="md:hidden max-w-xs mx-auto">
+            <div className="md:hidden max-w-sm mx-auto">
               <div className="bg-white border border-gray-200 rounded-lg px-6 py-6 space-y-4">
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center justify-center space-x-3">
                   <Terminal className="w-5 h-5 text-gray-700 flex-shrink-0" />
-                  <span className="text-sm font-medium text-gray-900">CLI Commands</span>
+                  <span className="text-sm font-medium text-gray-900 text-center">CLI Commands</span>
                 </div>
                 
                 <div className="flex justify-center">
                   <div className="w-px h-6 bg-[#5b61eb]"></div>
                 </div>
                 
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center justify-center space-x-3">
                   <Zap className="w-5 h-5 text-[#5b61eb] flex-shrink-0" />
-                  <span className="text-sm font-medium text-gray-900">Real-time Sync</span>
+                  <span className="text-sm font-medium text-gray-900 text-center">Real-time Sync</span>
                 </div>
                 
                 <div className="flex justify-center">
                   <div className="w-px h-6 bg-[#5b61eb]"></div>
                 </div>
                 
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center justify-center space-x-3">
                   <BarChart3 className="w-5 h-5 text-gray-700 flex-shrink-0" />
-                  <span className="text-sm font-medium text-gray-900">Dashboard Analytics</span>
+                  <span className="text-sm font-medium text-gray-900 text-center">Dashboard Analytics</span>
                 </div>
               </div>
             </div>
