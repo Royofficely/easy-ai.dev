@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Terminal, Zap, Code, BarChart3, Copy, Check, Play, Sparkles, ArrowRight, Star, CheckCircle } from 'lucide-react'
-// import { SignInButton, SignUpButton, useAuth } from '@clerk/nextjs'
-// import Link from 'next/link'
+import { SignInButton, SignUpButton, useAuth } from '@clerk/nextjs'
+import Link from 'next/link'
 
 export default function Home() {
-  const isSignedIn = false // Demo mode - no auth
+  const { isSignedIn } = useAuth()
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState('analytics')
   
@@ -114,12 +114,16 @@ export default function Home() {
             <div className="flex items-center space-x-3">
               {!isSignedIn ? (
                 <>
-                  <button className="text-sm text-gray-600 hover:text-gray-900 transition-colors px-3 py-2">
-                    Sign in
-                  </button>
-                  <button className="text-sm bg-gray-900 text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors">
-                    Get started
-                  </button>
+                  <SignInButton mode="modal">
+                    <button className="text-sm text-gray-600 hover:text-gray-900 transition-colors px-3 py-2">
+                      Sign in
+                    </button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <button className="text-sm bg-gray-900 text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors">
+                      Get started
+                    </button>
+                  </SignUpButton>
                 </>
               ) : (
                 <button className="text-sm bg-gray-900 text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors">
