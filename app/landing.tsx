@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Terminal, Zap, Code, BarChart3, Copy, Check, Play, Sparkles, ArrowRight, Star, CheckCircle } from 'lucide-react'
-// import { SignInButton, SignUpButton, useAuth } from '@clerk/nextjs'
+import { SignInButton, SignUpButton, useAuth } from '@clerk/nextjs'
 import Link from 'next/link'
 
 export default function Home() {
-  const isSignedIn = false // const { isSignedIn } = useAuth()
+  const { isSignedIn } = useAuth()
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState('analytics')
   
@@ -112,12 +112,24 @@ export default function Home() {
             </div>
             
             <div className="flex items-center space-x-3">
-              <button className="text-sm text-gray-600 hover:text-gray-900 transition-colors px-3 py-2">
-                Sign in
-              </button>
-              <button className="text-sm bg-gray-900 text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors">
-                Get started
-              </button>
+              {!isSignedIn ? (
+                <>
+                  <SignInButton mode="modal">
+                    <button className="text-sm text-gray-600 hover:text-gray-900 transition-colors px-3 py-2">
+                      Sign in
+                    </button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <button className="text-sm bg-gray-900 text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors">
+                      Get started
+                    </button>
+                  </SignUpButton>
+                </>
+              ) : (
+                <Link href="/dashboard" className="text-sm bg-gray-900 text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors">
+                  Dashboard
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -154,13 +166,23 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
           >
-            <button className="bg-gray-900 text-white px-6 py-3 rounded-md text-sm font-medium hover:bg-gray-800 transition-colors">
-              Get started for free
-            </button>
-            
-            <a href="#demo" className="text-gray-600 hover:text-gray-900 transition-colors font-medium px-6 py-3 text-sm">
-              View demo
-            </a>
+            {!isSignedIn ? (
+              <>
+                <SignUpButton mode="modal">
+                  <button className="bg-gray-900 text-white px-6 py-3 rounded-md text-sm font-medium hover:bg-gray-800 transition-colors">
+                    Get started for free
+                  </button>
+                </SignUpButton>
+                
+                <a href="#demo" className="text-gray-600 hover:text-gray-900 transition-colors font-medium px-6 py-3 text-sm">
+                  View demo
+                </a>
+              </>
+            ) : (
+              <Link href="/dashboard" className="bg-gray-900 text-white px-6 py-3 rounded-md text-sm font-medium hover:bg-gray-800 transition-colors">
+                Go to dashboard
+              </Link>
+            )}
           </motion.div>
 
           {/* Install Command */}
@@ -269,15 +291,17 @@ export default function Home() {
                   ))}
                 </div>
 
-                <button 
-                  className={`w-full py-2.5 px-4 rounded-md text-sm font-medium transition-colors ${
-                    plan.popular
-                      ? 'bg-gray-900 text-white hover:bg-gray-800'
-                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                  }`}
-                >
-                  {plan.cta}
-                </button>
+                <SignUpButton mode="modal">
+                  <button 
+                    className={`w-full py-2.5 px-4 rounded-md text-sm font-medium transition-colors ${
+                      plan.popular
+                        ? 'bg-gray-900 text-white hover:bg-gray-800'
+                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                    }`}
+                  >
+                    {plan.cta}
+                  </button>
+                </SignUpButton>
               </motion.div>
             ))}
           </div>
@@ -501,25 +525,35 @@ export default function Home() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button className="bg-white text-gray-900 px-6 py-3 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors">
-                Get started for free
-              </button>
-              <button 
-                onClick={copyCommand}
-                className="border border-gray-600 text-white px-6 py-3 rounded-md text-sm font-medium hover:border-gray-500 hover:bg-gray-800 transition-colors"
-              >
-                {copied ? (
-                  <>
-                    <Check className="w-4 h-4 mr-2 inline" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4 mr-2 inline" />
-                    Copy install
-                  </>
-                )}
-              </button>
+              {!isSignedIn ? (
+                <>
+                  <SignUpButton mode="modal">
+                    <button className="bg-white text-gray-900 px-6 py-3 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors">
+                      Get started for free
+                    </button>
+                  </SignUpButton>
+                  <button 
+                    onClick={copyCommand}
+                    className="border border-gray-600 text-white px-6 py-3 rounded-md text-sm font-medium hover:border-gray-500 hover:bg-gray-800 transition-colors"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-4 h-4 mr-2 inline" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4 mr-2 inline" />
+                        Copy install
+                      </>
+                    )}
+                  </button>
+                </>
+              ) : (
+                <Link href="/dashboard" className="bg-white text-gray-900 px-6 py-3 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors">
+                  Go to dashboard
+                </Link>
+              )}
             </div>
           </motion.div>
         </div>

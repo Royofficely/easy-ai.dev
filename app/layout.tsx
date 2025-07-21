@@ -2,12 +2,13 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
+// import { ClerkProvider } from '@clerk/nextjs'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'EasyAI Dashboard',
-  description: 'AI development tool dashboard',
+  title: 'EasyAI - One CLI for every AI model',
+  description: 'Stop switching between interfaces. EasyAI brings OpenAI, Claude, Gemini, and 50+ other models into a single, elegant command line experience.',
 }
 
 export default function RootLayout({
