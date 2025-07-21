@@ -7,7 +7,7 @@ import { SignInButton, SignUpButton, useAuth } from '@clerk/nextjs'
 import Link from 'next/link'
 
 export default function Home() {
-  const { isSignedIn } = useAuth()
+  const { isSignedIn, isLoaded } = useAuth()
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState('analytics')
   
@@ -112,7 +112,9 @@ export default function Home() {
             </div>
             
             <div className="flex items-center space-x-3">
-              {!isSignedIn ? (
+              {!isLoaded ? (
+                <div className="w-6 h-6 animate-spin border-2 border-gray-300 border-t-gray-900 rounded-full"></div>
+              ) : !isSignedIn ? (
                 <>
                   <SignInButton mode="modal">
                     <button className="text-sm text-gray-600 hover:text-gray-900 transition-colors px-3 py-2">
@@ -166,11 +168,15 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
           >
-            {!isSignedIn ? (
+            {!isLoaded ? (
+              <div className="w-6 h-6 animate-spin border-2 border-gray-300 border-t-gray-900 rounded-full mx-auto"></div>
+            ) : !isSignedIn ? (
               <>
-                <button className="bg-gray-900 text-white px-6 py-3 rounded-md text-sm font-medium hover:bg-gray-800 transition-colors">
-                  Get started for free
-                </button>
+                <SignUpButton mode="modal">
+                  <button className="bg-gray-900 text-white px-6 py-3 rounded-md text-sm font-medium hover:bg-gray-800 transition-colors">
+                    Get started for free
+                  </button>
+                </SignUpButton>
                 
                 <a href="#demo" className="text-gray-600 hover:text-gray-900 transition-colors font-medium px-6 py-3 text-sm">
                   View demo
@@ -521,11 +527,15 @@ export default function Home() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              {!isSignedIn ? (
+              {!isLoaded ? (
+                <div className="w-6 h-6 animate-spin border-2 border-gray-300 border-t-white rounded-full mx-auto"></div>
+              ) : !isSignedIn ? (
                 <>
-                  <button className="bg-white text-gray-900 px-6 py-3 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors">
-                    Get started for free
-                  </button>
+                  <SignUpButton mode="modal">
+                    <button className="bg-white text-gray-900 px-6 py-3 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors">
+                      Get started for free
+                    </button>
+                  </SignUpButton>
                   <button 
                     onClick={copyCommand}
                     className="border border-gray-600 text-white px-6 py-3 rounded-md text-sm font-medium hover:border-gray-500 hover:bg-gray-800 transition-colors"
