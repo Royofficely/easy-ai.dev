@@ -1,0 +1,20 @@
+{
+  "ui": {
+    "theme": "dark",
+    "autoSave": true
+  },
+  "models": {
+    "openai": "gpt-4",
+    "anthropic": "claude-3-sonnet",
+    "default": "gpt-4"
+  },
+  "logging": {
+    "enabled": true,
+    "includeResponses": true,
+    "retention": "30d"
+  },
+  "prompts": {
+    "autoBackup": true,
+    "validateSyntax": true
+  }
+}

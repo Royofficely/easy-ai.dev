@@ -1,0 +1,58 @@
+# Source files  
+src/
+*.ts
+!*.d.ts
+
+# Development
+.env*
+*.log
+node_modules/
+.git/
+.gitignore
+
+# Test files
+test/
+tests/
+__tests__/
+*.test.*
+*.spec.*
+
+# Documentation and examples
+docs/
+examples/
+
+# Build artifacts
+*.tsbuildinfo
+tsconfig.json
+
+# Frontend builds and cache (CLI doesn't need these)
+frontend/
+dashboard/
+dist/dashboard/
+
+# Local development files
+backend-server.js
+*-server.js
+test-project/
+easyai.env
+index.html
+project-structure.md
+
+# Cache and temp files
+.cache/
+cache/
+.next/
+build/
+*.tgz
+
+# OS generated
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Claude settings
+.claude/
