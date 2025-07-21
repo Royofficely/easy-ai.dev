@@ -5,13 +5,22 @@ import { motion } from 'framer-motion'
 import { Terminal, Zap, Code, BarChart3, Copy, Check, Play, Sparkles, ArrowRight, Star, CheckCircle } from 'lucide-react'
 import { SignInButton, SignUpButton, useAuth } from '@clerk/nextjs'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function Home() {
   const { isSignedIn, isLoaded } = useAuth()
+  const router = useRouter()
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState('analytics')
   
   const installCommand = "npm install @easyai/cli"
+
+  // Auto-redirect to dashboard after successful login
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      router.push('/dashboard')
+    }
+  }, [isSignedIn, isLoaded, router])
 
   const copyCommand = () => {
     navigator.clipboard.writeText(installCommand)
@@ -157,8 +166,7 @@ export default function Home() {
             </h1>
             
             <p className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-              Beyond just "one endpoint for all LLMs" - EasyAI gives you complete control over your AI workflow. 
-              Track costs, compare outputs, manage conversations, and switch between 300+ models seamlessly.
+              Complete control over your AI workflow. Track costs, compare models, and switch between 300+ LLMs seamlessly.
             </p>
           </motion.div>
 
@@ -344,7 +352,7 @@ export default function Home() {
                 </div>
               </div>
               
-              <div className="p-4 font-mono text-sm text-white space-y-2">
+              <div className="p-4 font-mono text-xs text-white space-y-2">
                 <div className="flex">
                   <span className="text-green-400 mr-2">$</span>
                   <span>easyai prompts save "login-form"</span>
