@@ -32,7 +32,7 @@ export default function Dashboard() {
     )
   }
 
-  const installCommand = `npm install -g @easyai/cli && easyai init -k ${apiKey} --ui`
+  const installCommand = `npm install @easyai/cli && easyai init -k ${apiKey} --ui`
   
   const copyCommand = () => {
     navigator.clipboard.writeText(installCommand)

@@ -11,7 +11,7 @@ export default function Home() {
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState('analytics')
   
-  const installCommand = "npm install -g @easyai/cli"
+  const installCommand = "npm install @easyai/cli"
 
   const copyCommand = () => {
     navigator.clipboard.writeText(installCommand)
@@ -158,7 +158,7 @@ export default function Home() {
             
             <p className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
               Beyond just "one endpoint for all LLMs" - EasyAI gives you complete control over your AI workflow. 
-              Track costs, compare outputs, manage conversations, and switch between 50+ models seamlessly.
+              Track costs, compare outputs, manage conversations, and switch between 300+ models seamlessly.
             </p>
           </motion.div>
 
@@ -347,25 +347,25 @@ export default function Home() {
               <div className="p-4 font-mono text-sm text-white space-y-2">
                 <div className="flex">
                   <span className="text-green-400 mr-2">$</span>
-                  <span>easyai chat "Build a login form in React"</span>
+                  <span>easyai prompts save "login-form"</span>
                 </div>
-                <div className="text-blue-400">🤖 Using Claude-3.5 Sonnet...</div>
-                <div className="text-gray-300">✅ Generated complete React component</div>
-                <div className="text-gray-300">📁 Saved to: ./LoginForm.tsx</div>
+                <div className="text-green-400">💾 Prompt saved to library</div>
                 
                 <div className="flex mt-3">
                   <span className="text-green-400 mr-2">$</span>
-                  <span>easyai models switch gpt-4o</span>
+                  <span>easyai playground --models claude,gpt4,gemini</span>
                 </div>
-                <div className="text-yellow-300">⚡ Switched to GPT-4o</div>
+                <div className="text-blue-400">🧪 Testing with 3 models...</div>
+                <div className="text-gray-300">✅ Claude-3.5: Clean code (0.8s, $0.002)</div>
+                <div className="text-gray-300">✅ GPT-4o: Detailed docs (1.1s, $0.004)</div>
+                <div className="text-gray-300">✅ Gemini Pro: Fast response (0.6s, $0.001)</div>
+                <div className="text-yellow-300">🏆 Winner: Gemini Pro (speed+cost)</div>
                 
                 <div className="flex mt-3">
                   <span className="text-green-400 mr-2">$</span>
-                  <span>easyai chat "Add form validation"</span>
+                  <span>easyai ui --dashboard</span>
                 </div>
-                <div className="text-blue-400">🤖 Using GPT-4o...</div>
-                <div className="text-gray-300">✅ Added validation logic</div>
-                <div className="text-gray-400">💰 Cost: $0.003 | Speed: 1.2s</div>
+                <div className="text-purple-400">🚀 Opening dashboard at localhost:3000</div>
               </div>
             </div>
 
