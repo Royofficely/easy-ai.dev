@@ -22,24 +22,24 @@ export default function Home() {
 
   const features = [
     {
-      icon: Terminal,
-      title: "Unified CLI",
-      description: "One command interface for all AI models and providers",
+      icon: BarChart3,
+      title: "Smart Analytics",
+      description: "Track costs, compare model performance, and optimize your AI spending in real-time",
     },
     {
-      icon: Code,
-      title: "IDE Integration", 
-      description: "Seamless integration with VS Code, Cursor, and other editors",
+      icon: Terminal,
+      title: "Conversation Management", 
+      description: "Organize, save, and continue conversations across different models and projects",
     },
     {
       icon: Zap,
-      title: "Multi-Provider",
-      description: "OpenAI, Anthropic, Gemini, and 50+ models in one place",
+      title: "Intelligent Switching",
+      description: "Seamlessly switch between 50+ models based on task requirements and cost optimization",
     },
     {
-      icon: BarChart3,
-      title: "Analytics",
-      description: "Track usage, costs, and performance across all models",
+      icon: Code,
+      title: "Workflow Control",
+      description: "Full control over your AI development process with advanced filtering and organization",
     }
   ]
 
@@ -151,14 +151,14 @@ export default function Home() {
             </div>
             
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-medium text-gray-900 mb-8 leading-tight tracking-tight">
-              One CLI for
+              Manage, organize
               <br />
-              <span className="text-gray-500">every AI model</span>
+              <span className="text-gray-500">& control AI better</span>
             </h1>
             
             <p className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-              Stop switching between interfaces. EasyAI brings OpenAI, Claude, Gemini, 
-              and 50+ other models into a single, elegant command line experience.
+              Beyond just "one endpoint for all LLMs" - EasyAI gives you complete control over your AI workflow. 
+              Track costs, compare outputs, manage conversations, and switch between 50+ models seamlessly.
             </p>
           </motion.div>
 
@@ -216,10 +216,10 @@ export default function Home() {
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-medium text-gray-900 mb-4 tracking-tight">
-              Everything you need, nothing you don&apos;t
+              Complete AI workflow management
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Built for developers who value simplicity and power in equal measure.
+              More than just API access - get full visibility, control, and optimization of your AI usage.
             </p>
           </div>
 
@@ -315,11 +315,11 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-medium text-gray-900 mb-4 tracking-tight">
-              CLI meets dashboard intelligence
+              Work smart, not just fast
             </h2>
             <p className="text-gray-600 max-w-3xl mx-auto">
-              Code in your terminal, monitor from your browser. EasyAI connects your CLI workflow 
-              with powerful analytics and management tools.
+              Chat with any model from your terminal, then analyze performance, track spending, and optimize 
+              your AI workflow through our intelligent dashboard. Complete control at your fingertips.
             </p>
           </div>
 
