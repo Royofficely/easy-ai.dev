@@ -128,9 +128,9 @@ export default function Home() {
                   </SignUpButton>
                 </>
               ) : (
-                <button className="text-sm bg-gray-900 text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors">
+                <Link href="/dashboard" className="text-sm bg-gray-900 text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors">
                   Dashboard
-                </button>
+                </Link>
               )}
             </div>
           </div>
@@ -183,9 +183,9 @@ export default function Home() {
                 </a>
               </>
             ) : (
-              <button className="bg-gray-900 text-white px-6 py-3 rounded-md text-sm font-medium hover:bg-gray-800 transition-colors">
+              <Link href="/dashboard" className="bg-gray-900 text-white px-6 py-3 rounded-md text-sm font-medium hover:bg-gray-800 transition-colors">
                 Go to dashboard
-              </button>
+              </Link>
             )}
           </motion.div>
 
@@ -585,9 +585,9 @@ export default function Home() {
                   </button>
                 </>
               ) : (
-                <button className="bg-white text-gray-900 px-6 py-3 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors">
+                <Link href="/dashboard" className="bg-white text-gray-900 px-6 py-3 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors">
                   Go to dashboard
-                </button>
+                </Link>
               )}
             </div>
           </motion.div>
