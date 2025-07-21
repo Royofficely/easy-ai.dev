@@ -1,139 +1,72 @@
-# EasyAI CLI
+# Easy AI Dev
 
-> AI development tool with interactive CLI and local dashboard
+A modern landing page for Easy AI Dev with Clerk authentication integration.
 
-[![npm version](https://badge.fury.io/js/@easyai%2Fcli.svg)](https://badge.fury.io/js/@easyai%2Fcli)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+## Features
 
-## 🚀 Quick Start
+- 🎨 Modern, responsive design with Tailwind CSS
+- 🔐 Secure authentication with Clerk
+- ⚡ Built with Next.js 14 and TypeScript
+- 📊 Analytics dashboard
+- 📝 Prompt management system
+- ⚙️ Settings configuration
 
-### One-Command Setup
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+ 
+- npm or yarn
+- Clerk account for authentication
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm install -g @easyai/cli && easyai init --key=YOUR_API_KEY --ui
+git clone https://github.com/Royofficely/easy-ai.dev.git
+cd easy-ai.dev
 ```
 
-This single command will:
-1. Install EasyAI globally
-2. Initialize your project
-3. Configure your API key automatically
-4. Open the dashboard in your browser
-
-### Manual Setup
+2. Install dependencies:
 ```bash
-npm install -g @easyai/cli
-easyai init
-easyai ui
+npm install
 ```
 
-## ✨ Features
-
-- **Interactive Terminal** - ChatGPT-style CLI interface
-- **Multi-Model Playground** - Test prompts across OpenAI, Anthropic, OpenRouter
-- **Local Dashboard** - Beautiful web UI at `localhost:3000`
-- **Prompt Management** - Create, edit, and organize AI prompts
-- **Usage Analytics** - Track tokens, costs, and performance
-- **Export & Sync** - Export data in JSON/CSV formats
-
-## 📋 Commands
-
-```bash
-easyai                           # Interactive mode
-easyai init                      # Setup new project
-easyai init --key=API_KEY --ui   # One-command setup with auto dashboard
-easyai ui                        # Launch web dashboard
-easyai models                    # Browse available models
-easyai prompts                   # Manage prompts
-easyai playground                # Multi-model testing
-easyai analytics                 # Usage statistics
-```
-
-## 🛠 Interactive Mode
-
-Run `easyai` to enter interactive mode:
-
-```
-🤖 EasyAI Interactive Terminal
-════════════════════════════════════════════════════════════
-✅ EasyAI initialized
-   Configured providers: OpenAI, Anthropic
-
-Type "help" for commands, "exit" to quit
-────────────────────────────────────────────────────────────
-easyai> help
-
-📚 Available Commands:
-──────────────────────────────────────────────────
-
-Core Commands:
-  init         - Initialize EasyAI in current project
-  ui           - Launch dashboard UI
-  config       - Manage configuration
-  status       - Show current project status
-
-AI Operations:
-  models       - Browse and manage AI models
-  prompts      - Manage AI prompts  
-  playground   - Test prompts against multiple models
-  analytics    - View usage analytics
-```
-
-## 🔧 Configuration
-
-### Quick Configuration
-```bash
-easyai init --key=YOUR_API_KEY  # Auto-detects OpenAI or Anthropic
-```
-
-### Interactive Configuration
-```bash
-easyai init
-# Follow the prompts to add your OpenAI, Anthropic, etc. API keys
-```
-
-Or manually edit `easyai/config/easyai.env`:
-
+3. Set up environment variables:
+Create a `.env.local` file in the root directory:
 ```env
-OPENAI_API_KEY=your_key_here
-ANTHROPIC_API_KEY=your_key_here
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+CLERK_SECRET_KEY=your_clerk_secret_key
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/
 ```
 
-## 🎯 Use Cases
-
-- **Prompt Engineering** - Test and iterate on prompts
-- **Model Comparison** - Compare responses across different models
-- **Cost Optimization** - Track and analyze AI usage costs  
-- **Team Collaboration** - Share prompts and configurations
-- **Development Workflow** - Integrate AI into your dev process
-
-## 🌐 Web Dashboard
-
-Launch the local dashboard:
-
+4. Run the development server:
 ```bash
-easyai ui
+npm run dev
 ```
 
-Access at `http://localhost:3000` for:
-- Visual prompt editor
-- Model playground
-- Usage analytics
-- Configuration management
+Open [http://localhost:3000](http://localhost:3000) to see the application.
 
-## 📊 Analytics & Exports
+## Project Structure
 
-Track your AI usage:
-
-```bash
-easyai analytics --period week --detailed
-easyai export --type logs --format csv
+```
+easy-ai.dev/
+├── app/              # Next.js app directory
+├── components/       # React components
+├── public/          # Static assets
+├── package.json     # Dependencies
+└── README.md        # This file
 ```
 
-## 🤝 Support
+## Deployment
 
-- **Website**: [https://easy-ai.dev](https://easy-ai.dev)
-- **Issues**: [GitHub Issues](https://github.com/easyai/cli/issues)
-- **Email**: support@easy-ai.dev
+The easiest way to deploy is using [Vercel](https://vercel.com):
 
-## 📄 License
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Royofficely/easy-ai.dev)
 
-MIT © [EasyAI](https://easy-ai.dev)
+## License
+
+MIT
