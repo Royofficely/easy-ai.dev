@@ -347,19 +347,25 @@ export default function Home() {
               <div className="p-4 font-mono text-sm text-white space-y-2">
                 <div className="flex">
                   <span className="text-green-400 mr-2">$</span>
-                  <span>easyai prompts create "React Generator"</span>
+                  <span>easyai chat "Build a login form in React"</span>
                 </div>
-                <div className="text-green-400">✅ Prompt created: React Generator</div>
+                <div className="text-blue-400">🤖 Using Claude-3.5 Sonnet...</div>
+                <div className="text-gray-300">✅ Generated complete React component</div>
+                <div className="text-gray-300">📁 Saved to: ./LoginForm.tsx</div>
                 
                 <div className="flex mt-3">
                   <span className="text-green-400 mr-2">$</span>
-                  <span>easyai playground --models gpt4,claude</span>
+                  <span>easyai models switch gpt-4o</span>
                 </div>
-                <div className="text-blue-400">🔄 Testing prompt with 2 models...</div>
-                <div className="text-gray-300">✅ GPT-4: Detailed JSX + TypeScript</div>
-                <div className="text-gray-300">✅ Claude: Clean + optimized code</div>
-                <div className="text-yellow-300">💡 Claude wins: 0.8s, $0.002</div>
-                <div className="text-gray-400">📊 All data synced to dashboard</div>
+                <div className="text-yellow-300">⚡ Switched to GPT-4o</div>
+                
+                <div className="flex mt-3">
+                  <span className="text-green-400 mr-2">$</span>
+                  <span>easyai chat "Add form validation"</span>
+                </div>
+                <div className="text-blue-400">🤖 Using GPT-4o...</div>
+                <div className="text-gray-300">✅ Added validation logic</div>
+                <div className="text-gray-400">💰 Cost: $0.003 | Speed: 1.2s</div>
               </div>
             </div>
 
@@ -404,27 +410,27 @@ export default function Home() {
                   <>
                     <div className="grid grid-cols-3 gap-3">
                       <div className="text-center bg-gray-50 rounded-lg p-3">
-                        <div className="text-lg font-bold text-gray-900">48</div>
-                        <div className="text-xs text-gray-500">Requests</div>
+                        <div className="text-lg font-bold text-gray-900">127</div>
+                        <div className="text-xs text-gray-500">Chats</div>
                       </div>
                       <div className="text-center bg-gray-50 rounded-lg p-3">
-                        <div className="text-lg font-bold text-green-600">$0.23</div>
+                        <div className="text-lg font-bold text-green-600">$2.84</div>
                         <div className="text-xs text-gray-500">Total Cost</div>
                       </div>
                       <div className="text-center bg-gray-50 rounded-lg p-3">
-                        <div className="text-lg font-bold text-[#5b61eb]">0.9s</div>
+                        <div className="text-lg font-bold text-[#5b61eb]">1.1s</div>
                         <div className="text-xs text-gray-500">Avg Speed</div>
                       </div>
                     </div>
                     
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Claude: Best performance</span>
-                        <span className="text-[#5b61eb]">0.8s</span>
+                        <span className="text-gray-600">Claude-3.5: Most used</span>
+                        <span className="text-[#5b61eb]">89 chats</span>
                       </div>
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">GPT-4: Good quality</span>
-                        <span className="text-green-600">1.2s</span>
+                        <span className="text-gray-600">GPT-4o: Code heavy</span>
+                        <span className="text-green-600">38 chats</span>
                       </div>
                     </div>
                   </>
@@ -433,52 +439,52 @@ export default function Home() {
                 {activeTab === 'prompts' && (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-900">Prompts (13)</span>
+                      <span className="text-sm font-medium text-gray-900">Recent Chats</span>
                       <div className="w-2 h-2 bg-[#5b61eb] rounded-full animate-pulse"></div>
                     </div>
                     
                     <div className="p-3 bg-[#5b61eb]/5 border border-[#5b61eb]/20 rounded-lg">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-gray-900">React Generator</span>
-                        <span className="text-xs text-green-600">New</span>
+                        <span className="text-sm font-medium text-gray-900">Login Form React</span>
+                        <span className="text-xs text-green-600">Active</span>
                       </div>
-                      <div className="text-xs text-gray-500">Just added • Best: Claude (0.8s)</div>
+                      <div className="text-xs text-gray-500">Claude-3.5 • 2 min ago</div>
                     </div>
                     
                     <div className="p-3 bg-gray-50 rounded-lg">
-                      <div className="text-sm font-medium text-gray-900">Code Review Assistant</div>
-                      <div className="text-xs text-gray-500">18 uses • GPT-4 preferred</div>
+                      <div className="text-sm font-medium text-gray-900">API Error Handling</div>
+                      <div className="text-xs text-gray-500">GPT-4o • 1 hour ago</div>
                     </div>
 
                     <div className="p-3 bg-gray-50 rounded-lg">
-                      <div className="text-sm text-gray-700">API Documentation</div>
-                      <div className="text-xs text-gray-500">5 uses • Claude preferred</div>
+                      <div className="text-sm text-gray-700">Database Schema Design</div>
+                      <div className="text-xs text-gray-500">Claude-3.5 • Yesterday</div>
                     </div>
                   </div>
                 )}
 
                 {activeTab === 'playground' && (
                   <div className="space-y-3">
-                    <div className="text-sm font-medium text-gray-900">Latest Test Results</div>
+                    <div className="text-sm font-medium text-gray-900">Model Usage</div>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-700">GPT-4</span>
-                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">Good</span>
+                          <span className="text-sm text-gray-700">GPT-4o</span>
+                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">Code</span>
                         </div>
-                        <span className="text-sm text-gray-500">1.2s</span>
+                        <span className="text-sm text-gray-500">38 uses</span>
                       </div>
                       <div className="flex items-center justify-between p-3 border-2 border-[#5b61eb] bg-[#5b61eb]/5 rounded-lg">
                         <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-700 font-medium">Claude 3.5</span>
-                          <span className="text-xs bg-[#5b61eb] text-white px-2 py-1 rounded">Winner</span>
+                          <span className="text-sm text-gray-700 font-medium">Claude-3.5</span>
+                          <span className="text-xs bg-[#5b61eb] text-white px-2 py-1 rounded">Primary</span>
                         </div>
-                        <span className="text-sm text-[#5b61eb] font-medium">0.8s</span>
+                        <span className="text-sm text-[#5b61eb] font-medium">89 uses</span>
                       </div>
                     </div>
                     
                     <div className="text-xs text-gray-500 mt-2">
-                      Tested with "React Generator" prompt
+                      Switch models anytime with "easyai models switch"
                     </div>
                   </div>
                 )}
